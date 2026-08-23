@@ -27,6 +27,12 @@ cross-cutting UI changes, read the relevant docs:
 - `docs/ARCHITECTURE.md` — Flutter architecture, boundaries, routes, state,
   API, notification, timezone, and testing guidance.
 
+For UI implementation or visual review, also inspect the static design
+references:
+
+- `docs/design/home.png`
+- `docs/design/event_details.png`
+
 If the docs and code disagree, call that out before changing behavior.
 
 ## Product Scope
@@ -78,7 +84,8 @@ Do not add v0.0.1 non-goals unless the user explicitly changes product scope:
 ## Design Direction
 
 For UI, interaction, or copy-layout work, follow `docs/DESIGN.md` where
-necessary.
+necessary. Treat `docs/design/home.png` and `docs/design/event_details.png` as
+the canonical v0.0.1 visual references for the two primary screens.
 
 The app should feel like a polished consumer history product: editorial,
 refined, calm, trustworthy, warm, modern, and readable. The experience should

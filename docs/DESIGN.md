@@ -293,16 +293,18 @@ The detail view should feel like a short editorial note, not a long article.
 
 ### 8.3 Description
 
-The description should generally be one concise paragraph covering:
+The description should be concise and may be one substantial paragraph or two
+short paragraphs, similar in length to the approved Event Detail reference
+screen. It should cover:
 
 - what happened
 - who or what was involved
 - relevant background
 - why it mattered historically
 
-The UI may visually wrap the paragraph over multiple lines, but the content
-should remain concise. Avoid turning the detail page into a multi-section
-article.
+The UI may visually wrap the copy over multiple lines, but the content should
+remain quick to read. Avoid turning the detail page into a long article,
+multi-section explainer, or exhaustive encyclopedia entry.
 
 ### 8.4 Sources
 
@@ -423,6 +425,17 @@ the daily-history loop is validated.
 ---
 
 ## 13. Reference Screen Direction
+
+The canonical v0.0.1 screen references are:
+
+- `docs/design/home.png` — Home screen reference.
+- `docs/design/event_details.png` — Event Detail screen reference.
+
+Use these images as the primary visual references when implementing or
+reviewing the v0.0.1 UI. The written guidance in this document explains the
+intent behind those screens and should be used to resolve responsive,
+accessibility, loading, error, or no-image states that are not shown directly in
+the static references.
 
 The current approved direction uses:
 
