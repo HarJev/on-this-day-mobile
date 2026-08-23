@@ -4,6 +4,7 @@ import '../domain/event_source.dart';
 import '../domain/featured_event.dart';
 import '../domain/historical_event.dart';
 import '../domain/historical_event_summary.dart';
+import '../domain/on_this_day_exceptions.dart';
 import '../domain/on_this_day_repository.dart';
 
 class FakeOnThisDayRepository implements OnThisDayRepository {
@@ -264,13 +265,4 @@ class FakeOnThisDayRepository implements OnThisDayRepository {
 
     return event;
   }
-}
-
-class EventNotFoundException implements Exception {
-  const EventNotFoundException(this.eventId);
-
-  final String eventId;
-
-  @override
-  String toString() => 'EventNotFoundException: $eventId';
 }

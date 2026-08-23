@@ -17,20 +17,28 @@ void main() {
   ) async {
     await tester.pumpWidget(const OnThisDayApp());
 
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('On This Day'), findsOneWidget);
+    expect(find.text("Loading today's history..."), findsOneWidget);
   });
 
-  testWidgets('event route passes event ID to detail placeholder', (
+  testWidgets('event route passes event ID to detail screen', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        initialRoute: AppRoutes.eventDetail('battle-of-bosworth-field-1485'),
+        initialRoute: AppRoutes.eventDetail('loch-ness-monster-columba-565'),
         onGenerateRoute: const AppRouter().onGenerateRoute,
       ),
     );
 
-    expect(find.text('Event: battle-of-bosworth-field-1485'), findsOneWidget);
+    expect(find.text('Loading event...'), findsOneWidget);
+
+    await tester.pump();
+
+    expect(
+      find.text('Saint Columba reports seeing a monster in Loch Ness'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('unknown route renders unavailable fallback', (

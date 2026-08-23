@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../features/on_this_day/data/fake_on_this_day_repository.dart';
+import '../../features/on_this_day/presentation/event_detail_screen.dart';
+import '../../features/on_this_day/presentation/home_screen.dart';
 import 'app_routes.dart';
+import 'source_launcher.dart';
 
 class AppRouter {
   const AppRouter();
@@ -10,12 +14,22 @@ class AppRouter {
     final uri = Uri.parse(routeName);
 
     if (_isTodayRoute(uri)) {
-      return _page(const TodayPlaceholderScreen(), settings);
+      return _page(
+        HomeScreen(repository: FakeOnThisDayRepository(), timezone: 'Etc/UTC'),
+        settings,
+      );
     }
 
     final eventId = _eventIdFrom(uri);
     if (eventId != null) {
-      return _page(EventDetailPlaceholderScreen(eventId: eventId), settings);
+      return _page(
+        EventDetailScreen(
+          repository: FakeOnThisDayRepository(),
+          eventId: eventId,
+          sourceLauncher: const PlatformSourceLauncher(),
+        ),
+        settings,
+      );
     }
 
     return _page(const UnavailableRouteScreen(), settings);
@@ -40,33 +54,6 @@ class AppRouter {
 
   MaterialPageRoute<void> _page(Widget child, RouteSettings settings) {
     return MaterialPageRoute<void>(builder: (_) => child, settings: settings);
-  }
-}
-
-class TodayPlaceholderScreen extends StatelessWidget {
-  const TodayPlaceholderScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('On This Day')),
-      body: const Center(child: Text('Today')),
-    );
-  }
-}
-
-class EventDetailPlaceholderScreen extends StatelessWidget {
-  const EventDetailPlaceholderScreen({super.key, required this.eventId})
-    : assert(eventId != '');
-
-  final String eventId;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('On This Day')),
-      body: Center(child: Text('Event: $eventId')),
-    );
   }
 }
 

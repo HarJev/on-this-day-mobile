@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/features/on_this_day/data/fake_on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 
 void main() {
   group('FakeOnThisDayRepository', () {

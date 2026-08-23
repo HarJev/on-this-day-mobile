@@ -6,6 +6,6 @@ void main() {
     await tester.pumpWidget(const OnThisDayApp());
 
     expect(find.text('On This Day'), findsOneWidget);
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text("Loading today's history..."), findsOneWidget);
   });
 }
