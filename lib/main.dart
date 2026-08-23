@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'core/config/app_theme.dart';
+import 'core/navigation/app_router.dart';
+import 'core/navigation/app_routes.dart';
 
 void main() {
   runApp(const OnThisDayApp());
@@ -9,24 +11,15 @@ void main() {
 class OnThisDayApp extends StatelessWidget {
   const OnThisDayApp({super.key});
 
+  static const _router = AppRouter();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'On This Day',
       theme: AppTheme.light,
-      home: const AppShell(),
-    );
-  }
-}
-
-class AppShell extends StatelessWidget {
-  const AppShell({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('On This Day')),
-      body: const SizedBox.expand(),
+      initialRoute: AppRoutes.today,
+      onGenerateRoute: _router.onGenerateRoute,
     );
   }
 }
