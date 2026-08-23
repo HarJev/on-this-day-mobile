@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/config/app_theme.dart';
+
 void main() {
   runApp(const OnThisDayApp());
 }
@@ -11,9 +13,7 @@ class OnThisDayApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'On This Day',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
-      ),
+      theme: AppTheme.light,
       home: const AppShell(),
     );
   }
@@ -24,6 +24,9 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('On This Day')));
+    return Scaffold(
+      appBar: AppBar(title: const Text('On This Day')),
+      body: const SizedBox.expand(),
+    );
   }
 }
