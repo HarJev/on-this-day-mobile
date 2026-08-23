@@ -240,6 +240,30 @@ Before finishing changes:
 
 If a verification step cannot run, explain why.
 
+## Branching And Review
+
+Feature work, behavior changes, architecture changes, dependency changes, and
+other major updates should happen on a dedicated branch by default.
+
+Use a `codex/` branch prefix unless the user asks for a different branch name.
+Keep branch names short and descriptive, for example:
+
+```text
+codex/home-featured-event
+codex/notification-deeplink
+codex/api-client
+```
+
+The agent should prepare the branch and changes, then summarize the diff and
+verification results. The user will open the PR, review it, and merge when
+ready.
+
+Do not merge changes, push branches, or open PRs unless the user explicitly
+asks for that action.
+
+Small documentation-only edits may be made on the current branch when the user
+asks for them, but keep them focused and easy to review.
+
 ## Agent Workflow
 
 Before implementation:
