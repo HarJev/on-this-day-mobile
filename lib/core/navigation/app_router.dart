@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
 
-import '../../features/on_this_day/data/fake_on_this_day_repository.dart';
+import '../../features/on_this_day/domain/on_this_day_repository.dart';
 import '../../features/on_this_day/presentation/event_detail_screen.dart';
 import '../../features/on_this_day/presentation/home_screen.dart';
+import '../config/timezone_provider.dart';
 import 'app_routes.dart';
 import 'source_launcher.dart';
 
 class AppRouter {
-  const AppRouter();
+  const AppRouter({
+    required OnThisDayRepository repository,
+    required TimezoneProvider timezoneProvider,
+    SourceLauncher sourceLauncher = const PlatformSourceLauncher(),
+    VoidCallback? onShowDebugNotification,
+  }) : _repository = repository,
+       _timezoneProvider = timezoneProvider,
+       _sourceLauncher = sourceLauncher,
+       _onShowDebugNotification = onShowDebugNotification;
+
+  final OnThisDayRepository _repository;
+  final TimezoneProvider _timezoneProvider;
+  final SourceLauncher _sourceLauncher;
+  final VoidCallback? _onShowDebugNotification;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
     final routeName = settings.name ?? AppRoutes.today;
@@ -15,7 +29,11 @@ class AppRouter {
 
     if (_isTodayRoute(uri)) {
       return _page(
-        HomeScreen(repository: FakeOnThisDayRepository(), timezone: 'Etc/UTC'),
+        HomeScreen(
+          repository: _repository,
+          timezoneProvider: _timezoneProvider,
+          onShowDebugNotification: _onShowDebugNotification,
+        ),
         settings,
       );
     }
@@ -24,9 +42,9 @@ class AppRouter {
     if (eventId != null) {
       return _page(
         EventDetailScreen(
-          repository: FakeOnThisDayRepository(),
+          repository: _repository,
           eventId: eventId,
-          sourceLauncher: const PlatformSourceLauncher(),
+          sourceLauncher: _sourceLauncher,
         ),
         settings,
       );

@@ -1,4 +1,4 @@
-package com.example.on_this_day_mobile
+package com.jevaunharris.onthisday
 
 import io.flutter.embedding.android.FlutterActivity
 

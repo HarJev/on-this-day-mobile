@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/core/navigation/app_router.dart';
 import 'package:on_this_day_mobile/core/navigation/app_routes.dart';
+import 'package:on_this_day_mobile/features/on_this_day/data/fake_on_this_day_repository.dart';
 import 'package:on_this_day_mobile/main.dart';
 
 void main() {
@@ -15,7 +17,7 @@ void main() {
   testWidgets('normal launch starts at today route', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const OnThisDayApp());
+    await tester.pumpWidget(OnThisDayApp(router: _router()));
 
     expect(find.text('On This Day'), findsOneWidget);
     expect(find.text("Loading today's history..."), findsOneWidget);
@@ -27,7 +29,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         initialRoute: AppRoutes.eventDetail('loch-ness-monster-columba-565'),
-        onGenerateRoute: const AppRouter().onGenerateRoute,
+        onGenerateRoute: _router().onGenerateRoute,
       ),
     );
 
@@ -47,7 +49,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         initialRoute: '/not-a-route',
-        onGenerateRoute: const AppRouter().onGenerateRoute,
+        onGenerateRoute: _router().onGenerateRoute,
       ),
     );
 
@@ -60,10 +62,28 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         initialRoute: '/events/foo/bar',
-        onGenerateRoute: const AppRouter().onGenerateRoute,
+        onGenerateRoute: _router().onGenerateRoute,
       ),
     );
 
     expect(find.text('Content unavailable'), findsOneWidget);
   });
+}
+
+AppRouter _router() {
+  return AppRouter(
+    repository: FakeOnThisDayRepository(),
+    timezoneProvider: const _FixedTimezoneProvider('Etc/UTC'),
+  );
+}
+
+class _FixedTimezoneProvider implements TimezoneProvider {
+  const _FixedTimezoneProvider(this.timezone);
+
+  final String timezone;
+
+  @override
+  Future<String> currentTimezone() async {
+    return timezone;
+  }
 }

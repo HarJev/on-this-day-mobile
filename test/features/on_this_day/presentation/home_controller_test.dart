@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
@@ -13,7 +14,7 @@ void main() {
 
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
 
       expect(controller.state, isA<HomeLoading>());
@@ -24,7 +25,7 @@ void main() {
       final repository = _RecordingRepository(result: _dailyContent);
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
 
       await controller.loadToday();
@@ -39,7 +40,7 @@ void main() {
       final repository = _RecordingRepository(result: _dailyContent);
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
       final states = <HomeState>[];
       controller.addListener(() => states.add(controller.state));
@@ -55,7 +56,7 @@ void main() {
       );
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
 
       await controller.loadToday();
@@ -72,7 +73,7 @@ void main() {
       final repository = _RecordingRepository(exception: Exception('network'));
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
 
       await controller.loadToday();
@@ -89,7 +90,7 @@ void main() {
       ]);
       final controller = HomeController(
         repository: repository,
-        timezone: 'America/Jamaica',
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
       );
 
       await controller.loadToday();
@@ -101,6 +102,21 @@ void main() {
       expect(state, isA<HomeLoaded>());
       expect((state as HomeLoaded).content, same(_dailyContent));
       expect(repository.loadCount, 2);
+    });
+
+    test('maps timezone lookup failures to retryable HomeError', () async {
+      final repository = _RecordingRepository(result: _dailyContent);
+      final controller = HomeController(
+        repository: repository,
+        timezoneProvider: _ThrowingTimezoneProvider(Exception('timezone')),
+      );
+
+      await controller.loadToday();
+
+      final state = controller.state;
+      expect(state, isA<HomeError>());
+      expect((state as HomeError).message, "Could not load today's history.");
+      expect(repository.loadCount, 0);
     });
   });
 }
@@ -171,5 +187,27 @@ class _SequenceRepository implements OnThisDayRepository {
   @override
   Future<HistoricalEvent> getEvent(String eventId) {
     throw UnimplementedError();
+  }
+}
+
+class _FixedTimezoneProvider implements TimezoneProvider {
+  const _FixedTimezoneProvider(this.timezone);
+
+  final String timezone;
+
+  @override
+  Future<String> currentTimezone() async {
+    return timezone;
+  }
+}
+
+class _ThrowingTimezoneProvider implements TimezoneProvider {
+  const _ThrowingTimezoneProvider(this.exception);
+
+  final Object exception;
+
+  @override
+  Future<String> currentTimezone() async {
+    throw exception;
   }
 }

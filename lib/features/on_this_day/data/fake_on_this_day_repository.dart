@@ -17,6 +17,10 @@ class FakeOnThisDayRepository implements OnThisDayRepository {
     ),
     altText: 'Richard III on horseback at the Battle of Bosworth Field',
     source: 'Wikimedia Commons',
+    sourceUrl: Uri.parse(
+      'https://commons.wikimedia.org/wiki/File:'
+      'Richard_III_at_the_Battle_of_Bosworth.jpg',
+    ),
     attribution:
         'Edmund Blair Leighton, Richard III at the Battle of Bosworth Field',
     creator: 'Edmund Blair Leighton',

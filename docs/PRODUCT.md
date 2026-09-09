@@ -1,4 +1,7 @@
-# On This Day — Product Specification v0.0.1
+# On This Day — Product Specification
+
+Sections 1-12 preserve the v0.0.1 daily-history definition. Section 13 is the
+approved, additive Quiz v0.1.0 specification; its implementation is planned.
 
 **Status:** Canonical product definition  
 **Version:** v0.0.1  
@@ -714,3 +717,125 @@ The first release is therefore deliberately:
 > **Today → Featured event → Learn → Read more → Come back tomorrow.**
 
 That is the product.
+
+## 13. Quiz v0.1.0
+
+Quiz adds a second product area alongside Today. The v0.0.1 exclusions above
+remain scoped to that release. Quiz permits collection selection, local scoring,
+and local result storage without adding accounts or competitive progression.
+The implementation sequence is in `../quiz_implementation_plan.md`.
+
+### 13.1 Entry and setup
+
+- Today and Quiz are root destinations with bottom navigation. Normal launch
+  selects Today. Event Detail and quiz play/results/review open above the roots.
+- Existing notification event deep links remain supported.
+- Quiz offers Daily Challenge and Quick Play. Both offer 5, 10, or 20 questions.
+- Quick Play defaults to Mixed, five questions, and timing enabled. Users may
+  disable timing or choose one catalog collection. Collections are flat and
+  grouped as topic, historical period, civilization, or conflict/movement.
+- Offer only supported counts for the selected collection. A stale selection
+  must recover through catalog refresh rather than silently shorten the quiz.
+- Daily uses the backend-returned date and challenge identity. Timezone selects
+  the calendar date; all users receiving that date receive the same persisted
+  20-question assignment. Five and ten are stable prefixes.
+- Daily requires a complete backend assignment even for a five-question request.
+  Membership/order are immutable; backend editorial corrections remain possible.
+  The mobile session freezes the received question content for its duration.
+
+### 13.2 Answering and feedback
+
+Multiple-choice, true/false, and image-identification answers commit immediately
+on an option tap. Lock the answer and show correct/incorrect and the correct
+answer immediately. There is no separate Submit answer control. Chronological
+ordering has four rearrangeable items and an explicit Submit order control;
+the entire order must be correct to earn credit.
+
+Daily feedback is compact, with Continue readily available. Full explanations
+and external sources belong in post-quiz review so they do not compete with the
+total timer. Quick Play may display explanations and source links during
+feedback because its timer has stopped. All modes support full final review.
+
+Correct answers are delivered by the backend and graded on-device. Every
+correct question earns one credit; difficulty and speed do not affect scoring.
+Results show correct/total, percentage, answered/correct/unanswered counts, and
+review of every question, including those never reached. A timed-out or skipped
+question is unanswered and earns zero credit, distinguished from a submitted
+incorrect answer. Draft chronological arrangements are not submitted answers.
+
+### 13.3 Timing and interruption
+
+| Mode | Timing |
+| --- | --- |
+| Daily, 5 / 10 / 20 | 120 / 240 / 480 seconds total, always enabled |
+| Quick Play multiple choice / true-false | 20 seconds per question |
+| Quick Play image identification | 30 seconds per question |
+| Quick Play chronological ordering | 45 seconds per question |
+
+Use backend timing metadata. Daily continues through feedback, backgrounding,
+and navigation to a notified event. Expiry completes the quiz and assigns zero
+credit to unanswered questions. Quick Play's current question also continues
+in the background; on expiry it enters feedback and waits for Continue. It
+never starts timing unseen subsequent questions. Untimed Quick Play has no
+countdown. Exit confirmation does not pause a timer.
+
+Freeze the result immediately when the last answer commits, the final question
+is skipped/times out, or the Daily timer expires, and attempt persistence then.
+Opening Results is not the completion trigger. Completion must occur once even
+when answer, timeout, background, and navigation callbacks race.
+
+Confirm deliberate abandonment. An unfinished session is not restored after
+process termination; normal launch still starts at Today. Returning while the
+process survives restores the in-memory session with elapsed time reconciled.
+An active Daily session retains its backend date across midnight; new sessions
+resolve the date again.
+
+### 13.4 Official and local results
+
+One official completed Daily result exists per backend ISO date on this device,
+across all counts. Completing five first makes later ten/twenty attempts
+practice. Expiry counts as completion; abandonment does not. This casual local
+rule permits restarting an abandoned attempt and is not an integrity guarantee.
+
+Persist the official result and its review snapshot atomically. On save failure,
+retain the frozen pending official result in memory, expose retry/unsaved status,
+and reserve its date so another session cannot replace it while the app runs.
+Replays of that date are practice even while its official write is pending.
+If the process dies before a successful write, that pending result may be lost.
+
+Store best practice results by Daily date/count, and best Quick Play results by
+collection (or Mixed), count, and timing mode. Higher correct count wins within
+each comparable group; ties retain the earlier result. Store the Quick Play
+timing preference locally. There is no history-browser screen in this scope.
+There are no accounts or cross-device synchronization guarantees.
+
+### 13.5 Images, accessibility, and failure
+
+Prepare all required question images before starting timing, with bounded
+loading and memory use as specified in Architecture. Failed image loading offers
+retry/exit and never costs points. Do not silently substitute or remove an
+assigned question. If a required image becomes unavailable during play, treat
+the session as technically interrupted without recording a scored completion.
+
+Image questions offer Skip question, recorded as unanswered with zero credit.
+Neutral alt text and skipping do not provide equivalent access to visual
+identification for blind users; this limitation must remain explicit. Ordering
+must work without dragging. Support dynamic text, adequate contrast, comfortable
+tap targets, meaningful semantics, and non-color-only correctness indicators.
+
+Loading, empty/unavailable catalog, retryable network/timezone/API failure,
+malformed content, image failure, and persistence failure need distinct handling.
+Reject malformed quizzes before timing. Never show raw technical errors or claim
+an unsaved result was stored.
+
+### 13.6 Scope and acceptance
+
+The backend currently supplies 60 published questions, all four types, and nine
+collections. Counts and collection names come from the API, not hard-coded UI.
+This work does not expand the bank. Acceptance requires the complete setup,
+answer, feedback, timeout, result, review, and restart/persistence flows plus
+unchanged Today/Event Detail and notification deep-link behavior.
+
+Excluded: backend answers/attempts/scores, accounts/profiles, leaderboards,
+achievements/badges/streaks, synchronization, user-generated questions, arbitrary
+quiz search, runtime AI, notification changes, and backend Q8 content expansion.

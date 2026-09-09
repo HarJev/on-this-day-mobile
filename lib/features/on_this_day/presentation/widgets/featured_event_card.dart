@@ -28,47 +28,49 @@ class FeaturedEventCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (event.image case final image?) ...[
                   AspectRatio(
-                    aspectRatio: 1.55,
+                    aspectRatio: 2.05,
                     child: Image.network(
                       image.url.toString(),
                       fit: BoxFit.cover,
                       semanticLabel: image.altText,
                     ),
                   ),
-                  const SizedBox(height: 52),
+                  const SizedBox(height: 22),
                 ],
                 Text(
                   event.year,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: AppColors.archivalCobalt,
                     fontWeight: FontWeight.w500,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
                 const Divider(color: AppColors.mutedCopper),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 Text(
                   event.title,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppColors.deepInk,
-                    fontWeight: FontWeight.w800,
-                    height: 1.12,
+                    fontFamily: 'Georgia',
+                    fontFamilyFallback: const ['Times New Roman', 'serif'],
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 26),
+                const SizedBox(height: 14),
                 Text(
                   event.summary,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.deepInk,
                     fontWeight: FontWeight.w400,
-                    height: 1.45,
+                    height: 1.5,
                   ),
                 ),
               ],

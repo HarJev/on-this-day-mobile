@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/api/api_exception.dart';
+import '../../../core/config/timezone_provider.dart';
 import '../domain/daily_content.dart';
 import '../domain/on_this_day_exceptions.dart';
 import '../domain/on_this_day_repository.dart';
@@ -33,13 +35,12 @@ class HomeError extends HomeState {
 class HomeController extends ChangeNotifier {
   HomeController({
     required OnThisDayRepository repository,
-    required String timezone,
-  }) : assert(timezone != ''),
-       _repository = repository,
-       _timezone = timezone;
+    required TimezoneProvider timezoneProvider,
+  }) : _repository = repository,
+       _timezoneProvider = timezoneProvider;
 
   final OnThisDayRepository _repository;
-  final String _timezone;
+  final TimezoneProvider _timezoneProvider;
 
   HomeState _state = const HomeLoading();
   HomeState get state => _state;
@@ -47,16 +48,43 @@ class HomeController extends ChangeNotifier {
   Future<void> loadToday() async {
     _setState(const HomeLoading());
 
+    final String timezone;
     try {
-      final content = await _repository.getTodayContent(_timezone);
+      _debugLog('timezone_lookup_start');
+      timezone = await _timezoneProvider.currentTimezone();
+      _debugLog('timezone_lookup_success timezone=$timezone');
+    } catch (error) {
+      _debugLog(
+        'timezone_lookup_failure causeType=${error.runtimeType} cause=$error',
+      );
+      _setState(const HomeError(message: "Could not load today's history."));
+      return;
+    }
+
+    try {
+      _debugLog('repository_getTodayContent_start timezone=$timezone');
+      final content = await _repository.getTodayContent(timezone);
+      _debugLog('repository_getTodayContent_success');
       _setState(HomeLoaded(content));
     } on TodayContentUnavailableException {
+      _debugLog('repository_getTodayContent_unavailable');
       _setState(
         const HomeUnavailable(
           message: "Today's history is unavailable right now.",
         ),
       );
-    } catch (_) {
+    } on ApiException catch (error) {
+      _debugLog(
+        'api_exception kind=${error.kind} status=${error.statusCode} '
+        'code=${error.code} causeType=${error.cause.runtimeType} '
+        'cause=${error.cause}',
+      );
+      _setState(const HomeError(message: "Could not load today's history."));
+    } catch (error) {
+      _debugLog(
+        'repository_getTodayContent_failure causeType=${error.runtimeType} '
+        'cause=$error',
+      );
       _setState(const HomeError(message: "Could not load today's history."));
     }
   }
@@ -68,5 +96,11 @@ class HomeController extends ChangeNotifier {
   void _setState(HomeState state) {
     _state = state;
     notifyListeners();
+  }
+
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint('[HomeController] $message');
+    }
   }
 }

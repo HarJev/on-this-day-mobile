@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
@@ -21,6 +22,7 @@ void main() {
     await tester.pumpWidget(_homeApp(repository));
 
     expect(find.text("Loading today's history..."), findsOneWidget);
+    await tester.pump();
     expect(repository.lastTimezone, 'Etc/UTC');
   });
 
@@ -36,6 +38,34 @@ void main() {
     expect(find.text('Also on this day'), findsOneWidget);
     expect(find.text('1770'), findsOneWidget);
     expect(find.text('Additional history'), findsOneWidget);
+  });
+
+  testWidgets('does not render a back button on home', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_homeApp(_StaticRepository(_dailyContent)));
+    await tester.pump();
+
+    expect(find.byTooltip('Back'), findsNothing);
+    expect(find.byIcon(Icons.arrow_back), findsNothing);
+  });
+
+  testWidgets('shows and invokes the optional debug notification action', (
+    WidgetTester tester,
+  ) async {
+    var invocationCount = 0;
+
+    await tester.pumpWidget(
+      _homeApp(
+        _StaticRepository(_dailyContent),
+        onShowDebugNotification: () => invocationCount += 1,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Show test notification'));
+
+    expect(invocationCount, 1);
   });
 
   testWidgets('featured event tap navigates to event detail route', (
@@ -126,10 +156,17 @@ void main() {
   });
 }
 
-Widget _homeApp(OnThisDayRepository repository) {
+Widget _homeApp(
+  OnThisDayRepository repository, {
+  VoidCallback? onShowDebugNotification,
+}) {
   return MaterialApp(
     theme: AppTheme.light,
-    home: HomeScreen(repository: repository, timezone: 'Etc/UTC'),
+    home: HomeScreen(
+      repository: repository,
+      timezoneProvider: const _FixedTimezoneProvider('Etc/UTC'),
+      onShowDebugNotification: onShowDebugNotification,
+    ),
     onGenerateRoute: (settings) {
       return MaterialPageRoute<void>(
         builder: (_) => Scaffold(body: Text('Route: ${settings.name}')),
@@ -239,5 +276,16 @@ class _SequenceRepository implements OnThisDayRepository {
   @override
   Future<HistoricalEvent> getEvent(String eventId) {
     throw UnimplementedError();
+  }
+}
+
+class _FixedTimezoneProvider implements TimezoneProvider {
+  const _FixedTimezoneProvider(this.timezone);
+
+  final String timezone;
+
+  @override
+  Future<String> currentTimezone() async {
+    return timezone;
   }
 }

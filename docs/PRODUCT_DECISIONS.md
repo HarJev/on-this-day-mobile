@@ -1,5 +1,8 @@
 # On This Day — Product Decision Log
 
+PD-001 through PD-019 preserve v0.0.1. PD-020 onward specify the approved
+Quiz v0.1.0 expansion, which is planned rather than implemented in mobile.
+
 ## PD-001 — The product is centered on one featured historical event per day
 
 **Decision**  
@@ -256,3 +259,97 @@ If removing a feature would still allow the user to discover today's featured ev
 
 **Implications**  
 This rule should be used when deciding whether proposed functionality belongs in v0.0.1.  
+
+## PD-020 — Quiz is an explicit v0.1.0 expansion
+
+Daily Challenge and Quick Play add a second product area without redefining
+v0.0.1. Today remains normal launch; event discovery and notifications remain
+compatible. Today/Quiz bottom navigation is approved on root screens only.
+
+## PD-021 — Daily uses the backend's dated assignment
+
+One persisted 20-question assignment exists worldwide per calendar date; five
+and ten use its stable prefixes. Timezone resolves the date, not a distinct
+question set. Use backend date/identity, retain API presentation order, and keep
+each received session immutable. Assignment membership is immutable, but valid
+backend editorial corrections may affect content returned to later sessions.
+
+## PD-022 — First completed Daily result is official locally
+
+One official completed result is allowed per backend date across all sizes.
+Completing five first makes later ten/twenty practice. Expiry completes;
+abandonment does not. This clarifies the backend's "first attempt" wording for
+mobile: restarting abandoned attempts is permitted in this casual device-local
+experience. Backend attempt tracking and cross-device synchronization remain
+excluded.
+
+## PD-023 — Quick Play uses Mixed or one catalog collection
+
+Default to Mixed and five questions. Omit collectionId for Mixed. Use catalog
+supported counts; never silently shorten a requested quiz. Refresh stale
+collection/count selections after backend rejection.
+
+## PD-024 — Timing depends on mode and continues in the background
+
+Daily always uses the backend total of 120/240/480 seconds for 5/10/20. It runs
+through compact feedback and background time. Full explanations/sources wait
+until review. Quick Play defaults to 20/20/30/45 seconds by type, can be disabled
+locally, and continues timing the current unanswered question in the background.
+On expiry it stays in feedback until Continue; feedback has no Quick Play timer.
+
+## PD-025 — Choice taps commit immediately; grading is local
+
+Multiple choice, true/false, and image identification commit on an option tap,
+lock input, and immediately reveal correctness and the correct answer. No
+Submit answer button. Chronological ordering alone requires Submit order.
+Quick Play may include explanations/sources in feedback; all results provide
+full review. Preserve backend answers separately from user responses.
+
+## PD-026 — Collections stay flat and grouped
+
+Use topic, historical_period, civilization, and conflict_or_movement for catalog
+presentation, without a parent/child taxonomy. Read counts and names from the API.
+
+## PD-027 — Difficulty and speed do not change scoring
+
+One credit per correct question; ordering requires the complete correct order.
+Timeouts and image skips are unanswered with zero credit. Difficulty is secondary
+metadata. Best results compare only matching count/mode/selection groups; ties
+keep the earlier result and do not introduce a speed-based score.
+
+## PD-028 — Content remains curated and provenance is retained
+
+Consume the backend's initial 60-question bank; expansion to 240 is backend
+content work. Keep explanations, sources, image attribution and license data.
+Image alt text should be neutral. No runtime generation or user-created content.
+
+## PD-029 — Completion freezes and saves immediately
+
+Last committed answer, final skip/timeout, or Daily expiry freezes the result
+and starts persistence exactly once, independently of Results navigation. A
+pending official result reserves its date in memory after save failure; replays
+cannot replace it. Retry that same frozen result idempotently. Process death
+before a successful save can lose it; do not imply stronger durability.
+
+## PD-030 — SQLite stores local results
+
+Use sqflite behind a quiz result-store contract for atomic official records,
+versioned review snapshots, best results, and timing preference. No database
+plugin types in controllers. No standalone history screen or backend storage.
+Do not treat unreadable storage as proof that no official result exists.
+
+## PD-031 — Required image failure never causes a scoring penalty
+
+Prepare images before timing with bounded transfer, decode, and memory budgets.
+Offer retry/exit when preparation fails; a runtime image failure technically
+interrupts play without a scored completion. Never remove or replace questions
+to hide failure. Image identification permits Skip question for zero credit,
+but this is not equivalent accessibility for blind users. Ordering supports
+non-drag controls.
+
+## PD-032 — Unfinished sessions remain in memory only
+
+Background/resume reconciles elapsed time; exit confirmation does not pause it.
+Process termination abandons an unfinished session. No restoration or automatic
+scored completion of that lost session occurs. Normal launch opens Today.
+Completed persisted results survive; no accounts or synchronization are added.

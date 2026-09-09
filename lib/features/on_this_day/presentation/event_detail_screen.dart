@@ -96,8 +96,39 @@ class _DetailScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('On This Day')),
-      body: SafeArea(child: body),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 48,
+        leadingWidth: 56,
+        titleSpacing: 0,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back),
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              )
+            : const SizedBox.shrink(),
+        title: Text(
+          'On This Day',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.deepInk,
+            fontFamily: 'Georgia',
+            fontFamilyFallback: const ['Times New Roman', 'serif'],
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
+        ),
+        actions: const [SizedBox(width: 56)],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: ColoredBox(
+            color: AppColors.paleStone,
+            child: SizedBox(height: 1, width: double.infinity),
+          ),
+        ),
+      ),
+      body: SafeArea(top: false, child: body),
     );
   }
 }
@@ -111,10 +142,10 @@ class _LoadedState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(30, 72, 30, 56),
+      padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
       children: [
         _ArticleSurface(event: event),
-        const SizedBox(height: 72),
+        const SizedBox(height: 42),
         Row(
           children: [
             const Icon(Icons.book_outlined, size: 18, color: AppColors.deepInk),
@@ -128,7 +159,7 @@ class _LoadedState extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 14),
         for (final source in event.sources)
           SourceRow(source: source, onTap: () => onSourceSelected(source)),
       ],
@@ -148,32 +179,36 @@ class _ArticleSurface extends StatelessWidget {
         color: AppColors.softIvory,
         border: Border.all(color: AppColors.paleStone),
       ),
-      padding: const EdgeInsets.fromLTRB(38, 42, 38, 44),
+      padding: const EdgeInsets.fromLTRB(30, 30, 30, 34),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             event.historicalDate.toUpperCase(),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.archivalCobalt,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
+              height: 1.2,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           const Divider(color: AppColors.mutedCopper),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           Text(
             event.title,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: AppColors.deepInk,
-              fontWeight: FontWeight.w800,
-              height: 1.12,
+              fontFamily: 'Georgia',
+              fontFamilyFallback: const ['Times New Roman', 'serif'],
+              fontWeight: FontWeight.w700,
+              height: 1.1,
             ),
           ),
           if (event.primaryImage case final image?) ...[
-            const SizedBox(height: 42),
+            const SizedBox(height: 28),
             AspectRatio(
-              aspectRatio: 1.75,
+              aspectRatio: 2.05,
               child: Image.network(
                 image.url.toString(),
                 fit: BoxFit.cover,
@@ -181,13 +216,13 @@ class _ArticleSurface extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 42),
+          const SizedBox(height: 28),
           Text(
             event.description,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: AppColors.deepInk,
               fontWeight: FontWeight.w400,
-              height: 1.55,
+              height: 1.5,
             ),
           ),
         ],

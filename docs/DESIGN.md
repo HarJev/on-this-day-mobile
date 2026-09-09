@@ -1,5 +1,9 @@
 # On This Day — Design Direction v0.0.1
 
+Sections 1-13 retain the canonical v0.0.1 direction. Section 14 defines the
+approved Quiz v0.1.0 extension; its UI is not yet implemented. Earlier exclusions
+of quizzes, tabs, and categories are scoped to v0.0.1.
+
 **Status:** Design direction  
 **Version:** v0.0.1  
 **Product:** On This Day mobile app
@@ -455,3 +459,85 @@ This direction should be treated as the baseline for v0.0.1 implementation.
 Future design iteration should refine spacing, typography, image proportions,
 and accessibility while preserving the product scope and editorial personality
 defined here.
+
+## 14. Quiz v0.1.0
+
+### Root navigation and setup
+
+Use a compact Today/Quiz bottom navigation bar on the two roots. Preserve the
+centered editorial masthead and Today date. Event Detail, gameplay, results,
+and review sit above the root shell without bottom navigation. Keep the native
+back affordance and existing notification destinations.
+
+Quiz offers Daily Challenge and Quick Play with a clear mode hierarchy. Use
+segmented controls for 5/10/20, a switch for Quick Play timing, and grouped
+selection rows for collections. Unsupported counts are visibly disabled and
+semantically explained; do not silently change count when collection changes.
+Show Daily date, duration, and official/practice status before play. Defaults:
+five questions, Mixed for Quick Play, Quick Play timing enabled.
+
+### Gameplay composition
+
+Retain warm paper, ivory, deep ink, cobalt, pale stone borders, and sparse copper
+accents. Use a compact progress/timer row, readable editorial question heading,
+image where required, and stable answer rows. Avoid poster-sized text, nested
+cards, heavy shadows, decorative medals, and celebratory score systems. Existing
+Material icons suffice; letter spacing stays zero. Subtle transitions must
+respect reduced-motion preferences.
+
+Choice rows commit on tap for multiple choice, true/false, and image questions.
+Immediately lock them and show selected/correct/incorrect states using text and
+icons as well as color. Do not render Submit answer. True/False retains API
+order. Ordering uses four movable rows with drag handles and accessible up/down
+actions, followed by Submit order.
+
+Daily feedback shows compact correctness and the correct answer/order, with
+Continue readily available. Do not put full explanations or external sources
+between Daily questions: its total timer continues. Quick Play feedback may
+show explanations and source rows, with its timer stopped until Continue.
+On the final question, completion/save already occurred before Results is opened.
+
+### Images and accessibility
+
+Prepare required images before showing a timed question. Loading/retry states
+must not expose a running timer. Use an inspectable image with preserved aspect
+ratio and contain fitting where cropping would remove information. Follow the
+Architecture resource budgets; no gallery or image-cache package is required.
+Required-image failure never consumes score or silently changes the assignment.
+
+Use neutral alt text and retain accessible attribution/license information;
+do not expose the full technical URL as an image semantic label. Provenance
+links may identify the subject, which is acceptable for this trusted casual
+experience; do not falsify attribution to conceal it. Full review includes image
+credits and sources. Image questions offer Skip question, recorded as unanswered
+with zero credit. This does not make visual recognition equivalent for blind
+users; retain that limitation in accessibility review.
+
+All controls need comfortable targets (at least 48 logical pixels), meaningful
+labels, logical focus order, and large-text layouts without overlap. Ordering
+must be operable without dragging. Announce correctness and meaningful timer
+thresholds rather than every tick. Let question/feedback content scroll while
+keeping Continue reachable, including at large text scales. Avoid communicating
+state through color alone.
+
+### Results and review
+
+Show correct/total, percentage, answered/correct/unanswered counts, and official
+or practice status where applicable. Review every question, including timeouts,
+skips, and questions never reached, with user answer, correct answer, explanation,
+external sources, and image provenance. Difficulty stays secondary; there are no
+speed bonuses. Present save progress/failure without hiding the completed result,
+and offer retry for an unsaved frozen result.
+
+### Failure and interruption states
+
+Provide loading, unavailable/empty, retryable request failure, invalid-content,
+image preparation failure, and unsaved-result treatments. Back during unfinished
+play requests abandonment confirmation while timing continues. Quick Play expiry
+waits in feedback; Daily expiry completes and makes review available. No timed
+screen should auto-advance through unseen questions after backgrounding.
+
+The existing home.png and event_details.png remain canonical for Today and Event
+Detail. Quiz inherits their visual language, not their exact article composition.
+Verify each quiz type, feedback, results, and errors on small screens, at large
+text scales, and with screen readers before release.
