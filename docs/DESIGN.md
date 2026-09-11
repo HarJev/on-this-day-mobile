@@ -541,3 +541,27 @@ The existing home.png and event_details.png remain canonical for Today and Event
 Detail. Quiz inherits their visual language, not their exact article composition.
 Verify each quiz type, feedback, results, and errors on small screens, at large
 text scales, and with screen readers before release.
+
+### Reviewed Stitch references (2026-09-11)
+
+The eight named exports under `docs/design/` are supporting visual proposals.
+Read [QUIZ_SCREEN_REVIEW.md](design/QUIZ_SCREEN_REVIEW.md) for their filename index,
+per-screen corrections, missing states, and concrete timer presentation rules
+before implementing any quiz screen. Written product/interaction requirements
+and that correction list take precedence over conflicting screenshot details.
+The exports have not been edited to incorporate the corrections.
+
+Use their palette, serif/sans pairing, root navigation and answer-row structure.
+Do not copy impossible countdowns, automatic next-question transitions,
+submission at zero seconds, invented metadata/assets, profile actions, or
+selected-answer styling for a skipped question. Daily shows total remaining
+time; timed Quick Play shows current-question remaining time. Both derive from
+session state and backend metadata. Untimed play and image preparation have no
+running countdown. Distinguish question progress from time and score.
+
+Keep gameplay compact, remove decorative pre-question blocks, wrap option/item
+text completely, and keep feedback/submit actions reachable above the safe area.
+Use the existing home.png and event_details.png for history content; the Stitch
+Today export is a bottom-navigation reference only. Missing quiz screens should
+reuse the approved components and written requirements, with real-device review
+during MQ4-MQ11 rather than requiring another complete design generation pass.
