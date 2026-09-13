@@ -21,16 +21,16 @@ maximum 1024-pixel edge; their combined retained decoded capacity was below
 32 MiB. Transfers used a 15-second deadline. Initial sandbox DNS resolution failed;
 the permitted network check outside that restriction succeeded.
 
-Recommended follow-up: approve bounded Commons renditions for the two oversized
-originals, preserving their original source/attribution/license metadata. These
-candidate renditions returned HTTP 200 within the transfer budget; they have not
-been substituted into canonical JSON:
+The two oversized originals were replaced in the backend canonical JSON with
+these bounded Commons renditions, while preserving their original
+source/attribution/license metadata:
 
 - [Benin Bronze, 960px](https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/At_the_British_Museum_2024_017.jpg/960px-At_the_British_Museum_2024_017.jpg): 351,822 bytes.
 - [Machu Picchu, 960px](https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Machu_Picchu%2C_Per%C3%BA%2C_2015-07-30%2C_DD_47.JPG/960px-Machu_Picchu%2C_Per%C3%BA%2C_2015-07-30%2C_DD_47.JPG): 207,136 bytes.
 
-Until that content change is approved, sessions containing either original will
-offer preparation retry/exit without starting a countdown or scoring a result.
+The backend content change must be imported into local PostgreSQL before SAM
+serves the updated image URLs. After import, all nine canonical images have a
+bounded rendition available to the mobile preparation layer.
 
 ## Local Verification
 
