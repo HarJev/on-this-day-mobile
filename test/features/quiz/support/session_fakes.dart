@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/images/prepared_quiz_images.dart';
 
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_definition.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_image.dart';
@@ -56,10 +59,30 @@ final class FakePreparation {
   }
 
   QuizPreparedResources succeed([int? index]) {
-    final resources = QuizPreparedResources(() => releases++);
+    final resources = QuizPreparedResources(
+      () => releases++,
+      images: PreparedQuizImages(
+        {
+          for (var i = 0; i < 5; i++)
+            'q-$i': Uri.parse('https://example.org/fake-$i'),
+        },
+        {
+          for (var i = 0; i < 5; i++)
+            Uri.parse('https://example.org/fake-$i'): _ControllerTestImage(),
+        },
+      ),
+    );
     pending[index ?? pending.length - 1].complete(resources);
     return resources;
   }
+}
+
+/// No pixel rendering in the original controller harness; MQ5 tests use real bytes.
+class _ControllerTestImage extends Fake implements ui.Image {
+  @override
+  ui.Image clone() => _ControllerTestImage();
+  @override
+  void dispose() {}
 }
 
 List<QuizQuestion> sessionQuestions({

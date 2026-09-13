@@ -11,11 +11,13 @@ class QuizChoiceQuestion extends StatelessWidget {
     required this.headingFocus,
     required this.onAnswer,
     this.outcome,
+    this.image,
   });
   final ChoiceQuestion question;
   final FocusNode headingFocus;
   final void Function(String) onAnswer;
   final QuestionOutcome? outcome;
+  final Widget? image;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -38,6 +40,7 @@ class QuizChoiceQuestion extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 20),
+      ?image,
       for (final option in question.options)
         Padding(
           padding: const EdgeInsets.only(bottom: 10),

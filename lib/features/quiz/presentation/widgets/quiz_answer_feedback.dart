@@ -10,13 +10,17 @@ class QuizAnswerFeedback extends StatelessWidget {
     required this.daily,
     required this.expired,
     required this.launcher,
+    this.showLabel = true,
   });
   final QuestionOutcome outcome;
   final bool daily, expired;
+  final bool showLabel;
   final SourceLauncher launcher;
   static String label(QuestionOutcome outcome, bool expired) =>
       expired || outcome.kind == QuestionOutcomeKind.timedOut
       ? "Time's up"
+      : outcome.kind == QuestionOutcomeKind.unanswered
+      ? 'Skipped'
       : outcome.kind == QuestionOutcomeKind.correct
       ? 'Correct'
       : 'Incorrect';
@@ -24,11 +28,12 @@ class QuizAnswerFeedback extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Divider(),
-      Text(
-        label(outcome, expired),
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
+      if (showLabel || !daily) const Divider(),
+      if (showLabel)
+        Text(
+          label(outcome, expired),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
       if (!daily) ...[
         const SizedBox(height: 10),
         Text(outcome.question.explanation),

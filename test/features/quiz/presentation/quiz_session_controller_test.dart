@@ -463,6 +463,8 @@ void main() {
         expect((controller.state as QuizCompleted).result, same(result));
         expect(completions.length, 1);
         expect(scheduler.activeCount, 0);
+        expect(preparation.releases, finish == 'skip' ? 0 : 1);
+        controller.dispose();
         expect(preparation.releases, 1);
       },
     );

@@ -9,6 +9,8 @@ import 'quiz_session_state.dart';
 import 'widgets/quiz_gameplay_header.dart';
 import 'widgets/quiz_choice_question.dart';
 import 'widgets/quiz_answer_feedback.dart';
+import 'widgets/quiz_image_question.dart';
+import 'images/quiz_image_preparation_exception.dart';
 
 /// Borrows the controller. The host owns disposal and app/route lifecycle signals.
 class QuizGameplayView extends StatefulWidget {
@@ -161,7 +163,10 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
     exitPending = false;
     if (!mounted || !confirmed) return;
     controller.abandon();
-    exited = true;
+    controller.releaseCompletedImages();
+    setState(() {
+      exited = true;
+    });
     widget.onExit();
   }
 
@@ -184,10 +189,21 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
         state is QuizCompleted &&
         state.result.reason == QuizCompletionReason.dailyTimeExpired;
     final q = current?.$2;
-    if (q != null && q is! MultipleChoiceQuestion && q is! TrueFalseQuestion) {
-      throw UnsupportedError(
-        'MQ4 gameplay supports only multiple-choice and true/false questions',
-      );
+    if (q is ChronologicalOrderingQuestion) {
+      throw UnsupportedError('Ordering gameplay is not implemented yet');
+    }
+    final needsImage =
+        q is ImageIdentificationQuestion && !resultsOpened && !exited;
+    final missingImage =
+        needsImage && controller.preparedImages?.contains(q.id) != true;
+    if (missingImage && state is! QuizCompleted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(controller.state, state)) {
+          controller.interrupt(
+            const QuizImagePreparationException(QuizImageFailure.missing),
+          );
+        }
+      });
     }
     return PopScope(
       canPop: false,
@@ -228,7 +244,9 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
               child: SingleChildScrollView(
                 controller: scroll,
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: current == null
+                child: missingImage
+                    ? const Text('Quiz image unavailable.')
+                    : current == null
                     ? Text(switch (state) {
                         QuizPreparing() => 'Preparing quiz',
                         QuizReady() => 'Ready',
@@ -243,6 +261,18 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                             question: q as ChoiceQuestion,
                             headingFocus: headingFocus,
                             outcome: current.$3,
+                            image: needsImage
+                                ? QuizQuestionImage(
+                                    key: ValueKey((
+                                      controller.preparedImages,
+                                      q.id,
+                                    )),
+                                    questionId: q.id,
+                                    images: controller.preparedImages!,
+                                    metadata: q.image,
+                                    launcher: widget.sourceLauncher,
+                                  )
+                                : null,
                             onAnswer: (id) => controller.answerOption(q.id, id),
                           ),
                           if (current.$3 != null)
@@ -251,6 +281,7 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                               daily: daily,
                               expired: expired,
                               launcher: widget.sourceLauncher,
+                              showLabel: q is! ImageIdentificationQuestion,
                             ),
                         ],
                       ),
@@ -271,33 +302,57 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                         ),
                       ),
                     ),
-                    child: switch (state) {
-                      QuizFeedback(:final outcome) => FilledButton(
-                        onPressed: () => advance(outcome.question.id),
-                        child: const Text('Continue'),
-                      ),
-                      QuizCompleted(:final result) => FilledButton(
-                        onPressed: resultsOpened
-                            ? null
-                            : () {
-                                if (resultsOpened) return;
-                                setState(() {
-                                  resultsOpened = true;
-                                });
-                                widget.onViewResults(result);
-                              },
-                        child: const Text('View results'),
-                      ),
-                      QuizReady() => FilledButton(
-                        onPressed: controller.start,
-                        child: const Text('Start'),
-                      ),
-                      QuizPreparationFailed() => FilledButton(
-                        onPressed: controller.prepare,
-                        child: const Text('Retry'),
-                      ),
-                      _ => const SizedBox.shrink(),
-                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (q is ImageIdentificationQuestion &&
+                            current?.$3 != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              QuizAnswerFeedback.label(current!.$3!, expired),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        switch (state) {
+                          QuizFeedback(:final outcome) => FilledButton(
+                            onPressed: () => advance(outcome.question.id),
+                            child: const Text('Continue'),
+                          ),
+                          QuizCompleted(:final result) => FilledButton(
+                            onPressed: resultsOpened
+                                ? null
+                                : () {
+                                    if (resultsOpened) return;
+                                    setState(() {
+                                      resultsOpened = true;
+                                    });
+                                    controller.releaseCompletedImages();
+                                    widget.onViewResults(result);
+                                  },
+                            child: const Text('View results'),
+                          ),
+                          QuizReady() => FilledButton(
+                            onPressed: controller.start,
+                            child: const Text('Start'),
+                          ),
+                          QuizPreparationFailed() => FilledButton(
+                            onPressed: controller.prepare,
+                            child: const Text('Retry'),
+                          ),
+                          QuizAnswering(:final question)
+                              when question is ImageIdentificationQuestion &&
+                                  !missingImage =>
+                            TextButton(
+                              onPressed: () =>
+                                  controller.skipImage(question.id),
+                              child: const Text('Skip question'),
+                            ),
+                          _ => const SizedBox.shrink(),
+                        },
+                      ],
+                    ),
                   ),
                 ),
               ),

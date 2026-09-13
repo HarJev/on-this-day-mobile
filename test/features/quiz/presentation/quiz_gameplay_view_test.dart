@@ -285,10 +285,7 @@ void main() {
       semantics.dispose();
     },
   );
-  for (final type in [
-    QuizQuestionType.imageIdentification,
-    QuizQuestionType.chronologicalOrdering,
-  ]) {
+  for (final type in [QuizQuestionType.chronologicalOrdering]) {
     testWidgets('unsupported $type fails explicitly', (tester) async {
       await mount(tester, type: type);
       expect(tester.takeException(), isUnsupportedError);

@@ -12,6 +12,8 @@ import 'quiz_session_clock.dart';
 import 'quiz_session_preparation.dart';
 import 'quiz_session_scheduler.dart';
 import 'quiz_session_state.dart';
+import 'images/prepared_quiz_images.dart';
+import 'images/quiz_image_preparation_exception.dart';
 
 final class QuizSessionController extends ChangeNotifier {
   QuizSessionController({
@@ -49,6 +51,7 @@ final class QuizSessionController extends ChangeNotifier {
   int _preparationGeneration = 0, _tickerGeneration = 0;
   QuizPreparationAttempt? _attempt;
   QuizPreparedResources? _resources;
+  PreparedQuizImages? get preparedImages => _resources?.images;
   void Function()? _cancelTicker;
   int _index = 0;
   final List<QuestionOutcome> _outcomes = [];
@@ -79,6 +82,12 @@ final class QuizSessionController extends ChangeNotifier {
       if (_disposed || _terminal || generation != _preparationGeneration) {
         _cleanup(resources.release);
         return;
+      }
+      if (definition.questions.whereType<ImageIdentificationQuestion>().any(
+        (q) => resources.images?.contains(q.id) != true,
+      )) {
+        _cleanup(resources.release);
+        throw const QuizImagePreparationException(QuizImageFailure.missing);
       }
       _attempt = null;
       _resources = resources;
@@ -175,6 +184,10 @@ final class QuizSessionController extends ChangeNotifier {
 
   void _beginQuestion() {
     final question = definition.questions[_index];
+    preparedImages?.retainQuestions(
+      definition.questions.skip(_index).map((q) => q.id),
+    );
+    if (!_imageAvailable()) return;
     _draft = question is ChronologicalOrderingQuestion
         ? List.unmodifiable(question.items.map((i) => i.id))
         : const [];
@@ -220,6 +233,7 @@ final class QuizSessionController extends ChangeNotifier {
 
   void _reconcile() {
     if (_disposed || _terminal) return;
+    if (!_imageAvailable()) return;
     final now = _clock.elapsed;
     final utc = _clock.utcNow;
     if (_counting && _baselineElapsed != null) {
@@ -322,7 +336,16 @@ final class QuizSessionController extends ChangeNotifier {
     );
     _terminal = true;
     _state = QuizCompleted(result, QuizCompletionDelivery.pending);
-    _release();
+    _stopTicker();
+    _preparationGeneration++;
+    _cancelPreparation();
+    final finalQuestion = definition.questions[_index];
+    if (finalQuestion is ImageIdentificationQuestion &&
+        preparedImages?.contains(finalQuestion.id) == true) {
+      preparedImages!.retainQuestions([finalQuestion.id]);
+    } else {
+      _release();
+    }
     // Future.sync invokes the sink now, after locking, before listeners can pop
     // the route. Its work is not cancelled when this controller is disposed.
     unawaited(
@@ -354,6 +377,22 @@ final class QuizSessionController extends ChangeNotifier {
     _state = const QuizAbandoned();
     _release();
     _emit();
+  }
+
+  bool _imageAvailable() {
+    if (_state is QuizPreparing || _state is QuizPreparationFailed) return true;
+    final question = definition.questions[_index];
+    if (question is ImageIdentificationQuestion &&
+        preparedImages?.contains(question.id) != true) {
+      interrupt(const QuizImagePreparationException(QuizImageFailure.missing));
+      return false;
+    }
+    return true;
+  }
+
+  /// Called after the final feedback is dismissed; the frozen result is intact.
+  void releaseCompletedImages() {
+    if (_state is QuizCompleted) _release();
   }
 
   void interrupt(Object cause) {
