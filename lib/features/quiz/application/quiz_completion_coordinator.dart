@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
 import '../domain/quiz_definition.dart';
 import '../domain/quiz_result.dart';
 import '../domain/quiz_result_store.dart';
@@ -23,11 +27,12 @@ final class QuizCompletionSaveState {
 
 /// Coordinates app-lifetime Daily claims above the persistence boundary.
 /// It deliberately depends only on the domain store contract, never SQLite.
-final class QuizCompletionCoordinator {
+final class QuizCompletionCoordinator extends ChangeNotifier {
   QuizCompletionCoordinator(this._store);
   final QuizResultStore _store;
   final Map<String, _Entry> _entries = {};
   final Map<QuizDate, _DailyReservation> _dailyReservations = {};
+  bool _disposed = false;
 
   QuizCompletionSaveState? stateFor(String completionId) =>
       _entries[completionId]?.state;
@@ -50,7 +55,8 @@ final class QuizCompletionCoordinator {
     );
     _entries[completion.result.completionId] = entry;
     _reserveDaily(effective);
-    entry.operation = _save(entry);
+    _notify();
+    _startSave(entry);
     return entry.operation;
   }
 
@@ -69,7 +75,9 @@ final class QuizCompletionCoordinator {
       effectiveIntent: entry.state.effectiveIntent,
       status: QuizCompletionSaveStatus.pending,
     );
-    entry.operation = _save(entry);
+    entry.restart();
+    _notify();
+    _startSave(entry);
     return entry.operation;
   }
 
@@ -107,6 +115,7 @@ final class QuizCompletionCoordinator {
           entry.state.requestedIntent == QuizSaveIntent.claimDailyIfAbsent) {
         _dailyReservations[definition.date] = _DailyReservation.occupied();
       }
+      _notify();
       return saved;
     } catch (error) {
       entry.state = QuizCompletionSaveState(
@@ -116,15 +125,45 @@ final class QuizCompletionCoordinator {
         status: QuizCompletionSaveStatus.failed,
         error: error,
       );
+      _notify();
       rethrow;
     }
+  }
+
+  void _startSave(_Entry entry) {
+    () async {
+      try {
+        entry.succeed(await _save(entry));
+      } catch (error, stackTrace) {
+        entry.fail(error, stackTrace);
+      }
+    }();
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
 
 final class _Entry {
   _Entry(this.state);
   QuizCompletionSaveState state;
-  late Future<StoredQuizResult> operation;
+  Completer<StoredQuizResult> _completion = Completer<StoredQuizResult>();
+
+  Future<StoredQuizResult> get operation => _completion.future;
+
+  void restart() => _completion = Completer<StoredQuizResult>();
+
+  void succeed(StoredQuizResult result) => _completion.complete(result);
+
+  void fail(Object error, StackTrace stackTrace) =>
+      _completion.completeError(error, stackTrace);
 }
 
 final class _DailyReservation {

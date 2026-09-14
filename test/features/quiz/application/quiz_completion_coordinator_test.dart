@@ -30,6 +30,21 @@ void main() {
     );
   });
 
+  test('listeners can safely reread an in-flight completion', () async {
+    final store = _ControlledStore();
+    final coordinator = QuizCompletionCoordinator(store);
+    final completion = _completion('reentrant');
+    Future<StoredQuizResult>? reread;
+    coordinator.addListener(() => reread ??= coordinator.complete(completion));
+
+    final original = coordinator.complete(completion);
+
+    expect(identical(original, reread), isTrue);
+    expect(store.calls, 1);
+    store.succeed(QuizSavedClassification.official);
+    await original;
+  });
+
   test(
     'a second Daily completion becomes practice while the claim is pending',
     () {
@@ -79,6 +94,29 @@ void main() {
     store.succeed(QuizSavedClassification.official);
     await retry;
   });
+
+  test(
+    'keeps an in-flight save alive after disposal without late listeners',
+    () async {
+      final store = _ControlledStore();
+      final coordinator = QuizCompletionCoordinator(store);
+      var notifications = 0;
+      coordinator.addListener(() => notifications++);
+
+      final operation = coordinator.complete(_completion('dispose'));
+      expect(notifications, 1);
+
+      coordinator.dispose();
+      store.succeed(QuizSavedClassification.official);
+
+      await expectLater(operation, completion(isA<StoredQuizResult>()));
+      expect(
+        coordinator.stateFor('dispose')!.status,
+        QuizCompletionSaveStatus.saved,
+      );
+      expect(notifications, 1);
+    },
+  );
 }
 
 final class _ControlledStore implements QuizResultStore {
