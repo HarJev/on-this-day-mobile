@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/question_outcome.dart';
+import 'package:on_this_day_mobile/features/quiz/domain/quiz_answer.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_question.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_result.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_rules.dart';
@@ -431,6 +432,95 @@ void main() {
       final outcome = (controller.state as QuizFeedback).outcome;
       expect(outcome.kind, QuestionOutcomeKind.timedOut);
       expect(outcome.answer, isNull);
+      expect((controller.state as QuizFeedback).orderingDraft, [
+        'a',
+        'b',
+        'c',
+        'd',
+      ]);
+    },
+  );
+  test(
+    'expired ordering mutations leave the unsubmitted draft unchanged',
+    () async {
+      create();
+      await start();
+      for (var i = 0; i < 3; i++) {
+        answer();
+        next();
+      }
+      expect(
+        controller.updateOrderingDraft('q-3', ['b', 'd', 'a', 'c']),
+        isTrue,
+      );
+      clock.advance(const Duration(seconds: 20));
+      expect(
+        controller.updateOrderingDraft('q-3', ['a', 'b', 'c', 'd']),
+        isFalse,
+      );
+      expect(controller.submitOrder('q-3'), isFalse);
+      final state = controller.state as QuizFeedback;
+      expect(state.outcome.kind, QuestionOutcomeKind.timedOut);
+      expect(state.outcome.answer, isNull);
+      expect(state.orderingDraft, ['b', 'd', 'a', 'c']);
+    },
+  );
+  test(
+    'final ordering draft survives completion delivery updates only',
+    () async {
+      final pending = Completer<void>();
+      create(
+        last: QuizQuestionType.chronologicalOrdering,
+        sink: (_) => pending.future,
+      );
+      await start();
+      reachLast();
+      expect(
+        controller.updateOrderingDraft('q-4', ['a', 'b', 'c', 'd']),
+        isTrue,
+      );
+      expect(controller.submitOrder('q-4'), isTrue);
+      expect(
+        (controller.state as QuizCompleted).result.outcomes.last.answer,
+        isA<OrderingAnswer>(),
+      );
+      expect((controller.state as QuizCompleted).orderingDraft, [
+        'a',
+        'b',
+        'c',
+        'd',
+      ]);
+      pending.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect((controller.state as QuizCompleted).orderingDraft, [
+        'a',
+        'b',
+        'c',
+        'd',
+      ]);
+    },
+  );
+  test(
+    'ordering draft survives timer refresh and ordinary lifecycle recovery',
+    () async {
+      create();
+      await start();
+      for (var i = 0; i < 3; i++) {
+        answer();
+        next();
+      }
+      controller.updateOrderingDraft('q-3', ['b', 'd', 'a', 'c']);
+      clock.advance(const Duration(seconds: 1));
+      scheduler.fire();
+      controller.setRouteVisible(false);
+      clock.advance(const Duration(seconds: 1));
+      controller.setRouteVisible(true);
+      expect((controller.state as QuizAnswering).orderingDraft, [
+        'b',
+        'd',
+        'a',
+        'c',
+      ]);
     },
   );
   for (final finish in ['answer', 'skip', 'timeout']) {

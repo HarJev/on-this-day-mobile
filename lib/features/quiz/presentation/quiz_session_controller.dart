@@ -123,20 +123,21 @@ final class QuizSessionController extends ChangeNotifier {
     );
   }
 
-  void updateOrderingDraft(String questionId, List<String> ids) {
-    if (!_canAnswer(questionId)) return;
+  bool updateOrderingDraft(String questionId, List<String> ids) {
+    if (!_canAnswer(questionId)) return false;
     final question = definition.questions[_index];
-    if (question is! ChronologicalOrderingQuestion) return;
+    if (question is! ChronologicalOrderingQuestion) return false;
     requirePermutation(ids, question.items.map((item) => item.id));
     _draft = List.unmodifiable(ids);
     _refreshState();
     _emit();
+    return true;
   }
 
-  void submitOrder(String questionId) {
+  bool submitOrder(String questionId) {
     if (!_canAnswer(questionId) ||
         definition.questions[_index] is! ChronologicalOrderingQuestion) {
-      return;
+      return false;
     }
     _commit(
       QuestionOutcome.answered(
@@ -144,6 +145,7 @@ final class QuizSessionController extends ChangeNotifier {
         OrderingAnswer(_draft),
       ),
     );
+    return true;
   }
 
   void skipImage(String questionId) {
@@ -215,6 +217,7 @@ final class QuizSessionController extends ChangeNotifier {
       index: _index,
       outcome: outcome,
       remaining: _remaining,
+      orderingDraft: _orderingDraftFor(outcome.question),
     );
     _resetBaseline();
     _syncTicker();
@@ -283,10 +286,12 @@ final class QuizSessionController extends ChangeNotifier {
         orderingDraft: _draft,
       );
     } else if (_state is QuizFeedback) {
+      final feedback = _state as QuizFeedback;
       _state = QuizFeedback(
         index: _index,
         outcome: _outcomes.last,
         remaining: _remaining,
+        orderingDraft: feedback.orderingDraft,
       );
     }
   }
@@ -324,6 +329,9 @@ final class QuizSessionController extends ChangeNotifier {
     _cancelTicker = null;
   }
 
+  List<String>? _orderingDraftFor(QuizQuestion question) =>
+      question is ChronologicalOrderingQuestion ? _draft : null;
+
   void _finish(QuizCompletionReason reason) {
     if (_disposed || _terminal) return;
     final result = QuizResult(
@@ -335,7 +343,12 @@ final class QuizSessionController extends ChangeNotifier {
       outcomes: _outcomes,
     );
     _terminal = true;
-    _state = QuizCompleted(result, QuizCompletionDelivery.pending);
+    final orderingDraft = _orderingDraftFor(definition.questions[_index]);
+    _state = QuizCompleted(
+      result,
+      QuizCompletionDelivery.pending,
+      orderingDraft: orderingDraft,
+    );
     _stopTicker();
     _preparationGeneration++;
     _cancelPreparation();
@@ -352,7 +365,11 @@ final class QuizSessionController extends ChangeNotifier {
       Future<void>.sync(() => _completionSink(result)).then(
         (_) {
           if (_disposed) return;
-          _state = QuizCompleted(result, QuizCompletionDelivery.delivered);
+          _state = QuizCompleted(
+            result,
+            QuizCompletionDelivery.delivered,
+            orderingDraft: orderingDraft,
+          );
           _emit();
         },
         onError: (Object error, StackTrace stack) {
@@ -361,6 +378,7 @@ final class QuizSessionController extends ChangeNotifier {
             result,
             QuizCompletionDelivery.failed,
             deliveryError: error,
+            orderingDraft: orderingDraft,
           );
           _emit();
         },

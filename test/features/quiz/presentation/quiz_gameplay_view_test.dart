@@ -68,7 +68,12 @@ void main() {
             questions: questions,
             selection: QuizSelection(displayName: 'Mixed'),
             questionTimeLimits: {
-              for (final q in questions) q.id: const Duration(seconds: 20),
+              for (final q in questions)
+                q.id: Duration(
+                  seconds: type == QuizQuestionType.chronologicalOrdering
+                      ? 45
+                      : 20,
+                ),
             },
             timingEnabledByDefault: true,
           );
@@ -285,12 +290,124 @@ void main() {
       semantics.dispose();
     },
   );
-  for (final type in [QuizQuestionType.chronologicalOrdering]) {
-    testWidgets('unsupported $type fails explicitly', (tester) async {
-      await mount(tester, type: type);
-      expect(tester.takeException(), isUnsupportedError);
-    });
-  }
+  testWidgets(
+    'ordering starts in API order and supports accessible boundary moves',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+      expect(find.text('Question time 00:45'), findsOneWidget);
+      expect(find.byKey(const ValueKey('d')), findsOneWidget);
+      expect(find.byKey(const ValueKey('b')), findsOneWidget);
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const Key('Move Item d up')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const Key('Move Item c down')))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byKey(const Key('Move Item a up')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('Move Item a up')));
+      await tester.pump();
+      expect(
+        tester.getTopLeft(find.byKey(const ValueKey('a'))).dy,
+        lessThan(tester.getTopLeft(find.byKey(const ValueKey('b'))).dy),
+      );
+      expect(find.byTooltip('Move Item a down'), findsOneWidget);
+      semantics.dispose();
+    },
+  );
+  testWidgets('ordering drag and buttons produce controller draft updates', (
+    tester,
+  ) async {
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    final handle = find.byKey(const Key('ordering-drag-d'));
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 300));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(
+      (controller.state as QuizAnswering).orderingDraft,
+      isNot(['d', 'b', 'a', 'c']),
+    );
+    await tester.tap(find.byKey(const Key('Move Item a up')));
+    await tester.pump();
+    expect(controller.state, isA<QuizAnswering>());
+  });
+  testWidgets('ordering submission is explicit and renders vertical feedback', (
+    tester,
+  ) async {
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    await tester.tap(find.byKey(const Key('submit-order')));
+    await tester.pump();
+    expect(find.text('Incorrect'), findsOneWidget);
+    expect(find.text('Your submitted order'), findsOneWidget);
+    expect(find.text('Correct order'), findsOneWidget);
+    expect(find.text('The reviewed explanation.'), findsOneWidget);
+    expect(find.byKey(const Key('submit-order')), findsNothing);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    expect((controller.state as QuizAnswering).index, 1);
+  });
+  testWidgets('ordering timeout preserves an unsubmitted draft and waits', (
+    tester,
+  ) async {
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    await tester.tap(find.byKey(const Key('Move Item a up')));
+    await tester.pump();
+    clock.advance(const Duration(seconds: 45));
+    scheduler.fire();
+    await tester.pump();
+    expect(find.text("Time's up"), findsOneWidget);
+    expect(find.text('Your draft - not submitted'), findsOneWidget);
+    expect(find.text('Your submitted order'), findsNothing);
+    expect(find.text('Correct order'), findsOneWidget);
+    expect(find.byKey(const Key('submit-order')), findsNothing);
+    await tap(tester, 'Continue');
+    expect((controller.state as QuizAnswering).index, 1);
+  });
+  testWidgets(
+    'Daily ordering expiry retains draft context and results access',
+    (tester) async {
+      await mount(
+        tester,
+        daily: true,
+        type: QuizQuestionType.chronologicalOrdering,
+      );
+      await tester.tap(find.byKey(const Key('Move Item a up')));
+      await tester.pump();
+      clock.advance(const Duration(seconds: 120));
+      scheduler.fire();
+      await tester.pump();
+      expect(find.text("Time's up"), findsOneWidget);
+      expect(find.text('Your draft - not submitted'), findsOneWidget);
+      expect(find.text('View results'), findsOneWidget);
+      expect(find.byKey(const Key('submit-order')), findsNothing);
+    },
+  );
+  testWidgets('untimed ordering hides time and large text can reach controls', (
+    tester,
+  ) async {
+    await mount(
+      tester,
+      timed: false,
+      scale: 2,
+      size: const Size(320, 568),
+      type: QuizQuestionType.chronologicalOrdering,
+    );
+    expect(find.byKey(const Key('quiz-timer')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('Move Item a up')));
+    expect(find.byKey(const Key('Move Item a up')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('submit-order')));
+    expect(find.text('Submit order'), findsOneWidget);
+  });
   testWidgets('late source failure after advancing or disposal is harmless', (
     tester,
   ) async {
@@ -366,6 +483,43 @@ void main() {
     await tester.ensureVisible(find.text('Option b'));
     await tap(tester, 'Option b');
     await capture('large-text-feedback');
+    await tester.pumpWidget(const SizedBox());
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    await capture('ordering-initial');
+    await tester.tap(find.byKey(const Key('Move Item a up')));
+    await tester.pump();
+    await capture('ordering-rearranged');
+    await tester.tap(find.byKey(const Key('submit-order')));
+    await tester.pump();
+    await capture('ordering-incorrect');
+    await tester.pumpWidget(const SizedBox());
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    for (final key in const [
+      Key('Move Item a up'),
+      Key('Move Item a up'),
+      Key('Move Item d down'),
+      Key('Move Item d down'),
+    ]) {
+      await tester.tap(find.byKey(key));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('submit-order')));
+    await tester.pump();
+    await capture('ordering-correct');
+    await tester.pumpWidget(const SizedBox());
+    await mount(tester, type: QuizQuestionType.chronologicalOrdering);
+    clock.advance(const Duration(seconds: 45));
+    scheduler.fire();
+    await tester.pump();
+    await capture('ordering-timeout');
+    await tester.pumpWidget(const SizedBox());
+    await mount(
+      tester,
+      type: QuizQuestionType.chronologicalOrdering,
+      scale: 2,
+      size: const Size(320, 568),
+    );
+    await capture('ordering-large-text');
     expect(tester.takeException(), isNull);
   });
 }

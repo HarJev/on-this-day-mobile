@@ -20,7 +20,9 @@ class QuizAnswerFeedback extends StatelessWidget {
       expired || outcome.kind == QuestionOutcomeKind.timedOut
       ? "Time's up"
       : outcome.kind == QuestionOutcomeKind.unanswered
-      ? 'Skipped'
+      ? outcome.unansweredReason == UnansweredReason.notReached
+            ? 'Not reached'
+            : 'Skipped'
       : outcome.kind == QuestionOutcomeKind.correct
       ? 'Correct'
       : 'Incorrect';

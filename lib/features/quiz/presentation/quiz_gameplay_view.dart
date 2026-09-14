@@ -10,6 +10,8 @@ import 'widgets/quiz_gameplay_header.dart';
 import 'widgets/quiz_choice_question.dart';
 import 'widgets/quiz_answer_feedback.dart';
 import 'widgets/quiz_image_question.dart';
+import 'widgets/quiz_ordering_feedback.dart';
+import 'widgets/quiz_ordering_question.dart';
 import 'images/quiz_image_preparation_exception.dart';
 
 /// Borrows the controller. The host owns disposal and app/route lifecycle signals.
@@ -130,6 +132,13 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
     QuizFeedback(:final remaining) => remaining,
     _ => null,
   };
+
+  List<String>? orderingDraft(QuizSessionState state) => switch (state) {
+    QuizAnswering(:final orderingDraft) => orderingDraft,
+    QuizFeedback(:final orderingDraft) => orderingDraft,
+    QuizCompleted(:final orderingDraft) => orderingDraft,
+    _ => null,
+  };
   Future<void> exit() async {
     if (exitPending || exited) return;
     exitPending = true;
@@ -189,9 +198,6 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
         state is QuizCompleted &&
         state.result.reason == QuizCompletionReason.dailyTimeExpired;
     final q = current?.$2;
-    if (q is ChronologicalOrderingQuestion) {
-      throw UnsupportedError('Ordering gameplay is not implemented yet');
-    }
     final needsImage =
         q is ImageIdentificationQuestion && !resultsOpened && !exited;
     final missingImage =
@@ -257,32 +263,58 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          QuizChoiceQuestion(
-                            question: q as ChoiceQuestion,
-                            headingFocus: headingFocus,
-                            outcome: current.$3,
-                            image: needsImage
-                                ? QuizQuestionImage(
-                                    key: ValueKey((
-                                      controller.preparedImages,
-                                      q.id,
-                                    )),
-                                    questionId: q.id,
-                                    images: controller.preparedImages!,
-                                    metadata: q.image,
-                                    launcher: widget.sourceLauncher,
-                                  )
-                                : null,
-                            onAnswer: (id) => controller.answerOption(q.id, id),
-                          ),
-                          if (current.$3 != null)
-                            QuizAnswerFeedback(
-                              outcome: current.$3!,
-                              daily: daily,
-                              expired: expired,
-                              launcher: widget.sourceLauncher,
-                              showLabel: q is! ImageIdentificationQuestion,
+                          if (q is ChoiceQuestion) ...[
+                            QuizChoiceQuestion(
+                              question: q,
+                              headingFocus: headingFocus,
+                              outcome: current.$3,
+                              image: needsImage
+                                  ? QuizQuestionImage(
+                                      key: ValueKey((
+                                        controller.preparedImages,
+                                        q.id,
+                                      )),
+                                      questionId: q.id,
+                                      images: controller.preparedImages!,
+                                      metadata: q.image,
+                                      launcher: widget.sourceLauncher,
+                                    )
+                                  : null,
+                              onAnswer: (id) =>
+                                  controller.answerOption(q.id, id),
                             ),
+                            if (current.$3 != null)
+                              QuizAnswerFeedback(
+                                outcome: current.$3!,
+                                daily: daily,
+                                expired: expired,
+                                launcher: widget.sourceLauncher,
+                                showLabel: q is! ImageIdentificationQuestion,
+                              ),
+                          ],
+                          if (q is ChronologicalOrderingQuestion) ...[
+                            if (current.$3 == null)
+                              QuizOrderingQuestion(
+                                question: q,
+                                headingFocus: headingFocus,
+                                orderingDraft: orderingDraft(state)!,
+                                onDraftChanged: (draft) =>
+                                    controller.updateOrderingDraft(q.id, draft),
+                              )
+                            else ...[
+                              _OrderingQuestionHeading(
+                                question: q,
+                                headingFocus: headingFocus,
+                              ),
+                              QuizOrderingFeedback(
+                                outcome: current.$3!,
+                                daily: daily,
+                                expired: expired,
+                                orderingDraft: orderingDraft(state),
+                                launcher: widget.sourceLauncher,
+                              ),
+                            ],
+                          ],
                         ],
                       ),
               ),
@@ -349,6 +381,14 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                                   controller.skipImage(question.id),
                               child: const Text('Skip question'),
                             ),
+                          QuizAnswering(:final question)
+                              when question is ChronologicalOrderingQuestion =>
+                            FilledButton(
+                              key: const Key('submit-order'),
+                              onPressed: () =>
+                                  controller.submitOrder(question.id),
+                              child: const Text('Submit order'),
+                            ),
                           _ => const SizedBox.shrink(),
                         },
                       ],
@@ -362,4 +402,33 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
       ),
     );
   }
+}
+
+class _OrderingQuestionHeading extends StatelessWidget {
+  const _OrderingQuestionHeading({
+    required this.question,
+    required this.headingFocus,
+  });
+
+  final ChronologicalOrderingQuestion question;
+  final FocusNode headingFocus;
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    focusNode: headingFocus,
+    child: Semantics(
+      header: true,
+      child: Text(
+        question.prompt,
+        key: const Key('quiz-heading'),
+        style: const TextStyle(
+          fontFamily: 'Georgia',
+          fontFamilyFallback: ['Times New Roman', 'serif'],
+          fontSize: 26,
+          height: 1.25,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  );
 }
