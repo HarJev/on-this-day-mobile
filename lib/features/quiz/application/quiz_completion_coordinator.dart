@@ -8,6 +8,15 @@ import '../domain/quiz_result_store.dart';
 
 enum QuizCompletionSaveStatus { pending, saved, failed }
 
+/// Immutable process-lifetime status for a backend Daily date. This exposes no
+/// mutable coordinator entries and is intentionally narrower than save state.
+final class DailyReservationSnapshot {
+  const DailyReservationSnapshot({required this.status, this.classification});
+
+  final QuizCompletionSaveStatus status;
+  final QuizSavedClassification? classification;
+}
+
 final class QuizCompletionSaveState {
   const QuizCompletionSaveState({
     required this.completion,
@@ -36,6 +45,17 @@ final class QuizCompletionCoordinator extends ChangeNotifier {
 
   QuizCompletionSaveState? stateFor(String completionId) =>
       _entries[completionId]?.state;
+
+  DailyReservationSnapshot? dailyReservationFor(QuizDate date) {
+    final completionId = _dailyReservations[date]?.completionId;
+    if (completionId == null) return null;
+    final state = _entries[completionId]?.state;
+    if (state == null) return null;
+    return DailyReservationSnapshot(
+      status: state.status,
+      classification: state.storedResult?.classification,
+    );
+  }
 
   Future<void> Function(QuizResult) sinkFor(QuizSaveIntent intent) =>
       (result) => complete(QuizCompletion(result, intent)).then<void>((_) {});
@@ -95,7 +115,7 @@ final class QuizCompletionCoordinator extends ChangeNotifier {
   void _reserveDaily(QuizCompletion completion) {
     if (completion.intent != QuizSaveIntent.claimDailyIfAbsent) return;
     final daily = completion.result.definition as DailyQuizDefinition;
-    _dailyReservations[daily.date] = _DailyReservation.pending(
+    _dailyReservations[daily.date] = _DailyReservation(
       completion.result.completionId,
     );
   }
@@ -113,7 +133,9 @@ final class QuizCompletionCoordinator extends ChangeNotifier {
       final definition = entry.state.completion.result.definition;
       if (definition is DailyQuizDefinition &&
           entry.state.requestedIntent == QuizSaveIntent.claimDailyIfAbsent) {
-        _dailyReservations[definition.date] = _DailyReservation.occupied();
+        _dailyReservations[definition.date] = _DailyReservation(
+          entry.state.completion.result.completionId,
+        );
       }
       _notify();
       return saved;
@@ -167,8 +189,6 @@ final class _Entry {
 }
 
 final class _DailyReservation {
-  const _DailyReservation.pending(this.completionId) : occupied = false;
-  const _DailyReservation.occupied() : completionId = null, occupied = true;
-  final String? completionId;
-  final bool occupied;
+  const _DailyReservation(this.completionId);
+  final String completionId;
 }

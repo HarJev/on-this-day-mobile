@@ -80,6 +80,29 @@ void main() {
     },
   );
 
+  test(
+    'exposes an immutable Daily reservation snapshot by backend date',
+    () async {
+      final store = _ControlledStore();
+      final coordinator = QuizCompletionCoordinator(store);
+      final date = QuizDate('2026-09-13');
+
+      final operation = coordinator.complete(_completion('snapshot'));
+      expect(
+        coordinator.dailyReservationFor(date)?.status,
+        QuizCompletionSaveStatus.pending,
+      );
+      expect(coordinator.dailyReservationFor(date)?.classification, isNull);
+
+      store.succeed(QuizSavedClassification.practice);
+      await operation;
+
+      final snapshot = coordinator.dailyReservationFor(date)!;
+      expect(snapshot.status, QuizCompletionSaveStatus.saved);
+      expect(snapshot.classification, QuizSavedClassification.practice);
+    },
+  );
+
   test('retry uses the same frozen completion and effective intent', () async {
     final store = _ControlledStore();
     final coordinator = QuizCompletionCoordinator(store);
