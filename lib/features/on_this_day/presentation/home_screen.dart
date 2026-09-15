@@ -15,11 +15,15 @@ class HomeScreen extends StatefulWidget {
     required this.repository,
     required this.timezoneProvider,
     this.onShowDebugNotification,
+    this.embedded = false,
+    this.onDisplayDateChanged,
   });
 
   final OnThisDayRepository repository;
   final TimezoneProvider timezoneProvider;
   final VoidCallback? onShowDebugNotification;
+  final bool embedded;
+  final ValueChanged<String?>? onDisplayDateChanged;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,6 +31,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final HomeController _controller;
+  String? _reportedDisplayDate;
 
   @override
   void initState() {
@@ -54,18 +59,26 @@ class _HomeScreenState extends State<HomeScreen> {
       listenable: _controller,
       builder: (context, _) {
         final state = _controller.state;
+        final displayDate = switch (state) {
+          HomeLoaded(:final content) => content.displayDate,
+          _ => null,
+        };
+        _reportDisplayDate(displayDate);
 
         return switch (state) {
           HomeLoading() => _HomeScaffold(
+            embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
             body: const _LoadingState(),
           ),
           HomeLoaded(:final content) => _HomeScaffold(
+            embedded: widget.embedded,
             displayDate: content.displayDate,
             onShowDebugNotification: widget.onShowDebugNotification,
             body: _LoadedState(content: content, onEventSelected: _openEvent),
           ),
           HomeUnavailable(:final message) => _HomeScaffold(
+            embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
             body: _MessageState(
               message: message,
@@ -74,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           HomeError(:final message) => _HomeScaffold(
+            embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
             body: _MessageState(
               message: message,
@@ -86,6 +100,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _reportDisplayDate(String? displayDate) {
+    if (_reportedDisplayDate == displayDate) return;
+    _reportedDisplayDate = displayDate;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onDisplayDateChanged?.call(displayDate);
+    });
+  }
+
   void _openEvent(String eventId) {
     Navigator.of(context).pushNamed(AppRoutes.eventDetail(eventId));
   }
@@ -94,16 +116,19 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeScaffold extends StatelessWidget {
   const _HomeScaffold({
     required this.body,
+    required this.embedded,
     this.displayDate,
     this.onShowDebugNotification,
   });
 
   final Widget body;
+  final bool embedded;
   final String? displayDate;
   final VoidCallback? onShowDebugNotification;
 
   @override
   Widget build(BuildContext context) {
+    if (embedded) return body;
     final appBarSideWidth = onShowDebugNotification == null ? 88.0 : 144.0;
 
     return Scaffold(

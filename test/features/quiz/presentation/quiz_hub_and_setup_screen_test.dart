@@ -33,8 +33,8 @@ void main() {
       _app(
         QuizHubScreen(
           repository: _Repo(),
-          onOpenDaily: () => daily++,
-          onOpenQuickPlay: () => quick++,
+          onOpenDaily: (_) => daily++,
+          onOpenQuickPlay: (_) => quick++,
         ),
       ),
     );
@@ -159,8 +159,8 @@ void main() {
         captureKey,
         QuizHubScreen(
           repository: _Repo(),
-          onOpenDaily: () {},
-          onOpenQuickPlay: () {},
+          onOpenDaily: (_) {},
+          onOpenQuickPlay: (_) {},
         ),
       ),
     );

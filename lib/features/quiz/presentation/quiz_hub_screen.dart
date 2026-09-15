@@ -17,13 +17,15 @@ final class QuizHubScreen extends StatefulWidget {
     required this.onOpenQuickPlay,
     this.dailyStatus,
     this.onReviewDailyResult,
+    this.embedded = false,
   });
 
   final QuizRepository repository;
-  final VoidCallback onOpenDaily;
-  final VoidCallback onOpenQuickPlay;
+  final ValueChanged<QuizCatalog> onOpenDaily;
+  final ValueChanged<QuizCatalog> onOpenQuickPlay;
   final DailyChallengeStatus? dailyStatus;
   final ValueChanged<QuizResult>? onReviewDailyResult;
+  final bool embedded;
 
   @override
   State<QuizHubScreen> createState() => _QuizHubScreenState();
@@ -58,9 +60,8 @@ class _QuizHubScreenState extends State<QuizHubScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: _masthead(),
-    body: ListenableBuilder(
+  Widget build(BuildContext context) {
+    final body = ListenableBuilder(
       listenable: _controller,
       builder: (context, _) => switch (_controller.state) {
         QuizHubLoading() => const Center(child: CircularProgressIndicator()),
@@ -81,8 +82,9 @@ class _QuizHubScreenState extends State<QuizHubScreen> {
           onReviewDailyResult: widget.onReviewDailyResult,
         ),
       },
-    ),
-  );
+    );
+    return widget.embedded ? body : Scaffold(appBar: _masthead(), body: body);
+  }
 }
 
 AppBar _masthead() => AppBar(
@@ -108,8 +110,8 @@ class _HubContent extends StatelessWidget {
 
   final QuizCatalog catalog;
   final DailyChallengeStatus? dailyStatus;
-  final VoidCallback onOpenDaily;
-  final VoidCallback onOpenQuickPlay;
+  final ValueChanged<QuizCatalog> onOpenDaily;
+  final ValueChanged<QuizCatalog> onOpenQuickPlay;
   final ValueChanged<QuizResult>? onReviewDailyResult;
 
   @override
@@ -141,7 +143,7 @@ class _HubContent extends StatelessWidget {
             ? 'Practice Daily Challenge'
             : 'Set up Daily Challenge',
         actionIcon: Icons.arrow_forward,
-        onPressed: onOpenDaily,
+        onPressed: () => onOpenDaily(catalog),
       ),
       const SizedBox(height: 18),
       _ModeSurface(
@@ -151,7 +153,7 @@ class _HubContent extends StatelessWidget {
         actionLabel: 'Configure Quick Play',
         actionIcon: Icons.tune,
         outlinedAction: true,
-        onPressed: onOpenQuickPlay,
+        onPressed: () => onOpenQuickPlay(catalog),
       ),
     ],
   );

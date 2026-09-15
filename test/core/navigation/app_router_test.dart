@@ -23,6 +23,17 @@ void main() {
     expect(find.text("Loading today's history..."), findsOneWidget);
   });
 
+  testWidgets(
+    'preserves an injected initial route without a cold notification',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        OnThisDayApp(router: _router(), initialRoute: '/not-a-route'),
+      );
+
+      expect(find.text('Content unavailable'), findsOneWidget);
+    },
+  );
+
   testWidgets('event route passes event ID to detail screen', (
     WidgetTester tester,
   ) async {
