@@ -97,6 +97,7 @@ class BytesDownloader implements QuizImageDownloader {
     QuizImageCancellation cancellation, {
     required int maxBytes,
     required void Function(int) reserveBytes,
+    DateTime? deadline,
   }) async {
     calls++;
     cancellation.check();

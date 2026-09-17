@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:ui' as ui;
 import '../../domain/quiz_definition.dart';
 import '../../domain/quiz_question.dart';
@@ -38,10 +39,17 @@ final class QuizImagePreparer {
     required this.downloader,
     required this.decoder,
     QuizImageLimits? limits,
-  }) : limits = limits ?? QuizImageLimits();
+    DateTime Function()? now,
+    void Function(String message)? diagnostic,
+  }) : limits = limits ?? QuizImageLimits(),
+       _now = now ?? DateTime.now,
+       _diagnostic = diagnostic ?? _defaultDiagnostic;
   final QuizImageDownloader downloader;
   final QuizImageDecoder decoder;
   final QuizImageLimits limits;
+  final DateTime Function() _now;
+  final void Function(String message) _diagnostic;
+
   QuizPreparationAttempt call(QuizDefinition quiz) {
     final cancellation = QuizImageCancellation();
     return QuizPreparationAttempt(
@@ -54,6 +62,8 @@ final class QuizImagePreparer {
     QuizDefinition quiz,
     QuizImageCancellation batch,
   ) async {
+    final stopwatch = Stopwatch()..start();
+    final batchDeadline = _now().add(limits.batch);
     final questions = {
       for (final q in quiz.questions.whereType<ImageIdentificationQuestion>())
         q.id: q.image.url,
@@ -80,6 +90,10 @@ final class QuizImagePreparer {
         batch.check();
         final url = urls[next++];
         final token = QuizImageCancellation();
+        final imageDeadline = _earlierDeadline(
+          batchDeadline,
+          _now().add(limits.perImage),
+        );
         active.add(token);
         final timeout = Timer(
           limits.perImage,
@@ -93,6 +107,7 @@ final class QuizImagePreparer {
               url,
               token,
               maxBytes: limits.encodedImage,
+              deadline: imageDeadline,
               reserveBytes: (count) {
                 token.check();
                 batch.check();
@@ -161,6 +176,10 @@ final class QuizImagePreparer {
       batch.check();
       final prepared = PreparedQuizImages(questions, images);
       images.clear();
+      _diagnostic(
+        'image_preparation outcome=success images=${urls.length} '
+        'durationMs=${stopwatch.elapsedMilliseconds}',
+      );
       return QuizPreparedResources(() {}, images: prepared);
     } catch (error) {
       batch.cancel(error);
@@ -168,10 +187,24 @@ final class QuizImagePreparer {
         image.dispose();
       }
       images.clear();
+      final kind = error is QuizImagePreparationException
+          ? error.kind.name
+          : QuizImageFailure.http.name;
+      _diagnostic(
+        'image_preparation outcome=failure kind=$kind '
+        'durationMs=${stopwatch.elapsedMilliseconds}',
+      );
       if (error is QuizImagePreparationException) rethrow;
       throw QuizImagePreparationException(QuizImageFailure.http, cause: error);
     } finally {
       timer.cancel();
     }
+  }
+
+  static DateTime _earlierDeadline(DateTime first, DateTime second) =>
+      first.isBefore(second) ? first : second;
+
+  static void _defaultDiagnostic(String message) {
+    developer.log(message, name: 'on_this_day.quiz_images');
   }
 }

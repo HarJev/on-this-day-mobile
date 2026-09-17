@@ -27,6 +27,7 @@ class WaitingDownloader implements QuizImageDownloader {
     QuizImageCancellation cancellation, {
     required int maxBytes,
     required void Function(int) reserveBytes,
+    DateTime? deadline,
   }) async {
     active++;
     if (active > maximum) maximum = active;
@@ -187,6 +188,254 @@ void main() {
     },
   );
   test(
+    'identifies source-host requests with the project issue tracker',
+    () async {
+      late http.BaseRequest captured;
+      final bytes =
+          await HttpQuizImageDownloader(
+            StreamClient((request) async {
+              captured = request;
+              return http.StreamedResponse(Stream.value([1, 2]), 200);
+            }),
+          ).download(
+            Uri.parse('https://upload.wikimedia.org/example.png'),
+            QuizImageCancellation(),
+            maxBytes: 10,
+            reserveBytes: (_) {},
+          );
+
+      expect(bytes, Uint8List.fromList([1, 2]));
+      expect(
+        captured.headers['user-agent'],
+        'OnThisDayMobile/1.0 '
+        '(+https://github.com/HarJev/on-this-day-mobile/issues)',
+      );
+    },
+  );
+  test('retries a 429 with a valid delay-seconds Retry-After', () async {
+    var calls = 0;
+    final bytes =
+        await HttpQuizImageDownloader(
+          StreamClient((_) async {
+            calls++;
+            if (calls == 1) {
+              return http.StreamedResponse(
+                const Stream.empty(),
+                429,
+                headers: {'retry-after': '0'},
+              );
+            }
+            return http.StreamedResponse(Stream.value([3]), 200);
+          }),
+        ).download(
+          Uri.parse('https://example.org/image.png'),
+          QuizImageCancellation(),
+          maxBytes: 10,
+          reserveBytes: (_) {},
+          deadline: DateTime.now().add(const Duration(seconds: 1)),
+        );
+
+    expect(bytes, Uint8List.fromList([3]));
+    expect(calls, 2);
+  });
+  test(
+    'uses a valid HTTP-date Retry-After instead of fallback backoff',
+    () async {
+      var calls = 0;
+      final now = DateTime.now().toUtc();
+      final downloader = HttpQuizImageDownloader(
+        StreamClient((_) async {
+          calls++;
+          return http.StreamedResponse(
+            const Stream.empty(),
+            429,
+            headers: {
+              'retry-after': HttpDate.format(
+                now.add(const Duration(minutes: 1)),
+              ),
+            },
+          );
+        }),
+        now: () => now,
+        retryPolicy: QuizImageRetryPolicy(initialBackoff: Duration.zero),
+      );
+
+      await expectLater(
+        downloader.download(
+          Uri.parse('https://example.org/image.png'),
+          QuizImageCancellation(),
+          maxBytes: 10,
+          reserveBytes: (_) {},
+          deadline: now.add(const Duration(seconds: 1)),
+        ),
+        throwsA(failure(QuizImageFailure.timeout)),
+      );
+      expect(calls, 1);
+    },
+  );
+  test('uses bounded backoff when Retry-After is absent or invalid', () async {
+    for (final retryAfter in [null, 'not-an-http-date']) {
+      var calls = 0;
+      final bytes =
+          await HttpQuizImageDownloader(
+            StreamClient((_) async {
+              calls++;
+              if (calls == 1) {
+                return http.StreamedResponse(
+                  const Stream.empty(),
+                  429,
+                  headers: retryAfter == null
+                      ? const {}
+                      : {'retry-after': retryAfter},
+                );
+              }
+              return http.StreamedResponse(Stream.value([4]), 200);
+            }),
+            retryPolicy: QuizImageRetryPolicy(initialBackoff: Duration.zero),
+          ).download(
+            Uri.parse('https://example.org/image.png'),
+            QuizImageCancellation(),
+            maxBytes: 10,
+            reserveBytes: (_) {},
+            deadline: DateTime.now().add(const Duration(seconds: 1)),
+          );
+      expect(bytes, Uint8List.fromList([4]));
+      expect(calls, 2);
+    }
+  });
+  test(
+    'does not wait past the image deadline for an excessive Retry-After',
+    () async {
+      var calls = 0;
+      final diagnostics = <String>[];
+      final downloader = HttpQuizImageDownloader(
+        StreamClient((_) async {
+          calls++;
+          return http.StreamedResponse(
+            const Stream.empty(),
+            429,
+            headers: {'retry-after': '120'},
+          );
+        }),
+        retryPolicy: QuizImageRetryPolicy(initialBackoff: Duration.zero),
+        diagnostic: diagnostics.add,
+      );
+
+      await expectLater(
+        downloader.download(
+          Uri.parse('https://example.org/image.png?private=value'),
+          QuizImageCancellation(),
+          maxBytes: 10,
+          reserveBytes: (_) {},
+          deadline: DateTime.now().add(const Duration(milliseconds: 50)),
+        ),
+        throwsA(failure(QuizImageFailure.timeout)),
+      );
+      expect(calls, 1);
+      expect(diagnostics.join('\n'), contains('host=example.org status=429'));
+      expect(diagnostics.join('\n'), isNot(contains('private=value')));
+    },
+  );
+  test('serializes same-host retries after concurrent 429 responses', () async {
+    for (final retryAfter in ['0', null]) {
+      var calls = 0;
+      final thirdRequestStarted = Completer<void>();
+      final thirdResponse = Completer<http.StreamedResponse>();
+      final downloader = HttpQuizImageDownloader(
+        StreamClient((_) async {
+          calls++;
+          if (calls <= 2) {
+            return http.StreamedResponse(
+              const Stream.empty(),
+              429,
+              headers: retryAfter == null
+                  ? const {}
+                  : {'retry-after': retryAfter},
+            );
+          }
+          if (calls == 3) {
+            thirdRequestStarted.complete();
+            return thirdResponse.future;
+          }
+          return http.StreamedResponse(Stream.value([5]), 200);
+        }),
+        retryPolicy: QuizImageRetryPolicy(initialBackoff: Duration.zero),
+      );
+      final deadline = DateTime.now().add(const Duration(seconds: 2));
+      final first = downloader.download(
+        Uri.parse('https://example.org/one.png'),
+        QuizImageCancellation(),
+        maxBytes: 10,
+        reserveBytes: (_) {},
+        deadline: deadline,
+      );
+      final second = downloader.download(
+        Uri.parse('https://example.org/two.png'),
+        QuizImageCancellation(),
+        maxBytes: 10,
+        reserveBytes: (_) {},
+        deadline: deadline,
+      );
+
+      await thirdRequestStarted.future;
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(
+        calls,
+        3,
+        reason: 'A second retry must wait for the active permit.',
+      );
+      thirdResponse.complete(http.StreamedResponse(Stream.value([5]), 200));
+      await Future.wait([first, second]);
+      expect(calls, 4);
+    }
+  });
+  test('cancellation during a cooldown prevents the retry', () async {
+    var calls = 0;
+    final firstResponse = Completer<void>();
+    final cancellation = QuizImageCancellation();
+    final downloader = HttpQuizImageDownloader(
+      StreamClient((_) async {
+        calls++;
+        firstResponse.complete();
+        return http.StreamedResponse(
+          const Stream.empty(),
+          429,
+          headers: {'retry-after': '60'},
+        );
+      }),
+    );
+    final future = downloader.download(
+      Uri.parse('https://example.org/image.png'),
+      cancellation,
+      maxBytes: 10,
+      reserveBytes: (_) {},
+      deadline: DateTime.now().add(const Duration(minutes: 2)),
+    );
+
+    await firstResponse.future;
+    cancellation.cancel();
+    await expectLater(future, throwsA(failure(QuizImageFailure.cancelled)));
+    expect(calls, 1);
+  });
+  test('does not retry non-429 HTTP failures', () async {
+    var calls = 0;
+    await expectLater(
+      HttpQuizImageDownloader(
+        StreamClient((_) async {
+          calls++;
+          return http.StreamedResponse(const Stream.empty(), 503);
+        }),
+      ).download(
+        Uri.parse('https://example.org/image.png'),
+        QuizImageCancellation(),
+        maxBytes: 10,
+        reserveBytes: (_) {},
+      ),
+      throwsA(failure(QuizImageFailure.http)),
+    );
+    expect(calls, 1);
+  });
+  test(
     'deduplication creates every mapping but downloads and decodes once',
     () async {
       final downloader = BytesDownloader(await testImageBytes());
@@ -287,6 +536,28 @@ void main() {
     await check;
     await tester.pump();
     expect(downloader.active, 0);
+  });
+  testWidgets('per-image deadline also includes decode work', (tester) async {
+    final bytes = (await tester.runAsync(testImageBytes))!;
+    final decoder = DelayedDecoder();
+    final attempt = QuizImagePreparer(
+      downloader: BytesDownloader(bytes),
+      decoder: decoder,
+      limits: QuizImageLimits(perImage: const Duration(seconds: 15)),
+    ).call(imageQuiz());
+    final check = expectLater(
+      attempt.result,
+      throwsA(failure(QuizImageFailure.timeout)),
+    );
+
+    await tester.pump();
+    expect(decoder.pending, hasLength(2));
+    await tester.pump(const Duration(seconds: 15));
+    await check;
+    for (final pending in decoder.pending) {
+      pending.complete((await tester.runAsync(testImage))!);
+    }
+    await tester.pump();
   });
   testWidgets('late decoded handles are disposed after cancellation', (
     tester,

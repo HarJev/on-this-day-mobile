@@ -246,6 +246,7 @@ final class _NoopDownloader implements QuizImageDownloader {
     dynamic cancellation, {
     required int maxBytes,
     required void Function(int) reserveBytes,
+    DateTime? deadline,
   }) => throw UnimplementedError();
 }
 
