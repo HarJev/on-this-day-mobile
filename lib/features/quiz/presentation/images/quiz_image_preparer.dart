@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:ui' as ui;
+import '../../../../core/images/encoded_image_cache.dart';
 import '../../domain/quiz_definition.dart';
 import '../../domain/quiz_question.dart';
 import '../quiz_session_preparation.dart';
@@ -39,6 +40,7 @@ final class QuizImagePreparer {
     required this.downloader,
     required this.decoder,
     QuizImageLimits? limits,
+    this.cache,
     DateTime Function()? now,
     void Function(String message)? diagnostic,
   }) : limits = limits ?? QuizImageLimits(),
@@ -47,6 +49,7 @@ final class QuizImagePreparer {
   final QuizImageDownloader downloader;
   final QuizImageDecoder decoder;
   final QuizImageLimits limits;
+  final EncodedImageCache? cache;
   final DateTime Function() _now;
   final void Function(String message) _diagnostic;
 
@@ -102,61 +105,85 @@ final class QuizImagePreparer {
           ),
         );
         try {
-          final bytes = await token.wait(
-            downloader.download(
-              url,
-              token,
-              maxBytes: limits.encodedImage,
-              deadline: imageDeadline,
-              reserveBytes: (count) {
-                token.check();
-                batch.check();
-                if (encoded + count > limits.encodedSession) {
-                  throw const QuizImagePreparationException(
-                    QuizImageFailure.encodedLimit,
-                  );
-                }
-                encoded += count;
-              },
-            ),
-          );
-          token.check();
-          batch.check();
+          void reserveEncoded(int count) {
+            token.check();
+            batch.check();
+            if (encoded + count > limits.encodedSession) {
+              throw const QuizImagePreparationException(
+                QuizImageFailure.encodedLimit,
+              );
+            }
+            encoded += count;
+          }
+
           var reserved = 0;
-          final future = decoder
-              .decode(
-                bytes,
+          void reserveDecoded(int count) {
+            token.check();
+            batch.check();
+            if (count <= 0 || decoded + count > limits.decodedSession) {
+              throw const QuizImagePreparationException(
+                QuizImageFailure.decodedLimit,
+              );
+            }
+            decoded += count;
+            reserved += count;
+          }
+
+          final ui.Image image;
+          if (cache case final cache?) {
+            image = await token.wait(
+              cache.load(
+                url,
                 token,
+                maxBytes: limits.encodedImage,
                 maxEdge: limits.maxEdge,
-                reserveDecodedBytes: (count) {
-                  token.check();
-                  batch.check();
-                  if (count <= 0 || decoded + count > limits.decodedSession) {
-                    throw const QuizImagePreparationException(
-                      QuizImageFailure.decodedLimit,
-                    );
+                download: (sharedCancellation) => downloader.download(
+                  url,
+                  sharedCancellation,
+                  maxBytes: limits.encodedImage,
+                  deadline: imageDeadline,
+                  reserveBytes: (_) {},
+                ),
+                decode: decoder.decode,
+                reserveEncodedBytes: reserveEncoded,
+                reserveDecodedBytes: reserveDecoded,
+              ),
+            );
+          } else {
+            final bytes = await token.wait(
+              downloader.download(
+                url,
+                token,
+                maxBytes: limits.encodedImage,
+                deadline: imageDeadline,
+                reserveBytes: reserveEncoded,
+              ),
+            );
+            final future = decoder
+                .decode(
+                  bytes,
+                  token,
+                  maxEdge: limits.maxEdge,
+                  reserveDecodedBytes: reserveDecoded,
+                )
+                .then((image) {
+                  if (token.isCancelled || batch.isCancelled) {
+                    image.dispose();
+                    token.check();
+                    batch.check();
                   }
-                  decoded += count;
-                  reserved += count;
-                },
-              )
-              .then((image) {
-                if (token.isCancelled || batch.isCancelled) {
-                  image.dispose();
-                  token.check();
-                  batch.check();
-                }
-                if (image.width > limits.maxEdge ||
-                    image.height > limits.maxEdge ||
-                    image.width * image.height * 4 > reserved) {
-                  image.dispose();
-                  throw const QuizImagePreparationException(
-                    QuizImageFailure.decodedLimit,
-                  );
-                }
-                return image;
-              });
-          final image = await token.wait(future);
+                  return image;
+                });
+            image = await token.wait(future);
+          }
+          if (image.width > limits.maxEdge ||
+              image.height > limits.maxEdge ||
+              image.width * image.height * 4 > reserved) {
+            image.dispose();
+            throw const QuizImagePreparationException(
+              QuizImageFailure.decodedLimit,
+            );
+          }
           if (token.isCancelled || batch.isCancelled) {
             image.dispose();
             token.check();
@@ -181,6 +208,18 @@ final class QuizImagePreparer {
         'durationMs=${stopwatch.elapsedMilliseconds}',
       );
       return QuizPreparedResources(() {}, images: prepared);
+    } on ImageCacheException catch (error) {
+      batch.cancel(error);
+      for (final image in images.values) {
+        image.dispose();
+      }
+      images.clear();
+      final kind = switch (error.kind) {
+        ImageCacheFailure.encodedLimit => QuizImageFailure.encodedLimit,
+        ImageCacheFailure.decoding => QuizImageFailure.decoding,
+        ImageCacheFailure.invalidRequest => QuizImageFailure.http,
+      };
+      throw QuizImagePreparationException(kind, cause: error.cause);
     } catch (error) {
       batch.cancel(error);
       for (final image in images.values) {

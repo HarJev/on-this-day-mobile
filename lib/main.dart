@@ -1,14 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import 'core/api/api_client.dart';
 import 'core/config/app_config.dart';
 import 'core/config/app_theme.dart';
 import 'core/config/timezone_provider.dart';
+import 'core/images/cached_optional_image_loader.dart';
+import 'core/images/encoded_image_cache.dart';
+import 'core/images/image_downloader.dart';
 import 'core/navigation/app_router.dart';
 import 'core/navigation/app_routes.dart';
 import 'core/navigation/quiz_route_dependencies.dart';
@@ -47,6 +52,17 @@ Future<void> main() async {
     httpClient: httpClient,
   );
   final repository = BackendOnThisDayRepository(apiClient: apiClient);
+  final networkImageDownloader = HttpImageDownloader(httpClient);
+  final imageCache = EncodedImageCache(
+    cacheDirectory: () async {
+      final temporary = await getTemporaryDirectory();
+      return Directory('${temporary.path}/on-this-day-images');
+    },
+  );
+  final optionalImageLoader = CachedOptionalImageLoader(
+    cache: imageCache,
+    downloader: networkImageDownloader,
+  );
   const timezoneProvider = PlatformTimezoneProvider();
   final navigatorKey = GlobalKey<NavigatorState>();
   final routeObserver = RouteObserver<PageRoute<dynamic>>();
@@ -57,8 +73,9 @@ Future<void> main() async {
     resultStore: quizResultStore,
     completionCoordinator: QuizCompletionCoordinator(quizResultStore),
     imagePreparer: QuizImagePreparer(
-      downloader: HttpQuizImageDownloader(httpClient),
+      downloader: HttpQuizImageDownloader.fromDelegate(networkImageDownloader),
       decoder: FlutterQuizImageDecoder(),
+      cache: imageCache,
     ),
     timezoneProvider: timezoneProvider,
     completionIdGenerator: SecureQuizCompletionIdGenerator(),
@@ -103,6 +120,7 @@ Future<void> main() async {
         navigatorKey: navigatorKey,
         routeObserver: routeObserver,
         quizDependencies: () => quizDependencies,
+        optionalImageLoader: optionalImageLoader,
       ),
       routeObserver: routeObserver,
     ),

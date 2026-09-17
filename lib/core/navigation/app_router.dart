@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../images/cached_optional_image_loader.dart';
 import '../../features/on_this_day/domain/on_this_day_repository.dart';
 import '../../features/on_this_day/presentation/event_detail_screen.dart';
 import '../../features/on_this_day/presentation/home_screen.dart';
@@ -24,12 +25,14 @@ class AppRouter {
     QuizRouteDependencies Function()? quizDependencies,
     RouteObserver<PageRoute<dynamic>>? routeObserver,
     GlobalKey<NavigatorState>? navigatorKey,
+    OptionalImageLoader? optionalImageLoader,
   }) : _repository = repository,
        _timezoneProvider = timezoneProvider,
        _sourceLauncher = sourceLauncher,
        _onShowDebugNotification = onShowDebugNotification,
        _quizDependencies = quizDependencies,
        _navigatorKey = navigatorKey,
+       _optionalImageLoader = optionalImageLoader,
        routeObserver = routeObserver ?? RouteObserver<PageRoute<dynamic>>();
 
   final OnThisDayRepository _repository;
@@ -38,6 +41,7 @@ class AppRouter {
   final VoidCallback? _onShowDebugNotification;
   final QuizRouteDependencies Function()? _quizDependencies;
   final GlobalKey<NavigatorState>? _navigatorKey;
+  final OptionalImageLoader? _optionalImageLoader;
   final RouteObserver<PageRoute<dynamic>> routeObserver;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
@@ -51,6 +55,7 @@ class AppRouter {
           timezoneProvider: _timezoneProvider,
           quizDependencies: _quizDependencies,
           onShowDebugNotification: _onShowDebugNotification,
+          optionalImageLoader: _optionalImageLoader,
         ),
         settings,
       );
@@ -62,6 +67,7 @@ class AppRouter {
           repository: _repository,
           timezoneProvider: _timezoneProvider,
           onShowDebugNotification: _onShowDebugNotification,
+          imageLoader: _optionalImageLoader,
         ),
         settings,
       );
@@ -74,6 +80,7 @@ class AppRouter {
           repository: _repository,
           eventId: eventId,
           sourceLauncher: _sourceLauncher,
+          imageLoader: _optionalImageLoader,
         ),
         settings,
       );

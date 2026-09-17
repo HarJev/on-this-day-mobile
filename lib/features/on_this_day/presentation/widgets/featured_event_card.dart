@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/images/cached_optional_image_loader.dart';
 import '../../../../core/config/app_colors.dart';
 import '../../domain/featured_event.dart';
+import 'optional_event_image.dart';
 
 class FeaturedEventCard extends StatelessWidget {
   const FeaturedEventCard({
     super.key,
     required this.event,
     required this.onTap,
+    this.imageLoader,
   });
 
   final FeaturedEvent event;
   final VoidCallback onTap;
+  final OptionalImageLoader? imageLoader;
 
   @override
   Widget build(BuildContext context) {
+    final image = event.image;
+    final loader = imageLoader;
     return Semantics(
       button: true,
       label: event.title,
@@ -32,16 +38,13 @@ class FeaturedEventCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (event.image case final image?) ...[
-                  AspectRatio(
-                    aspectRatio: 2.05,
-                    child: Image.network(
-                      image.url.toString(),
-                      fit: BoxFit.cover,
-                      semanticLabel: image.altText,
-                    ),
+                if (image != null && loader != null) ...[
+                  OptionalEventImage(
+                    url: image.url,
+                    altText: image.altText,
+                    loader: loader,
+                    padding: const EdgeInsets.only(bottom: 22),
                   ),
-                  const SizedBox(height: 22),
                 ],
                 Text(
                   event.year,

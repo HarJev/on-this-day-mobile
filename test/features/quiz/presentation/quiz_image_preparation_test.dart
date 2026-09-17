@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:on_this_day_mobile/core/images/encoded_image_cache.dart';
+import 'package:on_this_day_mobile/core/images/image_request_cancellation.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparer.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparation_exception.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_downloader.dart';
@@ -24,7 +26,7 @@ class WaitingDownloader implements QuizImageDownloader {
   @override
   Future<Uint8List> download(
     Uri url,
-    QuizImageCancellation cancellation, {
+    ImageRequestCancellation cancellation, {
     required int maxBytes,
     required void Function(int) reserveBytes,
     DateTime? deadline,
@@ -46,7 +48,7 @@ class DelayedDecoder implements QuizImageDecoder {
   @override
   Future<ui.Image> decode(
     Uint8List bytes,
-    QuizImageCancellation cancellation, {
+    ImageRequestCancellation cancellation, {
     required int maxEdge,
     required void Function(int) reserveDecodedBytes,
   }) {
@@ -475,6 +477,31 @@ void main() {
       }
     },
   );
+  test('cache hits retain the quiz session size limits', () async {
+    final directory = await Directory.systemTemp.createTemp('quiz-cache-test-');
+    addTearDown(() => directory.delete(recursive: true));
+    final bytes = await testImageBytes();
+    final downloader = BytesDownloader(bytes);
+    final cache = EncodedImageCache(cacheDirectory: () async => directory);
+
+    final prepared = await QuizImagePreparer(
+      downloader: downloader,
+      decoder: FlutterQuizImageDecoder(),
+      cache: cache,
+    ).call(imageQuiz(unique: false)).result;
+    prepared.release();
+
+    await expectLater(
+      QuizImagePreparer(
+        downloader: downloader,
+        decoder: FlutterQuizImageDecoder(),
+        cache: cache,
+        limits: QuizImageLimits(encodedSession: bytes.length - 1),
+      ).call(imageQuiz(unique: false)).result,
+      throwsA(failure(QuizImageFailure.encodedLimit)),
+    );
+    expect(downloader.calls, 1);
+  });
   test('invalid encoded image fails decoding before ready', () async {
     await expectLater(
       QuizImagePreparer(

@@ -5,6 +5,7 @@ import '../../features/on_this_day/presentation/home_screen.dart';
 import '../../features/quiz/domain/quiz_catalog.dart';
 import '../../features/quiz/domain/quiz_result.dart';
 import '../../features/quiz/presentation/quiz_hub_screen.dart';
+import '../images/cached_optional_image_loader.dart';
 import '../config/app_colors.dart';
 import '../config/timezone_provider.dart';
 import 'app_routes.dart';
@@ -19,12 +20,14 @@ final class AppRootShell extends StatefulWidget {
     required this.timezoneProvider,
     required this.quizDependencies,
     required this.onShowDebugNotification,
+    this.optionalImageLoader,
   });
 
   final OnThisDayRepository onThisDayRepository;
   final TimezoneProvider timezoneProvider;
   final QuizRouteDependencies Function() quizDependencies;
   final VoidCallback? onShowDebugNotification;
+  final OptionalImageLoader? optionalImageLoader;
 
   @override
   State<AppRootShell> createState() => _AppRootShellState();
@@ -75,6 +78,7 @@ class _AppRootShellState extends State<AppRootShell> {
           HomeScreen(
             repository: widget.onThisDayRepository,
             timezoneProvider: widget.timezoneProvider,
+            imageLoader: widget.optionalImageLoader,
             embedded: true,
             onDisplayDateChanged: (date) {
               if (mounted && date != _todayDate) {

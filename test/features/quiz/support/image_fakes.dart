@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:on_this_day_mobile/core/images/image_request_cancellation.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_definition.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_image.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_question.dart';
@@ -94,7 +95,7 @@ class BytesDownloader implements QuizImageDownloader {
   @override
   Future<Uint8List> download(
     Uri url,
-    QuizImageCancellation cancellation, {
+    ImageRequestCancellation cancellation, {
     required int maxBytes,
     required void Function(int) reserveBytes,
     DateTime? deadline,

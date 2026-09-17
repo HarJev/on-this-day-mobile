@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/timezone_provider.dart';
 import '../../../core/navigation/app_routes.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
     this.onShowDebugNotification,
     this.embedded = false,
     this.onDisplayDateChanged,
+    this.imageLoader,
   });
 
   final OnThisDayRepository repository;
@@ -24,6 +26,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback? onShowDebugNotification;
   final bool embedded;
   final ValueChanged<String?>? onDisplayDateChanged;
+  final OptionalImageLoader? imageLoader;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -75,7 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
             embedded: widget.embedded,
             displayDate: content.displayDate,
             onShowDebugNotification: widget.onShowDebugNotification,
-            body: _LoadedState(content: content, onEventSelected: _openEvent),
+            body: _LoadedState(
+              content: content,
+              onEventSelected: _openEvent,
+              imageLoader: widget.imageLoader,
+            ),
           ),
           HomeUnavailable(:final message) => _HomeScaffold(
             embedded: widget.embedded,
@@ -203,10 +210,15 @@ class _HomeScaffold extends StatelessWidget {
 }
 
 class _LoadedState extends StatelessWidget {
-  const _LoadedState({required this.content, required this.onEventSelected});
+  const _LoadedState({
+    required this.content,
+    required this.onEventSelected,
+    this.imageLoader,
+  });
 
   final DailyContent content;
   final ValueChanged<String> onEventSelected;
+  final OptionalImageLoader? imageLoader;
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +230,7 @@ class _LoadedState extends StatelessWidget {
         FeaturedEventCard(
           event: content.featuredEvent,
           onTap: () => onEventSelected(content.featuredEvent.id),
+          imageLoader: imageLoader,
         ),
         if (additionalEvents.isNotEmpty) ...[
           const SizedBox(height: 34),
