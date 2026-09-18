@@ -256,6 +256,11 @@ cobalt.
 Additional events are intentionally secondary. Do not add summaries, images,
 filters, category chips, or competing feature cards.
 
+The section must render every additional event returned for the date without a
+visual cap or padding. Ordinarily, curated dates provide at least three
+additional events; a smaller set is an explicit editorial exception, not a
+layout prompt to invent or duplicate content.
+
 ---
 
 ## 8. Event Detail Screen

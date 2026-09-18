@@ -126,11 +126,14 @@ At minimum:
 
 **Additional events**
 
-The product should target approximately **6–10 additional notable events** from the same calendar date.
+An ordinarily curated date contains at least **four total events**: one featured
+event and at least three additional notable events from the same calendar date.
+Aim for five or more total events when worthwhile, well-sourced additions are
+available. There is no upper cap on strong additions.
 
-Fewer events may be shown when there are not enough worthwhile events to maintain a high-quality experience.
-
-The goal is to keep the day's content interesting and varied without making the screen feel overwhelming or padding the list with weak historical events.
+A date below this floor requires an explicit editorial exception stating why
+stronger content is unavailable. The goal is to keep the day's content
+interesting and varied without padding the list with weak historical events.
 
 These events are secondary to the featured event.
 
@@ -185,12 +188,15 @@ The historical events displayed must correspond to that calendar date.
 
 ### FR-002 — Daily event collection
 
-For every supported calendar date, the product must be capable of returning:
+For every ordinarily curated calendar date, the product must be capable of
+returning:
 
 - exactly one featured event
-- zero or more additional events
+- at least three additional events
 
-The target is approximately 6–10 additional events per day, although fewer are permitted when appropriate.
+A below-floor date is permitted only with an explicit editorial exception. Aim
+for five or more total events when well-sourced additions are available; do not
+cap worthwhile additions.
 
 The featured event must also be a valid historical event for that calendar date.
 
@@ -557,7 +563,8 @@ If a primary image is available for that event, the product may also display it.
 **Then** they are displayed separately from the featured event  
 **And** none is visually confused with the primary featured event.
 
-The product should target approximately 6–10 additional events while allowing fewer when appropriate.
+Ordinarily, the product shows at least three additional events. A smaller set
+requires an explicit editorial exception; worthwhile additions are not capped.
 
 ### AC-005 — Open event
 
@@ -686,7 +693,9 @@ v0.0.1 should be considered product-complete when a user can reliably:
 1. open the app on any supported day,
 2. see today's date,
 3. immediately identify one featured historical event,
-4. see approximately 6–10 other historical events from that date when sufficient worthwhile events are available,
+4. see at least three additional historical events from that date, unless an
+   explicit editorial exception applies, and see five or more total events when
+   worthwhile,
 5. open any displayed event,
 6. understand what happened, its relevant background, and why it matters,
 7. see historical imagery where suitable imagery is available without the experience depending on it,

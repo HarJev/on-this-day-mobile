@@ -91,13 +91,17 @@ The application must detect calendar-date rollover and replace the previous day'
 ## PD-008 — The home screen includes a curated set of additional events
 
 **Decision**  
-In addition to the featured event, the home screen will target approximately 6–10 additional notable events from the same calendar date.
+Each ordinarily curated date contains at least four total events: one featured
+event and at least three additional notable events from the same calendar date.
+The editorial aim is five or more total events when strong, well-sourced
+additions are available. There is no upper cap.
 
 **Rationale**  
 Users should have more history to explore when interested, without turning the experience into an overwhelming or exhaustive list.
 
 **Implications**  
-- Fewer than 6–10 events are acceptable when stronger events are unavailable.
+- A below-floor date requires an explicit editorial exception explaining why
+  stronger events are unavailable.
 - Weak events should not be added simply to meet a numerical target.
 - The product does not attempt to display every event associated with a date.  
 
