@@ -66,6 +66,46 @@ Run against local SAM from the Android emulator:
 flutter run --dart-define=ON_THIS_DAY_API_BASE_URL=http://10.0.2.2:3000
 ```
 
+For a physical iPhone, SAM must listen beyond loopback and the app must use the
+Mac's LAN address. Do not use `127.0.0.1` from a phone:
+
+```sh
+# In /Users/jevaunharris/Workspace/on-this-day/on-this-day-backend
+sam local start-api \
+  --host 0.0.0.0 \
+  --env-vars ./env.sam.compose-network.json \
+  --warm-containers EAGER \
+  --docker-network on-this-day-backend_default
+
+# In this repository, with the iPhone and Mac on the same LAN
+flutter run -d <iphone-device-id> \
+  --dart-define=ON_THIS_DAY_API_BASE_URL=http://<mac-lan-ip>:3000
+```
+
+This validates local API reachability only. Remote FCM delivery still requires
+the Apple Developer and APNs setup described below.
+
+If SAM hangs while pulling the cached Java image, use the already downloaded
+image explicitly and choose an unused port:
+
+```sh
+# In /Users/jevaunharris/Workspace/on-this-day/on-this-day-backend
+sam local start-api \
+  --skip-pull-image \
+  --port 3001 \
+  --env-vars ./env.sam.compose-network.json \
+  --warm-containers LAZY \
+  --docker-network on-this-day-backend_default
+
+# Simulator or local desktop app
+flutter run -d <device-id> \
+  --dart-define=ON_THIS_DAY_API_BASE_URL=http://127.0.0.1:3001
+```
+
+This workaround avoids a SAM/Docker credential-helper stall observed during
+local image preparation. The Java handler and database path were healthy once
+the cached image was used.
+
 The mobile app does not store backend secrets. The backend must already be
 running with imported content before the Home and Event Detail screens can load
 real data.
@@ -191,12 +231,52 @@ Run tests:
 flutter test
 ```
 
+Run the native SQLite integration test on an iOS simulator:
+
+```sh
+flutter devices
+flutter test --no-pub integration_test/quiz_sqlite_result_store_test.dart \
+  -d <ios-simulator-id>
+```
+
+This exercises the real iOS `sqflite` implementation, including schema
+migration, idempotent receipts, rollback, corruption handling, and persisted
+result rules. Run the same command with an Android device ID when an Android
+emulator or device is available.
+
 ## Project Scope
 
-This bootstrap intentionally does not implement product features. The v0.0.1
-product scope and architecture are documented in:
+The app implements the daily-history loop and the Quiz expansion, including
+local result persistence. Product scope and architecture are documented in:
 
 - `docs/PRODUCT.md`
 - `docs/PRODUCT_DECISIONS.md`
 - `docs/DESIGN.md`
 - `docs/ARCHITECTURE.md`
+
+For the latest observed Android/iOS checks, opt-in live quiz flow, image-host
+limitations and remaining release gates, see
+[Local release-readiness audit](docs/RELEASE_READINESS.md).
+
+## Notification Verification Modes
+
+Treat notification checks as separate claims:
+
+| Mode | What it proves | Account requirement |
+| --- | --- | --- |
+| Debug local notification | System presentation, payload parsing, warm/cold navigation | None |
+| iOS `simctl push` fixture | APNs-shaped simulator routing for the installed debug app | No paid Apple membership |
+| Android emulator FCM | Firebase registration and remote FCM delivery | Firebase project configuration |
+| Physical iOS FCM/APNs | Real production-style Apple delivery | Apple Developer/APNs credentials configured in Firebase |
+
+The current debug local-notification path is the supported simulator fallback.
+Adding a checked-in `simctl push` payload/command and moving the permission ask
+behind an in-app explanation are pending launch-workplan tasks. Do not add a
+production branch that silently substitutes local notifications when remote
+delivery is unavailable. The app must remain fully readable when permission is
+denied or credentials are absent.
+
+Before claiming production daily notifications, verify the scheduled backend
+job, timezone isolation, FCM response handling, and a real Android delivery.
+Physical iOS delivery remains a separate manual gate until APNs ownership is
+available.

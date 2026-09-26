@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'widgets/optional_event_image.dart';
 
+import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/navigation/source_launcher.dart';
 import '../domain/event_source.dart';
@@ -14,11 +16,13 @@ class EventDetailScreen extends StatefulWidget {
     required this.repository,
     required this.eventId,
     required this.sourceLauncher,
+    this.imageLoader,
   }) : assert(eventId != '');
 
   final OnThisDayRepository repository;
   final String eventId;
   final SourceLauncher sourceLauncher;
+  final OptionalImageLoader? imageLoader;
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -57,7 +61,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         return switch (state) {
           EventDetailLoading() => const _DetailScaffold(body: _LoadingState()),
           EventDetailLoaded(:final event) => _DetailScaffold(
-            body: _LoadedState(event: event, onSourceSelected: _openSource),
+            body: _LoadedState(
+              event: event,
+              onSourceSelected: _openSource,
+              imageLoader: widget.imageLoader,
+            ),
           ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
             body: _MessageState(
@@ -134,17 +142,22 @@ class _DetailScaffold extends StatelessWidget {
 }
 
 class _LoadedState extends StatelessWidget {
-  const _LoadedState({required this.event, required this.onSourceSelected});
+  const _LoadedState({
+    required this.event,
+    required this.onSourceSelected,
+    this.imageLoader,
+  });
 
   final HistoricalEvent event;
   final ValueChanged<EventSource> onSourceSelected;
+  final OptionalImageLoader? imageLoader;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
       children: [
-        _ArticleSurface(event: event),
+        _ArticleSurface(event: event, imageLoader: imageLoader),
         const SizedBox(height: 42),
         Row(
           children: [
@@ -168,12 +181,15 @@ class _LoadedState extends StatelessWidget {
 }
 
 class _ArticleSurface extends StatelessWidget {
-  const _ArticleSurface({required this.event});
+  const _ArticleSurface({required this.event, this.imageLoader});
 
   final HistoricalEvent event;
+  final OptionalImageLoader? imageLoader;
 
   @override
   Widget build(BuildContext context) {
+    final image = event.primaryImage;
+    final loader = imageLoader;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.softIvory,
@@ -205,15 +221,12 @@ class _ArticleSurface extends StatelessWidget {
               height: 1.1,
             ),
           ),
-          if (event.primaryImage case final image?) ...[
-            const SizedBox(height: 28),
-            AspectRatio(
-              aspectRatio: 2.05,
-              child: Image.network(
-                image.url.toString(),
-                fit: BoxFit.cover,
-                semanticLabel: image.altText,
-              ),
+          if (image != null && loader != null) ...[
+            OptionalEventImage(
+              url: image.url,
+              altText: image.altText,
+              loader: loader,
+              padding: const EdgeInsets.only(top: 28),
             ),
           ],
           const SizedBox(height: 28),

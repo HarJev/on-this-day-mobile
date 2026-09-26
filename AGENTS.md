@@ -45,8 +45,9 @@ Keep the first release intentionally small:
 - normal launch opens today's home screen;
 - the home screen shows today's date;
 - exactly one event is visually treated as the featured event;
-- additional events are secondary and curated, targeting roughly 6-10 when
-  worthwhile content exists;
+- additional events are secondary and curated: ordinarily at least three sit
+  beside the featured event, five or more total events are preferred when
+  worthwhile, and strong additions have no upper cap;
 - selecting any event opens event detail;
 - event detail explains what happened and why it matters in concise language;
 - every event detail includes at least one source/read-more link;

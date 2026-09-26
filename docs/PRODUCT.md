@@ -1,10 +1,12 @@
 # On This Day — Product Specification
 
 Sections 1-12 preserve the v0.0.1 daily-history definition. Section 13 is the
-approved, additive Quiz v0.1.0 specification; its implementation is planned.
+implemented Quiz v0.1.0 expansion. Section 14 records the approved post-audit
+direction that connects Today, Quiz, recent history, notifications, and visual
+content into one daily learning loop.
 
 **Status:** Canonical product definition  
-**Version:** v0.0.1  
+**Version:** v0.1.0
 **Product:** On This Day mobile app
 
 ## 1. Product Goal
@@ -126,11 +128,14 @@ At minimum:
 
 **Additional events**
 
-The product should target approximately **6–10 additional notable events** from the same calendar date.
+An ordinarily curated date contains at least **four total events**: one featured
+event and at least three additional notable events from the same calendar date.
+Aim for five or more total events when worthwhile, well-sourced additions are
+available. There is no upper cap on strong additions.
 
-Fewer events may be shown when there are not enough worthwhile events to maintain a high-quality experience.
-
-The goal is to keep the day's content interesting and varied without making the screen feel overwhelming or padding the list with weak historical events.
+A date below this floor requires an explicit editorial exception stating why
+stronger content is unavailable. The goal is to keep the day's content
+interesting and varied without padding the list with weak historical events.
 
 These events are secondary to the featured event.
 
@@ -185,12 +190,15 @@ The historical events displayed must correspond to that calendar date.
 
 ### FR-002 — Daily event collection
 
-For every supported calendar date, the product must be capable of returning:
+For every ordinarily curated calendar date, the product must be capable of
+returning:
 
 - exactly one featured event
-- zero or more additional events
+- at least three additional events
 
-The target is approximately 6–10 additional events per day, although fewer are permitted when appropriate.
+A below-floor date is permitted only with an explicit editorial exception. Aim
+for five or more total events when well-sourced additions are available; do not
+cap worthwhile additions.
 
 The featured event must also be a valid historical event for that calendar date.
 
@@ -557,7 +565,8 @@ If a primary image is available for that event, the product may also display it.
 **Then** they are displayed separately from the featured event  
 **And** none is visually confused with the primary featured event.
 
-The product should target approximately 6–10 additional events while allowing fewer when appropriate.
+Ordinarily, the product shows at least three additional events. A smaller set
+requires an explicit editorial exception; worthwhile additions are not capped.
 
 ### AC-005 — Open event
 
@@ -686,7 +695,9 @@ v0.0.1 should be considered product-complete when a user can reliably:
 1. open the app on any supported day,
 2. see today's date,
 3. immediately identify one featured historical event,
-4. see approximately 6–10 other historical events from that date when sufficient worthwhile events are available,
+4. see at least three additional historical events from that date, unless an
+   explicit editorial exception applies, and see five or more total events when
+   worthwhile,
 5. open any displayed event,
 6. understand what happened, its relevant background, and why it matters,
 7. see historical imagery where suitable imagery is available without the experience depending on it,
@@ -830,12 +841,77 @@ an unsaved result was stored.
 
 ### 13.6 Scope and acceptance
 
-The backend currently supplies 60 published questions, all four types, and nine
-collections. Counts and collection names come from the API, not hard-coded UI.
-This work does not expand the bank. Acceptance requires the complete setup,
+The backend supplies a growing reviewed bank across all four types and nine
+collections. Counts and collection names come from the API, not hard-coded UI;
+documentation snapshots must not be treated as live bank counts. Acceptance
+requires the complete setup,
 answer, feedback, timeout, result, review, and restart/persistence flows plus
 unchanged Today/Event Detail and notification deep-link behavior.
 
 Excluded: backend answers/attempts/scores, accounts/profiles, leaderboards,
 achievements/badges/streaks, synchronization, user-generated questions, arbitrary
 quiz search, runtime AI, notification changes, and backend Q8 content expansion.
+
+## 14. Post-Audit Product Direction
+
+The product is no longer treated as two adjacent experiences. Its target loop is:
+
+> **Discover today's featured moment -> understand it -> reinforce it through a
+> short Daily Challenge -> return tomorrow.**
+
+These requirements extend the earlier versioned scope without claiming that the
+supporting implementation is complete.
+
+### 14.1 Date-linked Daily Challenge
+
+- Quiz questions may be explicitly related to one or more stable event IDs.
+- Relationships are curated and reviewed; they are never inferred at request
+  time or generated by runtime AI.
+- Daily-5 should contain one eligible question related to the featured event
+  when one exists. Daily-10 and Daily-20 may include a second eligible question
+  related to another event on that date.
+- The remainder comes from the balanced global bank. No related question means
+  a normal general-history Daily, not a failed challenge or generated filler.
+- Existing immutable assignments remain authoritative. Future generation must
+  retain deterministic dates and stable 5/10/20 prefixes.
+- Event Detail may offer `Test what you learned`; Results and Review may link
+  back to the event that supplied a related question.
+
+### 14.2 Recent history without a full archive
+
+The app may show a constrained recent window containing today and the previous
+six calendar days. This helps users recover a few missed days without adding an
+arbitrary date picker, search engine, or complete archive. Reopening historical
+content does not create another official Daily result; any replay is practice.
+
+### 14.3 Notification permission and delivery
+
+Notification permission is requested only after the app has rendered and the
+user has seen a short explanation of its value. Denial or unavailable push
+credentials never block Today, Quiz, or recent history. Production daily
+delivery remains a backend-scheduled FCM flow; debug local or simulator-injected
+notifications verify presentation and routing but are not evidence of remote
+delivery. One unavailable date or timezone must not prevent other eligible
+recipients from receiving their notification.
+
+### 14.4 Editorial and visual completeness
+
+Every featured-event research pass includes a good-faith search for useful,
+licensed imagery. Missing imagery remains acceptable when rights, relevance, or
+quality are insufficient, but its review state is recorded rather than silently
+ignored. Featured imagery is prioritized before imagery for additional events.
+
+Multiple-choice and image-identification distractors use the same semantic class
+and comparable specificity as the answer. Avoid answer words repeated in the
+prompt, absurd alternatives, overlapping answers, and one option made obvious by
+length or detail. `correctOptionId`, not list position, identifies correctness;
+canonical answer positions should still vary across a pack as an editorial
+quality check even though playable options are shuffled.
+
+### 14.5 Approved retention extensions
+
+A home-screen widget and restrained event/result share cards are approved
+post-core work. The widget opens the featured event from a cached app-owned
+snapshot. Sharing must preserve attribution and may use an image only when its
+rights permit that reuse. These features follow reliable core content,
+notifications, and image delivery rather than replacing them.

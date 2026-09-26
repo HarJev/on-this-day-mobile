@@ -1,0 +1,596 @@
+import 'package:flutter/material.dart';
+import '../../../core/config/app_colors.dart';
+import '../../../core/navigation/source_launcher.dart';
+import '../domain/quiz_definition.dart';
+import '../domain/quiz_question.dart';
+import '../domain/quiz_result.dart';
+import '../domain/question_outcome.dart';
+import 'quiz_session_controller.dart';
+import 'quiz_session_state.dart';
+import 'widgets/quiz_gameplay_header.dart';
+import 'widgets/quiz_choice_question.dart';
+import 'widgets/quiz_answer_feedback.dart';
+import 'widgets/quiz_image_question.dart';
+import 'widgets/quiz_ordering_feedback.dart';
+import 'widgets/quiz_ordering_question.dart';
+import 'images/quiz_image_preparation_exception.dart';
+
+/// Borrows the controller. The host owns disposal and app/route lifecycle signals.
+class QuizGameplayView extends StatefulWidget {
+  const QuizGameplayView({
+    super.key,
+    required this.controller,
+    required this.sourceLauncher,
+    required this.onExit,
+    required this.onViewResults,
+  });
+  final QuizSessionController controller;
+  final SourceLauncher sourceLauncher;
+  final VoidCallback onExit;
+  final ValueChanged<QuizResult> onViewResults;
+  @override
+  State<QuizGameplayView> createState() => _QuizGameplayViewState();
+}
+
+class _QuizGameplayViewState extends State<QuizGameplayView> {
+  final scroll = ScrollController();
+  final headingFocus = FocusNode(debugLabel: 'Quiz question heading');
+  bool exitPending = false, exited = false, resultsOpened = false;
+  String? continuedQuestion;
+  String? questionId;
+  String announcement = '';
+  String? feedbackKey;
+  String? warningKey;
+  QuizSessionController get controller => widget.controller;
+  @override
+  void initState() {
+    super.initState();
+    controller.addListener(changed);
+  }
+
+  @override
+  void didUpdateWidget(QuizGameplayView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != controller) {
+      oldWidget.controller.removeListener(changed);
+      controller.addListener(changed);
+      questionId = null;
+      feedbackKey = null;
+      warningKey = null;
+      continuedQuestion = null;
+      resultsOpened = false;
+      exited = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && scroll.hasClients) scroll.jumpTo(0);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(changed);
+    scroll.dispose();
+    headingFocus.dispose();
+    super.dispose();
+  }
+
+  // Accessibility text changes only at meaningful transitions, never each tick.
+  void changed() {
+    final state = controller.state;
+    final context = questionContext(state);
+    if (context != null && questionId != context.$2.id) {
+      questionId = context.$2.id;
+      announcement = '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || questionId != context.$2.id) return;
+        if (scroll.hasClients) scroll.jumpTo(0);
+        headingFocus.requestFocus();
+      });
+    }
+    final outcome = context?.$3;
+    final expired =
+        state is QuizCompleted &&
+        state.result.reason == QuizCompletionReason.dailyTimeExpired;
+    if (outcome != null) {
+      final key = '${outcome.question.id}:${outcome.kind}:$expired';
+      if (feedbackKey != key) {
+        feedbackKey = key;
+        announcement = QuizAnswerFeedback.label(outcome, expired);
+      }
+    }
+    if (outcome == null ||
+        (controller.definition is DailyQuizDefinition && !expired)) {
+      final remaining = remainingTime(state);
+      final key = controller.definition is DailyQuizDefinition
+          ? 'daily'
+          : questionId;
+      if (remaining != null &&
+          remaining <= const Duration(seconds: 5) &&
+          warningKey != key) {
+        warningKey = key;
+        announcement = 'Five seconds remaining';
+      }
+    }
+    setState(() {});
+  }
+
+  (int, QuizQuestion, QuestionOutcome?)? questionContext(
+    QuizSessionState state,
+  ) {
+    if (state is QuizAnswering) return (state.index, state.question, null);
+    if (state is QuizFeedback) {
+      return (state.index, state.outcome.question, state.outcome);
+    }
+    if (state is QuizCompleted) {
+      final index = state.result.outcomes.lastIndexWhere(
+        (o) => o.unansweredReason != UnansweredReason.notReached,
+      );
+      final outcome = state.result.outcomes[index];
+      return (index, outcome.question, outcome);
+    }
+    return null;
+  }
+
+  Duration? remainingTime(QuizSessionState state) => switch (state) {
+    QuizAnswering(:final remaining) ||
+    QuizFeedback(:final remaining) => remaining,
+    _ => null,
+  };
+
+  List<String>? orderingDraft(QuizSessionState state) => switch (state) {
+    QuizAnswering(:final orderingDraft) => orderingDraft,
+    QuizFeedback(:final orderingDraft) => orderingDraft,
+    QuizCompleted(:final orderingDraft) => orderingDraft,
+    _ => null,
+  };
+  Future<void> exit() async {
+    if (exitPending || exited) return;
+    exitPending = true;
+    final state = controller.state;
+    final terminal =
+        state is QuizCompleted ||
+        state is QuizAbandoned ||
+        state is QuizInterrupted;
+    final confirmed =
+        terminal ||
+        await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Leave quiz?'),
+                content: const Text(
+                  'This unfinished attempt will not be scored.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Stay'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Leave'),
+                  ),
+                ],
+              ),
+            ) ==
+            true;
+    exitPending = false;
+    if (!mounted || !confirmed) return;
+    controller.abandon();
+    controller.releaseCompletedImages();
+    setState(() {
+      exited = true;
+    });
+    widget.onExit();
+  }
+
+  void advance(String id) {
+    if (continuedQuestion == id) return;
+    controller.continueQuiz(id);
+    // Hidden Continue is a no-op and must remain usable on return.
+    if (controller.state is! QuizFeedback ||
+        (controller.state as QuizFeedback).outcome.question.id != id) {
+      continuedQuestion = id;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = controller.state;
+    final current = questionContext(state);
+    final daily = controller.definition is DailyQuizDefinition;
+    final expired =
+        state is QuizCompleted &&
+        state.result.reason == QuizCompletionReason.dailyTimeExpired;
+    final q = current?.$2;
+    final needsImage =
+        q is ImageIdentificationQuestion && !resultsOpened && !exited;
+    final missingImage =
+        needsImage && controller.preparedImages?.contains(q.id) != true;
+    final hasFooterAction =
+        state is QuizFeedback ||
+        state is QuizCompleted ||
+        state is QuizAnswering &&
+            (q is ImageIdentificationQuestion ||
+                q is ChronologicalOrderingQuestion);
+    if (missingImage && state is! QuizCompleted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(controller.state, state)) {
+          controller.interrupt(
+            const QuizImagePreparationException(QuizImageFailure.missing),
+          );
+        }
+      });
+    }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) exit();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'On This Day',
+            style: TextStyle(
+              fontFamily: 'Georgia',
+              fontFamilyFallback: ['Times New Roman', 'serif'],
+              fontSize: 21,
+            ),
+          ),
+          leading: IconButton(
+            tooltip: 'Leave quiz',
+            onPressed: exit,
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
+        body: Column(
+          children: [
+            if (current != null)
+              QuizGameplayHeader(
+                daily: daily,
+                index: current.$1,
+                count: controller.definition.questionCount,
+                remaining: remainingTime(state),
+              ),
+            Semantics(
+              liveRegion: true,
+              label: announcement,
+              child: const SizedBox.shrink(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scroll,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: missingImage
+                    ? const Text('Quiz image unavailable.')
+                    : current == null
+                    ? SafeArea(
+                        top: false,
+                        child: _SessionIntroduction(
+                          definition: controller.definition,
+                          timingEnabled: controller.timingEnabled,
+                          state: state,
+                          onStart: controller.start,
+                          onRetry: controller.prepare,
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (q is ChoiceQuestion) ...[
+                            QuizChoiceQuestion(
+                              question: q,
+                              headingFocus: headingFocus,
+                              outcome: current.$3,
+                              image: needsImage
+                                  ? QuizQuestionImage(
+                                      key: ValueKey((
+                                        controller.preparedImages,
+                                        q.id,
+                                      )),
+                                      questionId: q.id,
+                                      images: controller.preparedImages!,
+                                      metadata: q.image,
+                                      launcher: widget.sourceLauncher,
+                                    )
+                                  : null,
+                              onAnswer: (id) =>
+                                  controller.answerOption(q.id, id),
+                            ),
+                            if (current.$3 != null)
+                              QuizAnswerFeedback(
+                                outcome: current.$3!,
+                                daily: daily,
+                                expired: expired,
+                                launcher: widget.sourceLauncher,
+                                showLabel: q is! ImageIdentificationQuestion,
+                              ),
+                          ],
+                          if (q is ChronologicalOrderingQuestion) ...[
+                            if (current.$3 == null)
+                              QuizOrderingQuestion(
+                                question: q,
+                                headingFocus: headingFocus,
+                                orderingDraft: orderingDraft(state)!,
+                                onDraftChanged: (draft) =>
+                                    controller.updateOrderingDraft(q.id, draft),
+                              )
+                            else ...[
+                              _OrderingQuestionHeading(
+                                question: q,
+                                headingFocus: headingFocus,
+                              ),
+                              QuizOrderingFeedback(
+                                outcome: current.$3!,
+                                daily: daily,
+                                expired: expired,
+                                orderingDraft: orderingDraft(state),
+                                launcher: widget.sourceLauncher,
+                              ),
+                            ],
+                          ],
+                        ],
+                      ),
+              ),
+            ),
+            if (hasFooterAction)
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButtonTheme(
+                      data: FilledButtonThemeData(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (q is ImageIdentificationQuestion &&
+                              current?.$3 != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                QuizAnswerFeedback.label(current!.$3!, expired),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                          switch (state) {
+                            QuizFeedback(:final outcome) => FilledButton(
+                              onPressed: () => advance(outcome.question.id),
+                              child: const Text('Continue'),
+                            ),
+                            QuizCompleted(:final result) => FilledButton(
+                              onPressed: resultsOpened
+                                  ? null
+                                  : () {
+                                      if (resultsOpened) return;
+                                      setState(() {
+                                        resultsOpened = true;
+                                      });
+                                      controller.releaseCompletedImages();
+                                      widget.onViewResults(result);
+                                    },
+                              child: const Text('View results'),
+                            ),
+                            QuizAnswering(:final question)
+                                when question is ImageIdentificationQuestion &&
+                                    !missingImage =>
+                              TextButton(
+                                onPressed: () =>
+                                    controller.skipImage(question.id),
+                                child: const Text('Skip question'),
+                              ),
+                            QuizAnswering(:final question)
+                                when question
+                                    is ChronologicalOrderingQuestion =>
+                              FilledButton(
+                                key: const Key('submit-order'),
+                                onPressed: () =>
+                                    controller.submitOrder(question.id),
+                                child: const Text('Submit order'),
+                              ),
+                            _ => const SizedBox.shrink(),
+                          },
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrderingQuestionHeading extends StatelessWidget {
+  const _OrderingQuestionHeading({
+    required this.question,
+    required this.headingFocus,
+  });
+
+  final ChronologicalOrderingQuestion question;
+  final FocusNode headingFocus;
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    focusNode: headingFocus,
+    child: Semantics(
+      header: true,
+      child: Text(
+        question.prompt,
+        key: const Key('quiz-heading'),
+        style: const TextStyle(
+          fontFamily: 'Georgia',
+          fontFamilyFallback: ['Times New Roman', 'serif'],
+          fontSize: 24,
+          height: 1.2,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  );
+}
+
+class _SessionIntroduction extends StatelessWidget {
+  const _SessionIntroduction({
+    required this.definition,
+    required this.timingEnabled,
+    required this.state,
+    required this.onStart,
+    required this.onRetry,
+  });
+
+  final QuizDefinition definition;
+  final bool timingEnabled;
+  final QuizSessionState state;
+  final VoidCallback onStart;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final daily = definition is DailyQuizDefinition;
+    final preparing = state is QuizPreparing;
+    final failed = state is QuizPreparationFailed;
+    final interrupted = state is QuizInterrupted;
+    final abandoned = state is QuizAbandoned;
+    final imageCount = definition.questions
+        .whereType<ImageIdentificationQuestion>()
+        .length;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            daily ? 'DAILY CHALLENGE' : 'QUICK PLAY',
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            interrupted
+                ? 'Quiz interrupted'
+                : abandoned
+                ? 'Quiz ended'
+                : failed
+                ? 'We couldn\'t prepare this quiz'
+                : preparing
+                ? daily
+                      ? 'Preparing your challenge'
+                      : 'Preparing your quiz'
+                : daily
+                ? 'Your challenge is ready'
+                : 'Your quiz is ready',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontFamily: 'Georgia',
+              fontFamilyFallback: const ['Times New Roman', 'serif'],
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _SessionFact(
+            icon: Icons.help_outline,
+            label: '${definition.questionCount} questions',
+          ),
+          const SizedBox(height: 10),
+          _SessionFact(
+            icon: timingEnabled
+                ? Icons.timer_outlined
+                : Icons.timer_off_outlined,
+            label: _timingLabel(),
+          ),
+          if (imageCount > 0) ...[
+            const SizedBox(height: 10),
+            _SessionFact(
+              icon: Icons.image_outlined,
+              label: preparing
+                  ? 'Preparing images'
+                  : state is QuizReady
+                  ? 'Images ready'
+                  : 'Images unavailable',
+            ),
+          ],
+          const SizedBox(height: 22),
+          const Divider(color: AppColors.mutedCopper),
+          if (state is QuizReady || failed) ...[
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: failed ? onRetry : onStart,
+              child: Text(
+                failed
+                    ? 'Retry'
+                    : daily
+                    ? 'Start challenge'
+                    : 'Start quiz',
+              ),
+            ),
+          ],
+          if (preparing) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(
+                  Icons.hourglass_top,
+                  size: 18,
+                  color: AppColors.mutedGray,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Getting everything in place…',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _timingLabel() {
+    if (definition case DailyQuizDefinition(:final duration)) {
+      return '${duration.inMinutes} minutes total';
+    }
+    if (!timingEnabled) return 'No countdown';
+    final quick = definition as QuickPlayQuizDefinition;
+    final seconds =
+        quick.questionTimeLimits.values
+            .map((duration) => duration.inSeconds)
+            .toSet()
+            .toList()
+          ..sort();
+    return seconds.length == 1
+        ? '${seconds.single} seconds per question'
+        : '${seconds.first}-${seconds.last} seconds per question';
+  }
+}
+
+class _SessionFact extends StatelessWidget {
+  const _SessionFact({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 20, color: AppColors.archivalCobalt),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
+      ),
+    ],
+  );
+}

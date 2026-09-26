@@ -1,11 +1,12 @@
 # On This Day — Design Direction v0.0.1
 
 Sections 1-13 retain the canonical v0.0.1 direction. Section 14 defines the
-approved Quiz v0.1.0 extension; its UI is not yet implemented. Earlier exclusions
-of quizzes, tabs, and categories are scoped to v0.0.1.
+implemented Quiz v0.1.0 extension. Section 15 adds the approved post-audit UX
+direction. Earlier exclusions of quizzes, tabs, categories, and recent history
+are scoped to their original version.
 
 **Status:** Design direction  
-**Version:** v0.0.1  
+**Version:** v0.1.0
 **Product:** On This Day mobile app
 
 ## 1. Purpose
@@ -255,6 +256,11 @@ cobalt.
 
 Additional events are intentionally secondary. Do not add summaries, images,
 filters, category chips, or competing feature cards.
+
+The section must render every additional event returned for the date without a
+visual cap or padding. Ordinarily, curated dates provide at least three
+additional events; a smaller set is an explicit editorial exception, not a
+layout prompt to invent or duplicate content.
 
 ---
 
@@ -541,3 +547,68 @@ The existing home.png and event_details.png remain canonical for Today and Event
 Detail. Quiz inherits their visual language, not their exact article composition.
 Verify each quiz type, feedback, results, and errors on small screens, at large
 text scales, and with screen readers before release.
+
+### Reviewed Stitch references (2026-09-11)
+
+The eight named exports under `docs/design/` are supporting visual proposals.
+Read [QUIZ_SCREEN_REVIEW.md](design/QUIZ_SCREEN_REVIEW.md) for their filename index,
+per-screen corrections, missing states, and concrete timer presentation rules
+before implementing any quiz screen. Written product/interaction requirements
+and that correction list take precedence over conflicting screenshot details.
+The exports have not been edited to incorporate the corrections.
+
+Use their palette, serif/sans pairing, root navigation and answer-row structure.
+Do not copy impossible countdowns, automatic next-question transitions,
+submission at zero seconds, invented metadata/assets, profile actions, or
+selected-answer styling for a skipped question. Daily shows total remaining
+time; timed Quick Play shows current-question remaining time. Both derive from
+session state and backend metadata. Untimed play and image preparation have no
+running countdown. Distinguish question progress from time and score.
+
+Keep gameplay compact, remove decorative pre-question blocks, wrap option/item
+text completely, and keep feedback/submit actions reachable above the safe area.
+Use the existing home.png and event_details.png for history content; the Stitch
+Today export is a bottom-navigation reference only. Missing quiz screens should
+reuse the approved components and written requirements, with real-device review
+during MQ4-MQ11 rather than requiring another complete design generation pass.
+
+## 15. Post-Audit UX Direction
+
+### Connected daily journey
+
+Today remains the normal root and featured event remains the strongest visual
+element. Event Detail may end with a compact `Test what you learned` action when
+an approved related question exists. Daily setup may explain that part of the
+challenge connects to today's stories, but it must not reveal answers or add a
+large promotional screen. Results/Review may link back to the related story.
+
+### Recent days
+
+Add a restrained `Recent days` section for today and the previous six dates.
+Use the existing editorial list language rather than a calendar picker or a
+second card-heavy dashboard. Preserve the featured hierarchy, show empty dates
+honestly, and make returning to Today immediate.
+
+### Notification consent
+
+Never place the operating-system notification prompt over a blank launch view.
+Render usable content first. A concise in-app explanation may offer `Enable daily
+history reminder` and `Not now`; either choice leaves the app usable. Debug-only
+notification controls remain visually secondary and never appear in release UI.
+
+### Images and content density
+
+Featured events should use strong reviewed imagery whenever available, while the
+text-only composition remains deliberate and complete. A failed optional image
+collapses without a broken placeholder. Quiz images must survive their first
+fetch, preserve meaningful detail, and keep prompt plus answer choices readily
+scannable on a normal phone. Redirect, cache, and origin failures are technical
+states, not reasons to silently remove a question.
+
+### Widget and share cards
+
+The widget shows a compact date/year and featured-event hook from an app-owned
+cached snapshot and opens Event Detail. It must have a clear stale/empty state.
+Share cards emphasize one event or one result, use restrained branding, avoid
+dense source text, and include imagery only when the reviewed license permits
+redistribution in the generated card.

@@ -483,6 +483,33 @@ loading offers retry/exit without a timer or points penalty. Unexpected required
 image loss in play terminates as a technical interruption, not a scored result.
 Skip question is a separate deliberate user action, unanswered with zero credit.
 
+MQ5 uses `QuizImagePreparer` behind the existing preparation-attempt/lease
+boundary. Unique URLs share transfer/decode budgets; each question retains its
+own metadata. The HTTP adapter streams bounded chunks using http 1.6's
+AbortableRequest. Cancellation is best-effort: cancel subscriptions, signal
+supported request abort, ignore late results, and dispose late decoder handles.
+Do not equate cancellation with guaranteed termination of an underlying socket.
+Per-image deadlines include decoding; the batch deadline includes queueing.
+The adapter requires direct HTTPS 200 responses and static decodable images.
+
+`ImageDescriptor` supplies dimensions before target decoding. The decoder
+reserves width * height * 4 bytes and validates actual dimensions. These limits
+bound retained encoded data and decoded pixels, not all native codec/GPU scratch
+allocations. No global ImageCache entry or disk cache is used.
+
+The session owns original decoded handles; the RawImage widget owns a clone.
+RawImage does not dispose its supplied handle, so the widget disposes its clone
+only when it is no longer buildable. Advancing drops question mappings that are
+no longer needed (shared URLs remain until their last use). Completion preserves
+only the final reached image through feedback, even if result delivery fails.
+Leaving feedback/Results navigation or disposal releases it. Completion timing
+and immediate sink delivery remain unchanged. Missing active handles interrupt
+the session before answer/timeout grading; intentional terminal cleanup never
+rewrites a frozen result. Image credit is a quiet disclosure. Skip is not an
+equivalent nonvisual alternative to visual identification.
+
+See `docs/QUIZ_IMAGE_REVIEW.md` for MQ5's canonical asset budget check.
+
 ### SQLite persistence
 
 Use sqflite through QuizResultStore, resolving a compatible version in MQ7.
