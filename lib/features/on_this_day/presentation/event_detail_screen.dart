@@ -4,10 +4,12 @@ import 'widgets/optional_event_image.dart';
 import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/navigation/source_launcher.dart';
+import '../../../core/notifications/notification_prompt_coordinator.dart';
 import '../domain/event_source.dart';
 import '../domain/historical_event.dart';
 import '../domain/on_this_day_repository.dart';
 import 'event_detail_controller.dart';
+import 'widgets/notification_pre_prompt.dart';
 import 'widgets/source_row.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -17,12 +19,17 @@ class EventDetailScreen extends StatefulWidget {
     required this.eventId,
     required this.sourceLauncher,
     this.imageLoader,
+    this.notificationPrompt,
   }) : assert(eventId != '');
 
   final OnThisDayRepository repository;
   final String eventId;
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
+
+  /// When provided, a notification pre-prompt may appear after the sources of
+  /// a successfully loaded event.
+  final NotificationPromptCoordinator? notificationPrompt;
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -65,6 +72,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               event: event,
               onSourceSelected: _openSource,
               imageLoader: widget.imageLoader,
+              notificationPrompt: widget.notificationPrompt,
             ),
           ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
@@ -141,23 +149,70 @@ class _DetailScaffold extends StatelessWidget {
   }
 }
 
-class _LoadedState extends StatelessWidget {
+class _LoadedState extends StatefulWidget {
   const _LoadedState({
     required this.event,
     required this.onSourceSelected,
     this.imageLoader,
+    this.notificationPrompt,
   });
 
   final HistoricalEvent event;
   final ValueChanged<EventSource> onSourceSelected;
   final OptionalImageLoader? imageLoader;
+  final NotificationPromptCoordinator? notificationPrompt;
+
+  @override
+  State<_LoadedState> createState() => _LoadedStateState();
+}
+
+class _LoadedStateState extends State<_LoadedState> {
+  final ScrollController _scrollController = ScrollController();
+  bool _reachedArticleEnd = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_revealPromptAtArticleEnd);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _revealPromptAtArticleEnd();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_revealPromptAtArticleEnd)
+      ..dispose();
+    super.dispose();
+  }
+
+  /// Reveals the invitation once the reader is within this distance of the
+  /// article's end (sources included), so it is laid out before they stop and
+  /// they can keep scrolling into it.
+  static const _revealWithin = 180.0;
+
+  void _revealPromptAtArticleEnd() {
+    if (_reachedArticleEnd || !_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    if (position.pixels < position.maxScrollExtent - _revealWithin) {
+      return;
+    }
+    setState(() => _reachedArticleEnd = true);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final notificationPrompt = widget.notificationPrompt;
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
       children: [
-        _ArticleSurface(event: event, imageLoader: imageLoader),
+        _ArticleSurface(event: widget.event, imageLoader: widget.imageLoader),
         const SizedBox(height: 42),
         Row(
           children: [
@@ -173,8 +228,13 @@ class _LoadedState extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        for (final source in event.sources)
-          SourceRow(source: source, onTap: () => onSourceSelected(source)),
+        for (final source in widget.event.sources)
+          SourceRow(
+            source: source,
+            onTap: () => widget.onSourceSelected(source),
+          ),
+        if (_reachedArticleEnd && notificationPrompt != null)
+          NotificationPrePrompt(coordinator: notificationPrompt),
       ],
     );
   }

@@ -60,18 +60,19 @@ class ApiClient {
     final http.Response response;
 
     try {
-      _debugLog('api_request_start method=$method uri=$uri');
+      _debugLog('api_request_start method=$method uri=${_loggable(uri)}');
       response = await _send(method: method, uri: uri, body: requestBody);
     } catch (error) {
       _debugLog(
-        'api_request_failure method=$method uri=$uri '
+        'api_request_failure method=$method uri=${_loggable(uri)} '
         'causeType=${error.runtimeType} cause=$error',
       );
       throw ApiException.network(cause: error);
     }
 
     _debugLog(
-      'api_request_end method=$method uri=$uri statusCode=${response.statusCode}',
+      'api_request_end method=$method uri=${_loggable(uri)} '
+      'statusCode=${response.statusCode}',
     );
 
     final body = _decodeObject(response.body);
@@ -119,6 +120,18 @@ class ApiClient {
     } catch (error) {
       throw ApiException.invalidJson(cause: error);
     }
+  }
+
+  /// Device tokens travel in `/v1/devices/{token}` paths; never log them.
+  static String _loggable(Uri uri) {
+    final segments = uri.pathSegments;
+    final devices = segments.indexOf('devices');
+    if (devices < 0 || devices == segments.length - 1) {
+      return uri.toString();
+    }
+    return uri
+        .replace(pathSegments: [...segments.take(devices + 1), '<redacted>'])
+        .toString();
   }
 
   void _debugLog(String message) {

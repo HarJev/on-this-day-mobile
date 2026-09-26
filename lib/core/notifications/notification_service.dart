@@ -9,19 +9,41 @@ import 'notification_payload_parser.dart';
 enum NotificationPermissionStatus {
   authorized,
   denied,
+
+  /// The operating system will no longer show its permission prompt; only
+  /// device Settings can re-enable notifications.
+  permanentlyDenied,
   notDetermined,
   provisional,
+}
+
+extension NotificationPermissionStatusDelivery on NotificationPermissionStatus {
+  /// Whether the system will deliver notifications (provisional delivers
+  /// quietly on iOS).
+  bool get allowsDelivery => switch (this) {
+    NotificationPermissionStatus.authorized ||
+    NotificationPermissionStatus.provisional => true,
+    NotificationPermissionStatus.denied ||
+    NotificationPermissionStatus.permanentlyDenied ||
+    NotificationPermissionStatus.notDetermined => false,
+  };
+}
+
+/// Reads and requests notification permission. [requestPermission] is the only
+/// call that may show the operating-system permission prompt.
+abstract interface class NotificationPermissionGateway {
+  Future<NotificationPermissionStatus> currentPermissionStatus();
+
+  Future<NotificationPermissionStatus> requestPermission();
 }
 
 class NotificationStartupState {
   const NotificationStartupState({
     required this.permissionStatus,
-    required this.currentToken,
     required this.initialEventId,
   });
 
   final NotificationPermissionStatus permissionStatus;
-  final String? currentToken;
   final String? initialEventId;
 }
 
@@ -92,7 +114,7 @@ class FirebaseNotificationMessaging implements NotificationMessaging {
   }
 }
 
-class NotificationService {
+class NotificationService implements NotificationPermissionGateway {
   NotificationService({
     required NotificationMessaging messaging,
     LocalNotificationGateway? localNotifications,
@@ -117,18 +139,30 @@ class NotificationService {
 
   Stream<NotificationTap> get notificationTaps => _tapController.stream;
 
+  @override
   Future<NotificationPermissionStatus> currentPermissionStatus() {
     return _messaging.getPermissionStatus();
   }
 
+  /// Shows the operating-system prompt when it is still available. Call only
+  /// from an explicit user action; startup must never call this.
+  @override
+  Future<NotificationPermissionStatus> requestPermission() async {
+    _debugLog('permission_request_start');
+    final status = await _messaging.requestPermission();
+    _debugLog('permission_request_end status=$status');
+    return status;
+  }
+
+  /// Returns the current push token, or null when it is unavailable (for
+  /// example before APNs registration or without network).
+  Future<String?> currentToken() => _getCurrentToken();
+
+  /// Initializes tap handling and reports the existing permission status
+  /// without prompting.
   Future<NotificationStartupState> start() async {
     final localInitialPayload = await _startLocalNotifications();
-
-    _debugLog('permission_request_start');
-    final permissionStatus = await _messaging.requestPermission();
-    _debugLog('permission_request_end status=$permissionStatus');
-
-    final currentToken = await _getCurrentToken();
+    final permissionStatus = await _readPermissionStatus();
     await _listenForTokenRefresh();
 
     final initialMessageData = await _messaging.getInitialMessageData();
@@ -139,7 +173,6 @@ class NotificationService {
 
     return NotificationStartupState(
       permissionStatus: permissionStatus,
-      currentToken: currentToken,
       initialEventId: initialEventId,
     );
   }
@@ -164,6 +197,13 @@ class NotificationService {
       return;
     }
 
+    final status = await _readPermissionStatus();
+    if (!status.allowsDelivery) {
+      _debugLog(
+        'local_test_notification_permission_missing status=$status '
+        'hint=enable_via_event_detail_prompt',
+      );
+    }
     _debugLog('local_test_notification_show eventId=$eventId');
     await localNotifications.show(
       title: 'A moment in history is waiting',
@@ -190,6 +230,19 @@ class NotificationService {
         'causeType=${error.runtimeType} cause=$error',
       );
       return null;
+    }
+  }
+
+  Future<NotificationPermissionStatus> _readPermissionStatus() async {
+    try {
+      final status = await _messaging.getPermissionStatus();
+      _debugLog('permission_status status=$status');
+      return status;
+    } catch (error) {
+      _debugLog(
+        'permission_status_failure causeType=${error.runtimeType} cause=$error',
+      );
+      return NotificationPermissionStatus.notDetermined;
     }
   }
 
@@ -255,7 +308,7 @@ extension on AuthorizationStatus {
       AuthorizationStatus.authorized => NotificationPermissionStatus.authorized,
       AuthorizationStatus.denied => NotificationPermissionStatus.denied,
       AuthorizationStatus.deniedPermanently =>
-        NotificationPermissionStatus.denied,
+        NotificationPermissionStatus.permanentlyDenied,
       AuthorizationStatus.notDetermined =>
         NotificationPermissionStatus.notDetermined,
       AuthorizationStatus.provisional =>

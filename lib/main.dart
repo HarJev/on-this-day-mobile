@@ -23,7 +23,11 @@ import 'core/notifications/device_registration_client.dart';
 import 'core/notifications/device_registration_coordinator.dart';
 import 'core/notifications/local_notification_gateway.dart';
 import 'core/notifications/notification_navigation_coordinator.dart';
+import 'core/notifications/notification_prompt_coordinator.dart';
+import 'core/notifications/notification_prompt_store.dart';
+import 'core/notifications/notification_resume_reconciler.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/notifications/registered_token_store.dart';
 import 'features/on_this_day/data/backend_on_this_day_repository.dart';
 import 'features/quiz/application/quiz_completion_coordinator.dart';
 import 'features/quiz/application/quiz_completion_id_generator.dart';
@@ -86,14 +90,31 @@ Future<void> main() async {
     messaging: FirebaseNotificationMessaging(),
     localNotifications: PlatformLocalNotificationGateway(),
   );
+  // Reads the existing permission status and prepares tap routing; it never
+  // shows the system permission prompt (see NotificationPromptCoordinator).
   final notificationStartup = await notificationService.start();
   final deviceRegistrationCoordinator = DeviceRegistrationCoordinator(
     client: DeviceRegistrationClient(apiClient: apiClient),
     timezoneProvider: timezoneProvider,
     platformProvider: const PlatformDevicePlatformProvider(),
     notificationService: notificationService,
+    registeredTokens: FileRegisteredTokenStore(
+      directory: getApplicationSupportDirectory,
+    ),
   );
   unawaited(deviceRegistrationCoordinator.start(notificationStartup));
+  // Returning from device Settings may have changed the permission.
+  NotificationResumeReconciler(
+    reconcile: deviceRegistrationCoordinator.reconcile,
+  ).start();
+  final notificationPrompt = NotificationPromptCoordinator(
+    permissions: notificationService,
+    store: FileNotificationPromptStore(
+      directory: getApplicationSupportDirectory,
+    ),
+    onAuthorized: deviceRegistrationCoordinator.registerAfterAuthorization,
+    deniedMayBeUnasked: defaultTargetPlatform == TargetPlatform.android,
+  );
 
   final notificationNavigationCoordinator = NotificationNavigationCoordinator(
     navigatorKey: navigatorKey,
@@ -121,6 +142,7 @@ Future<void> main() async {
         routeObserver: routeObserver,
         quizDependencies: () => quizDependencies,
         optionalImageLoader: optionalImageLoader,
+        notificationPrompt: notificationPrompt,
       ),
       routeObserver: routeObserver,
     ),

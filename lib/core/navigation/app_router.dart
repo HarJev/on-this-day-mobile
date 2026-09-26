@@ -9,6 +9,7 @@ import '../../features/quiz/presentation/quick_play_setup_screen.dart';
 import '../../features/quiz/presentation/quiz_full_review_screen.dart';
 import '../../features/quiz/presentation/quiz_results_screen.dart';
 import '../config/timezone_provider.dart';
+import '../notifications/notification_prompt_coordinator.dart';
 import 'app_root_shell.dart';
 import 'app_routes.dart';
 import 'quiz_gameplay_route.dart';
@@ -26,6 +27,7 @@ class AppRouter {
     RouteObserver<PageRoute<dynamic>>? routeObserver,
     GlobalKey<NavigatorState>? navigatorKey,
     OptionalImageLoader? optionalImageLoader,
+    NotificationPromptCoordinator? notificationPrompt,
   }) : _repository = repository,
        _timezoneProvider = timezoneProvider,
        _sourceLauncher = sourceLauncher,
@@ -33,6 +35,7 @@ class AppRouter {
        _quizDependencies = quizDependencies,
        _navigatorKey = navigatorKey,
        _optionalImageLoader = optionalImageLoader,
+       _notificationPrompt = notificationPrompt,
        routeObserver = routeObserver ?? RouteObserver<PageRoute<dynamic>>();
 
   final OnThisDayRepository _repository;
@@ -42,6 +45,7 @@ class AppRouter {
   final QuizRouteDependencies Function()? _quizDependencies;
   final GlobalKey<NavigatorState>? _navigatorKey;
   final OptionalImageLoader? _optionalImageLoader;
+  final NotificationPromptCoordinator? _notificationPrompt;
   final RouteObserver<PageRoute<dynamic>> routeObserver;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
@@ -81,6 +85,7 @@ class AppRouter {
           eventId: eventId,
           sourceLauncher: _sourceLauncher,
           imageLoader: _optionalImageLoader,
+          notificationPrompt: _notificationPrompt,
         ),
         settings,
       );

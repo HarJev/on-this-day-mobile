@@ -67,7 +67,9 @@ extension NotificationPermissionStatusJson on NotificationPermissionStatus {
   String toJsonValue() {
     return switch (this) {
       NotificationPermissionStatus.authorized => 'authorized',
-      NotificationPermissionStatus.denied => 'denied',
+      // The backend contract has no permanent-denial value; both mean denied.
+      NotificationPermissionStatus.denied ||
+      NotificationPermissionStatus.permanentlyDenied => 'denied',
       NotificationPermissionStatus.notDetermined => 'not_determined',
       NotificationPermissionStatus.provisional => 'provisional',
     };
