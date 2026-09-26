@@ -12,6 +12,9 @@ import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_controller.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_preparation.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_state.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/widgets/quiz_image_question.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/widgets/quiz_source_row.dart';
+import 'package:on_this_day_mobile/features/quiz/domain/quiz_question.dart';
 import '../support/image_fakes.dart';
 import '../support/session_fakes.dart';
 import '../support/quiz_gameplay_harness.dart';
@@ -108,8 +111,96 @@ void main() {
     await tester.pump();
   }
 
+  // Every string in the fixture credit that could identify a subject.
+  const creditStrings = [
+    'Test artwork',
+    'Test fixture',
+    'Fixture archive',
+    'CC0',
+    'example.org',
+  ];
+
+  List<String> semanticsText(WidgetTester tester) {
+    var root = tester.getSemantics(find.byType(QuizGameplayHarness));
+    while (root.parent != null) {
+      root = root.parent!;
+    }
+    final text = <String>[];
+    void visit(SemanticsNode node) {
+      final data = node.getSemanticsData();
+      text.addAll(
+        [
+          data.label,
+          data.value,
+          data.hint,
+          data.tooltip,
+          data.linkUrl?.toString() ?? '',
+        ].where((value) => value.isNotEmpty),
+      );
+      node.visitChildren((child) {
+        visit(child);
+        return true;
+      });
+    }
+
+    visit(root);
+    return text;
+  }
+
+  void expectCreditHidden(WidgetTester tester) {
+    for (final value in creditStrings) {
+      expect(
+        find.textContaining(value, skipOffstage: false),
+        findsNothing,
+        reason: 'widget tree exposes "$value" before submission',
+      );
+    }
+    // Only the disabled placeholder tile may exist; no expandable credit.
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is ExpansionTile && widget.enabled,
+        skipOffstage: false,
+      ),
+      findsNothing,
+    );
+    expect(find.byType(QuizSourceRow, skipOffstage: false), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Tooltip &&
+            creditStrings.any(
+              (value) => (widget.message ?? '').contains(value),
+            ),
+      ),
+      findsNothing,
+    );
+    for (final value in creditStrings) {
+      expect(
+        semanticsText(tester).where((text) => text.contains(value)),
+        isEmpty,
+        reason: 'accessibility traversal exposes "$value" before submission',
+      );
+    }
+  }
+
+  Future<void> expectCreditAvailableAndLinksOpen(WidgetTester tester) async {
+    expect(find.text(QuizQuestionImage.pendingCreditMessage), findsNothing);
+    await tap(tester, 'Image credit');
+    await tester.pumpAndSettle();
+    expect(find.text('Test artwork'), findsOneWidget);
+    expect(find.text('Test fixture'), findsOneWidget);
+    await tap(tester, 'Fixture archive');
+    await tap(tester, 'CC0');
+    expect(launcher.opened, [
+      Uri.parse('https://example.org/source'),
+      (imageQuiz().questions.first as ImageIdentificationQuestion)
+          .image
+          .licenseUrl,
+    ]);
+  }
+
   testWidgets(
-    'real prepared pixels, neutral semantics, contained aspect ratio and credit links',
+    'real prepared pixels, neutral semantics, contained aspect ratio',
     (tester) async {
       final semantics = tester.ensureSemantics();
       await mount(tester);
@@ -121,15 +212,161 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(Image), findsNothing);
-      expect(find.text('Test artwork'), findsNothing);
-      await tap(tester, 'Image credit');
-      await tester.pumpAndSettle();
-      expect(find.text('Test artwork'), findsOneWidget);
-      await tap(tester, 'Fixture archive');
-      expect(launcher.opened.single, Uri.parse('https://example.org/source'));
       semantics.dispose();
     },
   );
+
+  testWidgets(
+    'while answerable, no credit text, link, tooltip, or semantics is reachable',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await mount(tester);
+
+      expect(controller.state, isA<QuizAnswering>());
+      expectCreditHidden(tester);
+      // The neutral reviewed alt text is still the image's description.
+      expect(
+        find.bySemanticsLabel('A blue circular form on a pale field'),
+        findsOneWidget,
+      );
+      // A quiet, non-interactive placeholder holds the row.
+      final pending = find.text(QuizQuestionImage.pendingCreditMessage);
+      expect(pending, findsOneWidget);
+      final node = tester
+          .getSemantics(find.byKey(const Key('image-credit-pending')))
+          .getSemanticsData();
+      expect(node.label, QuizQuestionImage.pendingCreditMessage);
+      expect(node.hasAction(SemanticsAction.tap), isFalse);
+      expect(node.flagsCollection.isButton, isFalse);
+      expect(node.linkUrl, isNull);
+      await tester.tap(pending);
+      await tester.pump();
+      expectCreditHidden(tester);
+      expect(launcher.opened, isEmpty);
+      semantics.dispose();
+    },
+  );
+
+  testWidgets('credit becomes available after a correct answer', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await mount(tester);
+    // Measure relative to the image so scrolling toward feedback is not
+    // mistaken for a layout change.
+    double belowImage(Finder finder) =>
+        tester.getTopLeft(finder).dy -
+        tester.getRect(find.byType(RawImage)).bottom;
+    final pendingOffset = belowImage(
+      find.byKey(const Key('image-credit-pending')),
+    );
+    final optionOffset = belowImage(find.byKey(const Key('option-a')));
+
+    await tester.tap(find.byKey(const Key('option-a')));
+    await tester.pump();
+
+    expect(controller.state, isA<QuizFeedback>());
+    // The credit row takes the placeholder's slot, and the answer options
+    // below it do not move.
+    expect(belowImage(find.byKey(const ValueKey('credit-q-0'))), pendingOffset);
+    expect(belowImage(find.byKey(const Key('option-a'))), optionOffset);
+    await expectCreditAvailableAndLinksOpen(tester);
+    // After submission the credit is reachable through accessibility too.
+    expect(
+      semanticsText(tester).any((text) => text.contains('Test artwork')),
+      isTrue,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('credit becomes available after an incorrect answer', (
+    tester,
+  ) async {
+    await mount(tester);
+
+    await tester.tap(find.byKey(const Key('option-b')));
+    await tester.pump();
+
+    expect(find.text('Incorrect'), findsOneWidget);
+    await expectCreditAvailableAndLinksOpen(tester);
+  });
+
+  testWidgets('credit becomes available after a timeout', (tester) async {
+    await mount(tester);
+
+    clock.advance(const Duration(seconds: 30));
+    scheduler.fire();
+    await tester.pump();
+
+    expect(find.text("Time's up"), findsOneWidget);
+    await expectCreditAvailableAndLinksOpen(tester);
+  });
+
+  testWidgets('credit becomes available after Skip', (tester) async {
+    await mount(tester);
+
+    await tap(tester, 'Skip question');
+
+    expect(find.text('Skipped'), findsOneWidget);
+    await expectCreditAvailableAndLinksOpen(tester);
+  });
+
+  testWidgets(
+    'the final question exposes credit in feedback before Results opens',
+    (tester) async {
+      await mount(tester);
+      for (var i = 0; i < 4; i++) {
+        await tap(tester, 'Skip question');
+        expect(find.text('Image credit'), findsOneWidget);
+        await tap(tester, 'Continue');
+        // Each new question starts protected again.
+        expectCreditHidden(tester);
+      }
+
+      await tester.tap(find.byKey(const Key('option-a')));
+      await tester.pump();
+
+      expect(controller.state, isA<QuizCompleted>());
+      expect(find.text('View results'), findsOneWidget);
+      await expectCreditAvailableAndLinksOpen(tester);
+      expect(results, 0);
+      await tap(tester, 'View results');
+      expect(results, 1);
+    },
+  );
+
+  testWidgets('small-phone large-text layout stays usable before and after', (
+    tester,
+  ) async {
+    await mount(tester, scale: 2);
+
+    expectCreditHidden(tester);
+    await tester.ensureVisible(
+      find.text(QuizQuestionImage.pendingCreditMessage),
+    );
+    expect(
+      tester.getBottomRight(find.text('Skip question')).dy,
+      lessThanOrEqualTo(568),
+    );
+
+    await tap(tester, 'Skip question');
+
+    expect(
+      tester.getBottomRight(find.text('Continue')).dy,
+      lessThanOrEqualTo(568),
+    );
+    await tester.ensureVisible(find.text('Image credit'));
+    await tap(tester, 'Image credit');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Test artwork'));
+    expect(find.text('Test artwork'), findsOneWidget);
+    expect(
+      tester.getBottomRight(find.text('Continue')).dy,
+      lessThanOrEqualTo(568),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'skip locks, advances, releases prior image and retains final feedback through completion',
     (tester) async {
@@ -331,6 +568,8 @@ void main() {
     await capture('image-answering');
     await tap(tester, 'Skip question');
     await capture('image-skipped');
+    await tap(tester, 'Image credit');
+    await capture('image-skipped-credit-expanded');
     await tester.pumpWidget(const SizedBox());
     await mount(tester, scale: 2);
     expect(

@@ -512,10 +512,14 @@ Architecture resource budgets; no gallery or image-cache package is required.
 Required-image failure never consumes score or silently changes the assignment.
 
 Use neutral alt text and retain accessible attribution/license information;
-do not expose the full technical URL as an image semantic label. Provenance
-links may identify the subject, which is acceptable for this trusted casual
-experience; do not falsify attribution to conceal it. Full review includes image
-credits and sources. Image questions offer Skip question, recorded as unanswered
+do not expose the full technical URL as an image semantic label. Attribution,
+titles, source names, filenames, and provenance links often identify the
+subject, so while an image question is answerable the credit is not built or
+reachable (including through accessibility); a quiet "Image credit after
+answering" line holds its place. After any committed outcome (answer,
+timeout, Skip, or final completion) the full credit and its links appear in
+feedback. Never falsify or trim attribution to conceal it. Full review includes
+image credits and sources. Image questions offer Skip question, recorded as unanswered
 with zero credit. This does not make visual recognition equivalent for blind
 users; retain that limitation in accessibility review.
 

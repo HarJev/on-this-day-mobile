@@ -119,7 +119,6 @@ void main() {
       expect(find.text('Image unavailable in review.'), findsOneWidget);
       expect(find.textContaining('Alt text:'), findsNothing);
       expect(find.text('Test museum'), findsWidgets);
-
       await tester.scrollUntilVisible(find.text('Timed out'), 200);
       expect(find.text('Timed out'), findsOneWidget);
       expect(find.text('Not reached'), findsNothing);
@@ -128,6 +127,29 @@ void main() {
 
       await tester.scrollUntilVisible(find.text('Not reached'), 200);
       expect(find.text('Not reached'), findsOneWidget);
+
+      // Full provenance and licence remain available in Review.
+      await tester.scrollUntilVisible(find.text('Attribution: Museum'), -200);
+      expect(find.text('Attribution: Museum'), findsOneWidget);
+      expect(find.text('License: CC0'), findsOneWidget);
+      final imageLicense = find.byWidgetPredicate(
+        (widget) =>
+            widget is QuizReviewExternalLink &&
+            (widget.key as ValueKey<String>?)?.value.endsWith(
+                  ':image-license',
+                ) ==
+                true,
+      );
+      expect(imageLicense, findsOneWidget);
+      final licenseButton = find.descendant(
+        of: imageLicense,
+        matching: find.byType(TextButton),
+      );
+      await tester.scrollUntilVisible(licenseButton, -200);
+      await tester.pumpAndSettle();
+      await tester.tap(licenseButton);
+      await tester.pump();
+      expect(launcher.urls, contains(Uri.parse('https://example.org/license')));
     },
   );
 
