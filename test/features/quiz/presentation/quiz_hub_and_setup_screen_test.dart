@@ -44,7 +44,7 @@ void main() {
     expect(find.text('Quick Play'), findsOneWidget);
     expect(find.byTooltip('Back'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsNothing);
-    await tester.tap(find.text('Set up Daily Challenge'));
+    await tester.tap(find.text('Choose challenge'));
     expect(daily, 1);
     expect(quick, 0);
   });
@@ -77,7 +77,7 @@ void main() {
       expect(find.text('Sep 14'), findsOneWidget);
       expect(find.text('2 min'), findsOneWidget);
       expect(find.textContaining('first completed result'), findsOneWidget);
-      await tester.tap(find.text('Start Challenge (5 Questions)'));
+      await tester.tap(find.text('Continue with 5 questions'));
       await tester.pumpAndSettle();
 
       expect(repository.dailyCalls, 2);
@@ -123,6 +123,22 @@ void main() {
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
       isNull,
+    );
+
+    await tester.tap(find.text('Collection wars'));
+    await tester.pumpAndSettle();
+    Navigator.of(tester.element(find.text('Choose collection'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Collection wars'), findsOneWidget);
+
+    await tester.tap(find.text('Collection wars'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mixed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mixed'), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
     );
   });
 

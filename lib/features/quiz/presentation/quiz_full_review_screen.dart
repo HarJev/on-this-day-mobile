@@ -35,39 +35,25 @@ final class QuizFullReviewScreen extends StatelessWidget {
         ),
       ),
     ),
-    body: Column(
-      children: [
-        Expanded(
-          child: ListView.separated(
-            key: const PageStorageKey('quiz-review-scroll'),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 108),
-            itemCount: result.outcomes.length,
-            itemBuilder: (context, index) => _ReviewQuestion(
-              key: ValueKey('review-${result.outcomes[index].question.id}'),
-              number: index + 1,
-              outcome: result.outcomes[index],
-              sourceLauncher: sourceLauncher,
-            ),
-            separatorBuilder: (_, _) => const SizedBox(height: 16),
-          ),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: onDone,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                ),
-                child: const Text('Done'),
-              ),
-            ),
-          ),
-        ),
-      ],
+    body: ListView.separated(
+      key: const PageStorageKey('quiz-review-scroll'),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      itemCount: result.outcomes.length + 1,
+      itemBuilder: (context, index) {
+        if (index == result.outcomes.length) {
+          return FilledButton(onPressed: onDone, child: const Text('Done'));
+        }
+        return _ReviewQuestion(
+          key: ValueKey('review-${result.outcomes[index].question.id}'),
+          number: index + 1,
+          outcome: result.outcomes[index],
+          sourceLauncher: sourceLauncher,
+        );
+      },
+      separatorBuilder: (_, _) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 22),
+        child: Divider(color: AppColors.mutedCopper),
+      ),
     ),
   );
 }
@@ -90,61 +76,54 @@ class _ReviewQuestion extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     container: true,
     label: 'Question $number: ${_outcomeLabel(outcome)}',
-    child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.softIvory,
-        border: Border.all(color: AppColors.paleStone),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Question $number · ${question.difficulty.name}',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
-          ),
-          const SizedBox(height: 8),
-          Semantics(
-            header: true,
-            child: Text(
-              question.prompt,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontFamily: 'Georgia',
-                fontFamilyFallback: const ['Times New Roman', 'serif'],
-              ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Question $number · ${question.difficulty.name}',
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+        ),
+        const SizedBox(height: 8),
+        Semantics(
+          header: true,
+          child: Text(
+            question.prompt,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFamily: 'Georgia',
+              fontFamilyFallback: const ['Times New Roman', 'serif'],
             ),
           ),
-          const SizedBox(height: 14),
-          _OutcomeLabel(outcome: outcome),
-          const SizedBox(height: 14),
-          _AnswerReview(outcome: outcome),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: AppColors.mutedCopper),
+        ),
+        const SizedBox(height: 12),
+        _OutcomeLabel(outcome: outcome),
+        const SizedBox(height: 10),
+        _AnswerReview(outcome: outcome),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Divider(),
+        ),
+        Text(question.explanation),
+        const SizedBox(height: 12),
+        Text('Sources', style: Theme.of(context).textTheme.titleSmall),
+        for (final source in question.sources)
+          QuizReviewExternalLink(
+            key: ValueKey('${question.id}:source:${source.url}'),
+            label: source.displayName,
+            semanticsLabel: 'Open source: ${source.displayName}',
+            url: source.url,
+            launcher: sourceLauncher,
           ),
-          Text(question.explanation),
-          const SizedBox(height: 16),
-          Text('Sources', style: Theme.of(context).textTheme.titleSmall),
-          for (final source in question.sources)
-            QuizReviewExternalLink(
-              key: ValueKey('${question.id}:source:${source.url}'),
-              label: 'Open source: ${source.displayName}',
-              url: source.url,
-              launcher: sourceLauncher,
-            ),
-          if (question is ImageIdentificationQuestion) ...[
-            const SizedBox(height: 12),
-            _ImageProvenance(
-              image: (question as ImageIdentificationQuestion).image,
-              launcher: sourceLauncher,
-              questionId: question.id,
-            ),
-          ],
+        if (question is ImageIdentificationQuestion) ...[
+          const SizedBox(height: 12),
+          _ImageProvenance(
+            image: (question as ImageIdentificationQuestion).image,
+            launcher: sourceLauncher,
+            questionId: question.id,
+          ),
         ],
-      ),
+      ],
     ),
   );
 }
@@ -287,24 +266,25 @@ class _ImageProvenance extends StatelessWidget {
       Text('Image', style: Theme.of(context).textTheme.titleSmall),
       const SizedBox(height: 6),
       const Text('Image unavailable in review.'),
-      const SizedBox(height: 6),
       Semantics(
         image: true,
         label: image.altText,
-        child: Text('Alt text: ${image.altText}'),
+        child: const SizedBox(height: 1),
       ),
       Text('Attribution: ${image.attribution}'),
       if (image.creator != null) Text('Creator: ${image.creator}'),
       Text('License: ${image.license}'),
       QuizReviewExternalLink(
         key: ValueKey('$questionId:image-source'),
-        label: 'Open image source: ${image.source}',
+        label: image.source,
+        semanticsLabel: 'Open image source: ${image.source}',
         url: image.sourceUrl,
         launcher: launcher,
       ),
       QuizReviewExternalLink(
         key: ValueKey('$questionId:image-license'),
-        label: 'Open image license: ${image.license}',
+        label: image.license,
+        semanticsLabel: 'Open image license: ${image.license}',
         url: image.licenseUrl,
         launcher: launcher,
       ),

@@ -168,6 +168,11 @@ final class HttpImageDownloader implements ImageByteDownloader {
     response.statusCode != 200
         ? ImageDownloadFailure.http
         : ImageDownloadFailure.encodedLimit,
+    cause: StateError(
+      'Image host ${url.host} returned HTTP ${response.statusCode}; '
+      'contentLength=${response.contentLength}'
+      '${maxBytes == null ? '' : '; maxBytes=$maxBytes'}',
+    ),
   );
 
   Duration? _retryAfter(String? value) {

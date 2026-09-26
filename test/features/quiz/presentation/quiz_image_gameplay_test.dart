@@ -94,7 +94,10 @@ void main() {
     if (start) {
       await tester.runAsync(controller.prepare);
       await tester.pump();
-      await tester.tap(find.text('Start'));
+      await tester.ensureVisible(
+        find.text(daily ? 'Start challenge' : 'Start quiz'),
+      );
+      await tester.tap(find.text(daily ? 'Start challenge' : 'Start quiz'));
       await tester.pump();
     }
   }
@@ -225,12 +228,14 @@ void main() {
       await pending;
       await tester.pump();
       expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Images ready'), findsNothing);
+      expect(find.text('Images unavailable'), findsOneWidget);
       expect(completions, isEmpty);
       await tester.runAsync(controller.prepare);
       await tester.pump();
       expect(controller.state, isA<QuizReady>());
       expect(scheduler.activeCount, 0);
-      await tap(tester, 'Start');
+      await tap(tester, 'Start quiz');
       expect(
         (controller.state as QuizAnswering).remaining,
         const Duration(seconds: 30),
@@ -317,7 +322,12 @@ void main() {
       });
     }
 
-    await mount(tester, daily: true);
+    await mount(tester, daily: true, start: false);
+    await tester.runAsync(controller.prepare);
+    await tester.pump();
+    await capture('session-ready');
+    expect(tester.getTopLeft(find.text('Start challenge')).dy, lessThan(400));
+    await tap(tester, 'Start challenge');
     await capture('image-answering');
     await tap(tester, 'Skip question');
     await capture('image-skipped');

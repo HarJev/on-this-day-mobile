@@ -117,54 +117,27 @@ final class _ResultContentState extends State<_ResultContent> {
     final result = widget.state.completion.result;
     return Scaffold(
       appBar: _appBar(),
-      body: Column(
+      body: ListView(
+        key: const PageStorageKey('quiz-results-scroll'),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              key: const PageStorageKey('quiz-results-scroll'),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 108),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ResultHeading(result: result),
-                  const SizedBox(height: 20),
-                  _ScoreSummary(result: result),
-                  const SizedBox(height: 16),
-                  _PersistenceStatus(
-                    state: widget.state,
-                    retryStarting: retryStarting,
-                    onRetry: retry,
-                  ),
-                ],
-              ),
-            ),
+          _ResultHeading(result: result),
+          const SizedBox(height: 18),
+          _ScoreSummary(result: result),
+          const SizedBox(height: 12),
+          _PersistenceStatus(
+            state: widget.state,
+            retryStarting: retryStarting,
+            onRetry: retry,
           ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => widget.onReview(result),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    child: const Text('Review answers'),
-                  ),
-                  const SizedBox(height: 8),
-                  FilledButton(
-                    onPressed: widget.onDone,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    child: const Text('Done'),
-                  ),
-                ],
-              ),
-            ),
+          const SizedBox(height: 22),
+          FilledButton.icon(
+            onPressed: () => widget.onReview(result),
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('Review answers'),
           ),
+          const SizedBox(height: 8),
+          OutlinedButton(onPressed: widget.onDone, child: const Text('Done')),
         ],
       ),
     );
@@ -289,7 +262,7 @@ class _PersistenceStatus extends StatelessWidget {
       QuizCompletionSaveStatus.saved
           when saved?.classification == QuizSavedClassification.practice &&
               state.requestedIntent == QuizSaveIntent.claimDailyIfAbsent =>
-        'Practice result. An earlier completed result owns this Daily date.',
+        'Practice result. Today\'s official score was already recorded.',
       QuizCompletionSaveStatus.saved
           when saved?.classification == QuizSavedClassification.practice =>
         'Practice result',

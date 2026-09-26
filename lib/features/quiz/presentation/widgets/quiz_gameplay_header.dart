@@ -18,7 +18,7 @@ class QuizGameplayHeader extends StatelessWidget {
         ? null
         : (remaining!.inMilliseconds / 1000).ceil();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -27,10 +27,13 @@ class QuizGameplayHeader extends StatelessWidget {
             spacing: 16,
             runSpacing: 4,
             children: [
-              Text(daily ? 'Daily Challenge' : 'Quick Play'),
+              Text(
+                '${daily ? 'Daily Challenge' : 'Quick Play'} · ${index + 1} of $count',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               if (seconds != null)
                 Text(
-                  '${daily ? 'Total time' : 'Question time'} ${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}',
+                  '${daily ? 'Total' : 'Question'} ${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}',
                   key: const Key('quiz-timer'),
                   style: TextStyle(
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -41,9 +44,7 @@ class QuizGameplayHeader extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text('Question ${index + 1} of $count'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
           LinearProgressIndicator(
             value: (index + 1) / count,
             minHeight: 2,

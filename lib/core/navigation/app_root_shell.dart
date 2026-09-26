@@ -107,8 +107,8 @@ class _AppRootShellState extends State<AppRootShell> {
         onDestinationSelected: _select,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today),
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
             label: 'Today',
           ),
           NavigationDestination(
@@ -131,6 +131,7 @@ class _AppRootShellState extends State<AppRootShell> {
         fontFamily: 'Georgia',
         fontFamilyFallback: ['Times New Roman', 'serif'],
         fontSize: 24,
+        fontWeight: FontWeight.w600,
         color: AppColors.deepInk,
       ),
     ),

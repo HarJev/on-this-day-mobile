@@ -10,6 +10,7 @@ import '../domain/quiz_catalog.dart';
 import '../domain/quiz_repository.dart';
 import '../domain/quiz_result_store.dart';
 import 'daily_challenge_setup_controller.dart';
+import 'widgets/quiz_question_count_selector.dart';
 
 final class DailyChallengeSetupScreen extends StatefulWidget {
   const DailyChallengeSetupScreen({
@@ -121,7 +122,7 @@ class _DailyChallengeSetupScreenState extends State<DailyChallengeSetupScreen> {
           message: message,
           detail: data == null
               ? null
-              : 'The backend date is ${data.status.displayDate}. Retry to check your Daily result for that date.',
+              : 'The challenge is for ${data.status.displayDate}. Retry to check whether a result is already saved.',
           onRetry: _controller.load,
           onBack: widget.onBack,
         ),
@@ -156,7 +157,7 @@ class _DailySetupBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
     children: [
       Text(
         'Daily Challenge',
@@ -170,25 +171,27 @@ class _DailySetupBody extends StatelessWidget {
         data.status.displayDate,
         style: Theme.of(context).textTheme.titleLarge,
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 16),
       _DailyPolicy(status: data.status),
-      const SizedBox(height: 24),
-      Text('Choose a length', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 12),
-      _QuestionCountSelector(
+      const SizedBox(height: 20),
+      Text('Question count', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 10),
+      QuizQuestionCountSelector(
         selected: data.selectedQuestionCount,
         supported: data.availability.supportedQuestionCounts.toSet(),
-        durationFor: data.durationFor,
+        detailFor: (count) {
+          final duration = data.durationFor(count);
+          return duration == null ? null : '${duration.inMinutes} min';
+        },
         onSelected: starting ? null : onCountSelected,
       ),
-      const SizedBox(height: 28),
+      const SizedBox(height: 22),
       FilledButton(
         onPressed: starting || !data.selectedCountIsSupported ? null : onStart,
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
         child: Text(
           starting
-              ? 'Starting…'
-              : 'Start Challenge (${data.selectedQuestionCount} Questions)',
+              ? 'Getting your challenge ready…'
+              : 'Continue with ${data.selectedQuestionCount} questions',
         ),
       ),
     ],
@@ -204,106 +207,20 @@ class _DailyPolicy extends StatelessWidget {
     final text = status.hasConfirmedOfficial
         ? 'Your official result is saved. A new play for this date is practice.'
         : status.reservation != null
-        ? 'A completed result already reserves this date while the app is open. A new play is practice.'
-        : 'Your first completed result for this backend date is official. Later plays are practice.';
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.softIvory,
-        border: Border.all(color: AppColors.paleStone),
-        borderRadius: BorderRadius.circular(6),
+        ? 'A result is already recorded for this date. A new play is practice.'
+        : 'Your first completed result for this date is official. Later plays are practice.';
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(
+          left: BorderSide(color: AppColors.mutedCopper, width: 2),
+        ),
       ),
-      child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 14),
+        child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+      ),
     );
   }
-}
-
-class _QuestionCountSelector extends StatelessWidget {
-  const _QuestionCountSelector({
-    required this.selected,
-    required this.supported,
-    required this.durationFor,
-    required this.onSelected,
-  });
-  final int selected;
-  final Set<int> supported;
-  final Duration? Function(int) durationFor;
-  final ValueChanged<int>? onSelected;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      for (final count in const [5, 10, 20])
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: count == 20 ? 0 : 8),
-            child: _CountButton(
-              count: count,
-              selected: selected == count,
-              supported: supported.contains(count),
-              duration: durationFor(count),
-              onPressed: onSelected == null || !supported.contains(count)
-                  ? null
-                  : () => onSelected!(count),
-            ),
-          ),
-        ),
-    ],
-  );
-}
-
-class _CountButton extends StatelessWidget {
-  const _CountButton({
-    required this.count,
-    required this.selected,
-    required this.supported,
-    required this.duration,
-    required this.onPressed,
-  });
-  final int count;
-  final bool selected;
-  final bool supported;
-  final Duration? duration;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    selected: selected,
-    button: true,
-    label: '$count questions',
-    child: OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(92),
-        backgroundColor: selected && supported
-            ? AppColors.softIvory
-            : Colors.transparent,
-        side: BorderSide(
-          color: selected && !supported
-              ? Theme.of(context).colorScheme.error
-              : selected
-              ? AppColors.archivalCobalt
-              : AppColors.paleStone,
-          width: selected ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('$count', style: Theme.of(context).textTheme.headlineSmall),
-          Text('Questions'),
-          if (duration != null)
-            Text(
-              _minutes(duration!),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          if (!supported) const Text('Unavailable'),
-        ],
-      ),
-    ),
-  );
-
-  String _minutes(Duration duration) => '${duration.inMinutes} min';
 }
 
 class _SetupMessage extends StatelessWidget {

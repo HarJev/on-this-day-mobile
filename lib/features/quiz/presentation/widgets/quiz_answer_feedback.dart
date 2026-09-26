@@ -37,9 +37,9 @@ class QuizAnswerFeedback extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
       if (!daily) ...[
-        const SizedBox(height: 10),
-        Text(outcome.question.explanation),
         const SizedBox(height: 8),
+        Text(outcome.question.explanation),
+        const SizedBox(height: 4),
         for (final source in outcome.question.sources)
           QuizSourceRow(
             key: ValueKey('${outcome.question.id}:${source.url}'),

@@ -46,7 +46,12 @@ class _QuizQuestionImageState extends State<QuizQuestionImage> {
         label: widget.metadata.altText,
         child: ExcludeSemantics(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 260),
+            constraints: BoxConstraints(
+              maxHeight: (MediaQuery.sizeOf(context).height * 0.24).clamp(
+                150.0,
+                210.0,
+              ),
+            ),
             child: AspectRatio(
               aspectRatio: image.width / image.height,
               child: RawImage(image: image, fit: BoxFit.contain),
@@ -59,6 +64,8 @@ class _QuizQuestionImageState extends State<QuizQuestionImage> {
         child: ExpansionTile(
           key: ValueKey('credit-${widget.questionId}'),
           tilePadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          minTileHeight: 36,
           title: Text(
             'Image credit',
             style: Theme.of(context).textTheme.bodySmall,
@@ -90,7 +97,7 @@ class _QuizQuestionImageState extends State<QuizQuestionImage> {
           ],
         ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 4),
     ],
   );
 }

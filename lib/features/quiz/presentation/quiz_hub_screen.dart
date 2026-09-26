@@ -116,7 +116,7 @@ class _HubContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
     children: [
       Text(
         'Quiz',
@@ -127,10 +127,10 @@ class _HubContent extends StatelessWidget {
       ),
       const SizedBox(height: 8),
       Text(
-        'A short way to test what you know about history.',
+        'Choose today\'s challenge or build a quick round.',
         style: Theme.of(context).textTheme.bodyLarge,
       ),
-      const SizedBox(height: 24),
+      const SizedBox(height: 20),
       _ModeSurface(
         eyebrow: 'DAILY CHALLENGE',
         title: dailyStatus?.displayDate ?? 'Daily Challenge',
@@ -140,17 +140,17 @@ class _HubContent extends StatelessWidget {
           onReview: onReviewDailyResult,
         ),
         actionLabel: dailyStatus?.hasConfirmedOfficial == true
-            ? 'Practice Daily Challenge'
-            : 'Set up Daily Challenge',
+            ? 'Practice again'
+            : 'Choose challenge',
         actionIcon: Icons.arrow_forward,
         onPressed: () => onOpenDaily(catalog),
       ),
-      const SizedBox(height: 18),
+      const SizedBox(height: 26),
       _ModeSurface(
         eyebrow: 'QUICK PLAY',
         title: 'Quick Play',
         description: _quickDescription(catalog),
-        actionLabel: 'Configure Quick Play',
+        actionLabel: 'Choose a round',
         actionIcon: Icons.tune,
         outlinedAction: true,
         onPressed: () => onOpenQuickPlay(catalog),
@@ -160,9 +160,9 @@ class _HubContent extends StatelessWidget {
 
   String _dailyDescription(DailyChallengeStatus? status) {
     if (status?.hasConfirmedOfficial == true) {
-      return 'Your official result is saved for this backend date.';
+      return 'Today\'s official score is saved.';
     }
-    return 'Choose a short timed challenge for the date returned by the backend.';
+    return 'A timed mix of history questions, refreshed daily.';
   }
 
   String _quickDescription(QuizCatalog catalog) {
@@ -186,7 +186,7 @@ class _DailyStatusLine extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Official result: ${official.result.correct} / ${official.result.total}',
+            'Today\'s score: ${official.result.correct} / ${official.result.total}',
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(color: AppColors.archivalCobalt),
@@ -206,11 +206,10 @@ class _DailyStatusLine extends StatelessWidget {
     final reservation = status?.reservation;
     if (reservation == null) return const SizedBox.shrink();
     final text = switch (reservation.status) {
-      QuizCompletionSaveStatus.pending => 'Saving today\'s completed result.',
+      QuizCompletionSaveStatus.pending => 'Saving today\'s result…',
       QuizCompletionSaveStatus.failed =>
-        'Today\'s completed result is not saved. Another play is practice while the app stays open.',
-      QuizCompletionSaveStatus.saved =>
-        'A completed result already reserves this date.',
+        'Today\'s result has not been saved yet. Another attempt will count as practice.',
+      QuizCompletionSaveStatus.saved => 'Today\'s result is already recorded.',
     };
     return Text(
       text,
@@ -243,54 +242,46 @@ class _ModeSurface extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: AppColors.softIvory,
-      border: Border.all(color: AppColors.paleStone),
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          eyebrow,
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        eyebrow,
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        title,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontFamily: 'Georgia',
+          fontFamilyFallback: const ['Times New Roman', 'serif'],
         ),
-        const SizedBox(height: 10),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontFamily: 'Georgia',
-            fontFamilyFallback: const ['Times New Roman', 'serif'],
+      ),
+      const SizedBox(height: 8),
+      Text(description, style: Theme.of(context).textTheme.bodyLarge),
+      if (status != null) ...[const SizedBox(height: 10), status!],
+      const SizedBox(height: 14),
+      if (outlinedAction)
+        OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(actionIcon),
+          label: Text(actionLabel),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
           ),
+        )
+      else
+        FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(actionIcon),
+          label: Text(actionLabel),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
         ),
-        const SizedBox(height: 10),
-        Text(description, style: Theme.of(context).textTheme.bodyLarge),
-        if (status != null) ...[const SizedBox(height: 14), status!],
-        const SizedBox(height: 18),
-        if (outlinedAction)
-          OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: Icon(actionIcon),
-            label: Text(actionLabel),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-          )
-        else
-          FilledButton.icon(
-            onPressed: onPressed,
-            icon: Icon(actionIcon),
-            label: Text(actionLabel),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-          ),
-      ],
-    ),
+      const SizedBox(height: 16),
+      const Divider(color: AppColors.mutedCopper),
+    ],
   );
 }
 

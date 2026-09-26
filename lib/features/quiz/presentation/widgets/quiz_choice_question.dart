@@ -32,18 +32,18 @@ class QuizChoiceQuestion extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Georgia',
               fontFamilyFallback: ['Times New Roman', 'serif'],
-              fontSize: 26,
-              height: 1.25,
+              fontSize: 24,
+              height: 1.2,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 14),
       ?image,
       for (final option in question.options)
         Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 8),
           child: _option(context, option),
         ),
     ],
@@ -74,36 +74,41 @@ class QuizChoiceQuestion extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           onTap: outcome == null ? () => onAnswer(option.id) : null,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 56),
+            constraints: const BoxConstraints(minHeight: 52),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
                     option.text,
                     style: const TextStyle(
-                      fontSize: 17,
-                      height: 1.35,
+                      fontSize: 16,
+                      height: 1.3,
                       color: AppColors.deepInk,
                     ),
                   ),
                   if (label.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.only(top: 4),
                       child: Row(
                         children: [
                           Icon(
                             correct
                                 ? Icons.check_circle_outline
                                 : Icons.cancel_outlined,
-                            size: 20,
+                            size: 18,
                             color: correct
                                 ? AppColors.archivalCobalt
                                 : Theme.of(context).colorScheme.error,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(label)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
                         ],
                       ),
                     ),

@@ -8,6 +8,7 @@ import '../domain/quiz_repository.dart';
 import '../domain/quiz_result_store.dart';
 import '../domain/quiz_rules.dart';
 import 'quick_play_setup_controller.dart';
+import 'widgets/quiz_question_count_selector.dart';
 
 final class QuickPlaySetupScreen extends StatefulWidget {
   const QuickPlaySetupScreen({
@@ -58,7 +59,7 @@ class _QuickPlaySetupScreenState extends State<QuickPlaySetupScreen> {
   }
 
   Future<void> _chooseCollection(QuickPlaySetupData data) async {
-    final selected = await showModalBottomSheet<String?>(
+    final selected = await showModalBottomSheet<({String? collectionId})>(
       context: context,
       showDragHandle: true,
       builder: (context) => _CollectionSheet(
@@ -66,8 +67,12 @@ class _QuickPlaySetupScreenState extends State<QuickPlaySetupScreen> {
         selectedCollectionId: data.selectedCollectionId,
       ),
     );
-    if (!mounted || selected == data.selectedCollectionId) return;
-    _controller.selectCollection(selected);
+    if (!mounted ||
+        selected == null ||
+        selected.collectionId == data.selectedCollectionId) {
+      return;
+    }
+    _controller.selectCollection(selected.collectionId);
   }
 
   @override
@@ -143,7 +148,7 @@ class _QuickSetupBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
     children: [
       Text(
         'Quick Play',
@@ -152,12 +157,12 @@ class _QuickSetupBody extends StatelessWidget {
           fontFamilyFallback: const ['Times New Roman', 'serif'],
         ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 6),
       Text(
-        'Choose a collection, length, and timing preference.',
+        'Build a short history round.',
         style: Theme.of(context).textTheme.bodyLarge,
       ),
-      const SizedBox(height: 24),
+      const SizedBox(height: 20),
       Text('Collection', style: Theme.of(context).textTheme.titleMedium),
       const SizedBox(height: 8),
       OutlinedButton.icon(
@@ -169,10 +174,10 @@ class _QuickSetupBody extends StatelessWidget {
         icon: const Icon(Icons.collections_bookmark_outlined),
         label: Text(data.selectedCollection?.name ?? 'Mixed'),
       ),
-      const SizedBox(height: 24),
-      Text('Questions', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
-      _QuickCountSelector(
+      const SizedBox(height: 20),
+      Text('Question count', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 10),
+      QuizQuestionCountSelector(
         selected: data.selectedQuestionCount,
         supported: data.availability.supportedQuestionCounts.toSet(),
         onSelected: starting ? null : onCountSelected,
@@ -186,13 +191,13 @@ class _QuickSetupBody extends StatelessWidget {
           ),
         ),
       ],
-      const SizedBox(height: 24),
+      const SizedBox(height: 16),
       SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
         title: const Text('Timed questions'),
         subtitle: Text(
           data.timingEnabled
-              ? 'Each question uses the backend time limit.'
+              ? 'Each question has its own countdown.'
               : 'Questions have no countdown.',
         ),
         value: data.timingEnabled,
@@ -208,64 +213,18 @@ class _QuickSetupBody extends StatelessWidget {
             ),
           ),
         ),
-      const SizedBox(height: 28),
+      const SizedBox(height: 20),
       FilledButton(
         onPressed:
             starting || data.preferenceSaving || !data.selectedCountIsSupported
             ? null
             : onStart,
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-        child: Text(starting ? 'Starting…' : 'Start Quick Play'),
-      ),
-    ],
-  );
-}
-
-class _QuickCountSelector extends StatelessWidget {
-  const _QuickCountSelector({
-    required this.selected,
-    required this.supported,
-    required this.onSelected,
-  });
-  final int selected;
-  final Set<int> supported;
-  final ValueChanged<int>? onSelected;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      for (final count in const [5, 10, 20])
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: count == 20 ? 0 : 8),
-            child: OutlinedButton(
-              onPressed: onSelected == null || !supported.contains(count)
-                  ? null
-                  : () => onSelected!(count),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(64),
-                backgroundColor: selected == count && supported.contains(count)
-                    ? AppColors.softIvory
-                    : Colors.transparent,
-                side: BorderSide(
-                  color: selected == count && !supported.contains(count)
-                      ? Theme.of(context).colorScheme.error
-                      : selected == count
-                      ? AppColors.archivalCobalt
-                      : AppColors.paleStone,
-                  width: selected == count ? 2 : 1,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('$count'),
-                  if (!supported.contains(count)) const Text('Unavailable'),
-                ],
-              ),
-            ),
-          ),
+        child: Text(
+          starting
+              ? 'Getting your quiz ready…'
+              : 'Continue with ${data.selectedQuestionCount} questions',
         ),
+      ),
     ],
   );
 }
@@ -294,7 +253,7 @@ class _CollectionSheet extends StatelessWidget {
           trailing: selectedCollectionId == null
               ? const Icon(Icons.check)
               : null,
-          onTap: () => Navigator.pop<String?>(context, null),
+          onTap: () => Navigator.pop(context, (collectionId: null)),
         ),
         for (final group in QuizCollectionGroup.values) ...[
           if (catalog.collections.any((item) => item.group == group)) ...[
@@ -315,12 +274,13 @@ class _CollectionSheet extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(collection.name),
                 subtitle: Text(
-                  '${collection.availability.publishedQuestionCount} published questions',
+                  '${collection.availability.publishedQuestionCount} questions available',
                 ),
                 trailing: selectedCollectionId == collection.id
                     ? const Icon(Icons.check)
                     : null,
-                onTap: () => Navigator.pop<String?>(context, collection.id),
+                onTap: () =>
+                    Navigator.pop(context, (collectionId: collection.id)),
               ),
           ],
         ],

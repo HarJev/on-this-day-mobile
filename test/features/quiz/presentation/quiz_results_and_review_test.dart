@@ -89,7 +89,7 @@ void main() {
 
       expect(
         find.text(
-          'Practice result. An earlier completed result owns this Daily date.',
+          'Practice result. Today\'s official score was already recorded.',
         ),
         findsOneWidget,
       );
@@ -117,11 +117,8 @@ void main() {
       await tester.scrollUntilVisible(find.text('Skipped'), 200);
       expect(find.text('Skipped'), findsOneWidget);
       expect(find.text('Image unavailable in review.'), findsOneWidget);
-      expect(
-        find.textContaining('Alt text: An archival object'),
-        findsOneWidget,
-      );
-      expect(find.text('Open source: Test museum'), findsWidgets);
+      expect(find.textContaining('Alt text:'), findsNothing);
+      expect(find.text('Test museum'), findsWidgets);
 
       await tester.scrollUntilVisible(find.text('Timed out'), 200);
       expect(find.text('Timed out'), findsOneWidget);

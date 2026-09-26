@@ -59,3 +59,34 @@ claim.
 - [ ] Verify iOS and Android release builds, store requirements, privacy
   disclosures, and Firebase/APNs configuration.
 - [ ] Record final go/no-go approval with the outstanding risks, if any.
+
+## Post-Audit Product Coherence
+
+- [ ] Verify Daily-5 contains one approved featured-event-linked question when
+  eligible content exists, and safely falls back when it does not.
+- [ ] Verify linked generation remains deterministic with stable 5/10/20
+  prefixes and does not rewrite completed assignments.
+- [ ] Review the seven-day Recent experience and confirm it does not become an
+  arbitrary archive or replace official results.
+- [ ] Confirm Event Detail, Daily, Results, and Review form a clear learning loop.
+
+## Post-Audit Content Quality
+
+- [ ] Review pack-level correct-answer positions and confirm list order has no
+  semantic meaning.
+- [ ] Review distractors for category, specificity, ambiguity, prompt leakage,
+  and obviously implausible choices.
+- [ ] Review featured-image coverage and an explicit image-rights outcome for
+  every date in the release window.
+- [ ] Compare draft/source-verified, approved canonical, and imported database
+  counts and fingerprints before release.
+
+## Post-Audit Retention And Observability
+
+- [ ] Verify notification permission is never shown over a blank launch view.
+- [ ] Separately record debug local, iOS simulator-injected, Android FCM, and
+  physical iOS APNs results without treating one as proof of another.
+- [ ] Review the widget's current/stale/empty states and Event Detail deep link.
+- [ ] Review event/result share cards for attribution and image reuse rights.
+- [ ] Approve the privacy disclosure and minimal analytics/crash event set before
+  enabling production telemetry.

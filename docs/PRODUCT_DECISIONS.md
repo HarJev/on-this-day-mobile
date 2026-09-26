@@ -1,7 +1,8 @@
 # On This Day — Product Decision Log
 
-PD-001 through PD-019 preserve v0.0.1. PD-020 onward specify the approved
-Quiz v0.1.0 expansion, which is planned rather than implemented in mobile.
+PD-001 through PD-019 preserve v0.0.1. PD-020 through PD-032 specify the
+implemented Quiz v0.1.0 expansion. PD-033 onward records the approved
+post-audit product direction and its pending implementation work.
 
 ## PD-001 — The product is centered on one featured historical event per day
 
@@ -357,3 +358,65 @@ Background/resume reconciles elapsed time; exit confirmation does not pause it.
 Process termination abandons an unfinished session. No restoration or automatic
 scored completion of that lost session occurs. Normal launch opens Today.
 Completed persisted results survive; no accounts or synchronization are added.
+
+## PD-033 — Today and Daily form one learning loop
+
+Today remains the editorial entry point, but future Daily assignments should
+include one explicitly related featured-event question when eligible content
+exists. Larger Daily counts may include one additional related question. The
+remaining questions retain global type/difficulty balance. Relationships use
+stable event IDs and reviewed question IDs; they are not inferred from prose.
+Existing persisted assignments do not change.
+
+## PD-034 — Recent history is limited to seven calendar days
+
+Provide today plus the previous six calendar days as a recovery window for
+missed content. This is intentionally not arbitrary date browsing, search, or a
+complete archive. Past event content may be revisited; any quiz replay is
+practice and cannot replace an official result.
+
+## PD-035 — Notification permission follows demonstrated value
+
+Firebase and notification-routing infrastructure may initialize at startup, but
+the operating-system permission prompt must not precede usable application UI.
+Ask after a short product explanation at an appropriate moment. Declining
+notifications leaves the complete reading and quiz experience available.
+Debug local/simulator delivery and real backend/FCM delivery are separately
+reported verification modes.
+
+## PD-036 — Production notifications are backend scheduled and failure isolated
+
+The production path is a scheduled backend job through FCM. A missing event or
+failure for one timezone group must be logged and isolated rather than aborting
+all other groups. Local notifications are a development aid, not a silent
+production replacement for remote delivery.
+
+## PD-037 — Correctness is explicit and distractors are editorial content
+
+`correctOptionId` and the stored correctness flag identify the correct option;
+array position has no semantic meaning. Authored correct positions should vary
+across a pack even though presentation is shuffled. Distractors must be
+plausible, parallel in category and specificity, unambiguous, and directly
+reviewed. Prompt wording must not give away the answer through repetition.
+
+## PD-038 — Featured-image research is required, image presence is not
+
+Each featured event receives an image search and rights review. Record the
+outcome and report coverage. Do not add weak, misleading, answer-revealing, or
+unclearly licensed media merely to meet a target. Reliable first fetch and
+graceful text-only presentation are both release requirements.
+
+## PD-039 — Editorial state remains outside the runtime database
+
+Draft and `source_verified` work remains under `editorial/`. Canonical content
+contains owner-approved records, and runtime PostgreSQL contains imported
+canonical records only. Tooling should compare editorial, canonical, and
+database counts/fingerprints so approval and import drift is visible without
+putting drafts into serving tables.
+
+## PD-040 — Widget and sharing are approved after core reliability
+
+A home-screen widget may expose the cached featured-event snapshot and deep-link
+to Event Detail. Event and quiz-result share cards may be added with restrained
+branding and rights-aware imagery. Neither feature delays fixes to image
+delivery, iOS builds, content coverage, Daily integration, or notifications.

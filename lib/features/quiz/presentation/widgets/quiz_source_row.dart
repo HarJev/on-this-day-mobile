@@ -43,19 +43,16 @@ class _QuizSourceRowState extends State<QuizSourceRow> {
     children: [
       TextButton(
         onPressed: busy ? null : open,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            children: [
-              Expanded(child: Text(widget.source.displayName)),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.open_in_new,
-                size: 20,
-                color: AppColors.archivalCobalt,
-              ),
-            ],
-          ),
+        child: Row(
+          children: [
+            Expanded(child: Text(widget.source.displayName)),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.open_in_new,
+              size: 18,
+              color: AppColors.archivalCobalt,
+            ),
+          ],
         ),
       ),
       if (failed) const Text('Could not open source. Tap the source to retry.'),

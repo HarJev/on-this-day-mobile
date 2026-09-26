@@ -66,7 +66,7 @@ final class SqliteQuizResultStore implements QuizResultStore {
     final snapshot = _codec.encode(completion.result);
     try {
       final database = await _database.open();
-      return database.transaction((transaction) async {
+      return await database.transaction((transaction) async {
         final existing = await transaction.query(
           'completion_receipt',
           columns: ['fingerprint', 'save_intent', 'classification'],

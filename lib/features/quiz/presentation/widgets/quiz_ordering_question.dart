@@ -64,14 +64,14 @@ class _QuizOrderingQuestionState extends State<QuizOrderingQuestion> {
             style: const TextStyle(
               fontFamily: 'Georgia',
               fontFamilyFallback: ['Times New Roman', 'serif'],
-              fontSize: 26,
-              height: 1.25,
+              fontSize: 24,
+              height: 1.2,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 14),
       // This viewport is deliberately non-scrollable; the gameplay page owns
       // the only effective scroll position while Reorderable provides drag.
       ReorderableListView.builder(
@@ -86,7 +86,7 @@ class _QuizOrderingQuestionState extends State<QuizOrderingQuestion> {
           final item = _itemFor(widget.orderingDraft[index]);
           return Padding(
             key: ValueKey(item.id),
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 8),
             child: _OrderingRow(
               index: index,
               item: item,
@@ -127,45 +127,10 @@ class _OrderingRow extends StatelessWidget {
         side: const BorderSide(color: AppColors.paleStone),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+        padding: const EdgeInsets.fromLTRB(6, 4, 4, 4),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 32,
-              child: Text(
-                '${index + 1}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                item.text,
-                style: const TextStyle(
-                  color: AppColors.deepInk,
-                  fontSize: 17,
-                  height: 1.35,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _MoveButton(
-                  tooltip: 'Move ${item.text} up',
-                  icon: Icons.keyboard_arrow_up,
-                  onPressed: onMoveUp,
-                ),
-                _MoveButton(
-                  tooltip: 'Move ${item.text} down',
-                  icon: Icons.keyboard_arrow_down,
-                  onPressed: onMoveDown,
-                ),
-              ],
-            ),
             ReorderableDragStartListener(
               index: index,
               child: Semantics(
@@ -181,6 +146,35 @@ class _OrderingRow extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+            SizedBox(
+              width: 24,
+              child: Text(
+                '${index + 1}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                item.text,
+                style: const TextStyle(
+                  color: AppColors.deepInk,
+                  fontSize: 16,
+                  height: 1.25,
+                ),
+              ),
+            ),
+            _MoveButton(
+              tooltip: 'Move ${item.text} up',
+              icon: Icons.keyboard_arrow_up,
+              onPressed: onMoveUp,
+            ),
+            _MoveButton(
+              tooltip: 'Move ${item.text} down',
+              icon: Icons.keyboard_arrow_down,
+              onPressed: onMoveDown,
             ),
           ],
         ),
