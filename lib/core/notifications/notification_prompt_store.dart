@@ -25,11 +25,12 @@ abstract interface class NotificationPromptStore {
 /// Stores the decision as a tiny JSON file in the app-support directory.
 class FileNotificationPromptStore implements NotificationPromptStore {
   FileNotificationPromptStore({required Future<Directory> Function() directory})
-    : _directory = directory;
+      : _directory = directory;
 
   static const _fileName = 'notification_prompt.json';
 
   final Future<Directory> Function() _directory;
+  Future<void> _writeQueue = Future<void>.value();
 
   @override
   Future<NotificationPromptDecision?> read() async {
@@ -40,21 +41,36 @@ class FileNotificationPromptStore implements NotificationPromptStore {
     try {
       final json = jsonDecode(await file.readAsString());
       final value = json is Map<String, Object?> ? json['decision'] : null;
-      return NotificationPromptDecision.values
+      final decision = NotificationPromptDecision.values
           .where((decision) => decision.name == value)
           .firstOrNull;
+      if (decision == null) {
+        throw const FormatException('Unknown notification prompt decision.');
+      }
+      return decision;
     } on FormatException catch (error) {
-      // A corrupt preference is treated as undecided rather than fatal.
+      // Propagate corruption so the coordinator suppresses a repeat prompt.
       _debugLog('read_corrupt cause=$error');
-      return null;
+      rethrow;
     }
   }
 
   @override
-  Future<void> write(NotificationPromptDecision decision) async {
+  Future<void> write(NotificationPromptDecision decision) {
+    final operation = _writeQueue.then<void>((_) => _writeAtomically(decision));
+    _writeQueue = operation.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {},
+    );
+    return operation;
+  }
+
+  Future<void> _writeAtomically(NotificationPromptDecision decision) async {
     final file = await _file();
     await file.parent.create(recursive: true);
-    final temporary = File('${file.path}.tmp');
+    final temporary = File(
+      '${file.path}.${DateTime.now().microsecondsSinceEpoch}.tmp',
+    );
     await temporary.writeAsString(
       jsonEncode({
         'decision': decision.name,

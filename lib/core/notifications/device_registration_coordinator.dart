@@ -13,10 +13,10 @@ class DeviceRegistrationCoordinator {
     required TimezoneProvider timezoneProvider,
     required DevicePlatformProvider platformProvider,
     required NotificationService notificationService,
-  }) : _client = client,
-       _timezoneProvider = timezoneProvider,
-       _platformProvider = platformProvider,
-       _notificationService = notificationService;
+  })  : _client = client,
+        _timezoneProvider = timezoneProvider,
+        _platformProvider = platformProvider,
+        _notificationService = notificationService;
 
   final DeviceRegistrationClient _client;
   final TimezoneProvider _timezoneProvider;
@@ -99,6 +99,13 @@ class DeviceRegistrationCoordinator {
       final permissionStatus = await _permissionStatus(
         refresh: refreshPermissionStatus,
       );
+      if (!permissionStatus.allowsDelivery) {
+        _debugLog(
+          'registration_skipped '
+          'reason=permission_${permissionStatus.name}',
+        );
+        return;
+      }
       final request = DeviceRegistrationRequest(
         token: token,
         platform: await _platformProvider.currentPlatform(),

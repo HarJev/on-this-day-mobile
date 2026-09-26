@@ -52,10 +52,11 @@ void main() {
     );
     expect(permissions.statusReadCount, 0);
 
-    await tester.scrollUntilVisible(prePrompt, 400);
+    await tester.fling(find.byType(ListView), const Offset(0, -10000), 5000);
     await tester.pumpAndSettle();
 
     expect(prePrompt, findsOneWidget);
+    expect(permissions.statusReadCount, 1);
     expect(permissions.requestCount, 0);
   });
 

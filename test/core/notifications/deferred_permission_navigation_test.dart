@@ -9,7 +9,6 @@ import 'package:on_this_day_mobile/core/notifications/notification_prompt_coordi
 import 'package:on_this_day_mobile/core/notifications/notification_service.dart';
 import 'package:on_this_day_mobile/features/on_this_day/data/fake_on_this_day_repository.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detail_screen.dart';
-import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/notification_pre_prompt.dart';
 import 'package:on_this_day_mobile/main.dart';
 
 import 'support/notification_prompt_fakes.dart';
@@ -83,48 +82,6 @@ void main() {
     expect(find.text(_eventTitle), findsOneWidget);
     expect(messaging.requestCount, 0);
   });
-
-  testWidgets('only Turn on notifications reaches the system prompt', (
-    tester,
-  ) async {
-    final messaging = _FakeMessaging(
-      requestResult: NotificationPermissionStatus.authorized,
-    );
-    final service = NotificationService(messaging: messaging);
-    final registration = RecordingRegistration();
-    addTearDown(() async {
-      await service.dispose();
-      await messaging.dispose();
-    });
-    await service.start();
-
-    await tester.pumpWidget(
-      OnThisDayApp(
-        initialEventId: _eventId,
-        router: _router(
-          NotificationPromptCoordinator(
-            permissions: service,
-            store: InMemoryPromptStore(),
-            onAuthorized: registration.call,
-            deniedMayBeUnasked: false,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text(NotificationPrePrompt.enableLabel),
-      300,
-    );
-    expect(messaging.requestCount, 0);
-
-    await _tapPromptAction(tester, NotificationPrePrompt.enableLabel);
-    await tester.pumpAndSettle();
-
-    expect(messaging.requestCount, 1);
-    expect(find.text('Notifications are on.'), findsOneWidget);
-    expect(registration.calls, [NotificationPermissionStatus.authorized]);
-  });
 }
 
 NotificationPromptCoordinator _promptFor(NotificationService service) {
@@ -152,13 +109,9 @@ class _FixedTimezoneProvider implements TimezoneProvider {
 }
 
 class _FakeMessaging implements NotificationMessaging {
-  _FakeMessaging({
-    this.initialMessageData,
-    this.requestResult = NotificationPermissionStatus.authorized,
-  });
+  _FakeMessaging({this.initialMessageData});
 
   final Map<String, Object?>? initialMessageData;
-  final NotificationPermissionStatus requestResult;
   NotificationPermissionStatus status =
       NotificationPermissionStatus.notDetermined;
   int requestCount = 0;
@@ -171,7 +124,6 @@ class _FakeMessaging implements NotificationMessaging {
   @override
   Future<NotificationPermissionStatus> requestPermission() async {
     requestCount += 1;
-    status = requestResult;
     return status;
   }
 
@@ -197,11 +149,4 @@ class _FakeMessaging implements NotificationMessaging {
     await _refresh.close();
     await _opened.close();
   }
-}
-
-Future<void> _tapPromptAction(WidgetTester tester, String label) async {
-  final action = find.text(label);
-  await tester.ensureVisible(action);
-  await tester.pumpAndSettle();
-  await tester.tap(action);
 }

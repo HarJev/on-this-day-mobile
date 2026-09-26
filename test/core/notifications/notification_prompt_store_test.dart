@@ -35,17 +35,36 @@ void main() {
     expect(File('${file().path}.tmp').existsSync(), isFalse);
   });
 
-  test('treats a corrupt file as undecided', () async {
+  test('reports a corrupt file so callers can fail closed', () async {
     await file().parent.create(recursive: true);
     await file().writeAsString('{not json');
 
-    expect(await store.read(), isNull);
+    await expectLater(store.read(), throwsFormatException);
   });
 
-  test('treats an unknown decision value as undecided', () async {
+  test('reports an unknown decision value so callers can fail closed',
+      () async {
     await file().parent.create(recursive: true);
     await file().writeAsString('{"decision":"maybe"}');
 
-    expect(await store.read(), isNull);
+    await expectLater(store.read(), throwsFormatException);
+  });
+
+  test('serializes concurrent writes and preserves the final decision',
+      () async {
+    await Future.wait([
+      store.write(NotificationPromptDecision.declined),
+      store.write(NotificationPromptDecision.requested),
+    ]);
+
+    expect(await store.read(), NotificationPromptDecision.requested);
+    expect(
+      await file()
+          .parent
+          .list()
+          .where((entry) => entry.path.endsWith('.tmp'))
+          .isEmpty,
+      isTrue,
+    );
   });
 }

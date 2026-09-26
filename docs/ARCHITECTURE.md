@@ -250,7 +250,9 @@ Permission timing (PD-035):
   An allowed result starts token registration in the background; a denied or
   undecided result points to device Settings. "Not now" and completed requests
   are stored by `NotificationPromptStore` (app-support JSON file) so the
-  pre-prompt is not repeated. Failed requests store nothing.
+  pre-prompt is not repeated. An unreadable or unknown stored decision fails
+  closed and also suppresses the offer; failed permission requests store
+  nothing.
 - Permanent denial is reported to the backend as `denied`.
 
 Firebase-opened messages and debug local notifications both pass through the

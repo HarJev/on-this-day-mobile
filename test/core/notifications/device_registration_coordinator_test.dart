@@ -193,6 +193,39 @@ void main() {
         await messaging.dispose();
       },
     );
+
+    for (final status in [
+      NotificationPermissionStatus.notDetermined,
+      NotificationPermissionStatus.denied,
+      NotificationPermissionStatus.permanentlyDenied,
+    ]) {
+      test('does not register a refreshed token when $status', () async {
+        final requests = <http.Request>[];
+        final messaging = _FakeNotificationMessaging(
+          currentPermissionStatus: status,
+        );
+        final service = NotificationService(messaging: messaging);
+        final coordinator = _coordinator(
+          notificationService: service,
+          httpClient: MockClient((request) async {
+            requests.add(request);
+            return http.Response('{"registered":true}', 200);
+          }),
+        );
+
+        await coordinator.start(await service.start());
+        messaging.emitTokenRefresh('refresh-token');
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(requests, isEmpty);
+        expect(messaging.permissionRequestCount, 0);
+
+        await coordinator.dispose();
+        await service.dispose();
+        await messaging.dispose();
+      });
+    }
   });
 }
 
@@ -200,16 +233,14 @@ DeviceRegistrationCoordinator _coordinator({
   NotificationService? notificationService,
   http.Client? httpClient,
 }) {
-  final service =
-      notificationService ??
+  final service = notificationService ??
       NotificationService(messaging: _FakeNotificationMessaging());
 
   return DeviceRegistrationCoordinator(
     client: DeviceRegistrationClient(
       apiClient: ApiClient(
         baseUrl: Uri.parse('http://127.0.0.1:3000'),
-        httpClient:
-            httpClient ??
+        httpClient: httpClient ??
             MockClient((_) async => http.Response('{"registered":true}', 200)),
       ),
     ),

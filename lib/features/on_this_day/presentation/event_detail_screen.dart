@@ -68,27 +68,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         return switch (state) {
           EventDetailLoading() => const _DetailScaffold(body: _LoadingState()),
           EventDetailLoaded(:final event) => _DetailScaffold(
-            body: _LoadedState(
-              event: event,
-              onSourceSelected: _openSource,
-              imageLoader: widget.imageLoader,
-              notificationPrompt: widget.notificationPrompt,
+              body: _LoadedState(
+                event: event,
+                onSourceSelected: _openSource,
+                imageLoader: widget.imageLoader,
+                notificationPrompt: widget.notificationPrompt,
+              ),
             ),
-          ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
-            body: _MessageState(
-              message: message,
-              actionLabel: 'Retry',
-              onActionPressed: _controller.retry,
+              body: _MessageState(
+                message: message,
+                actionLabel: 'Retry',
+                onActionPressed: _controller.retry,
+              ),
             ),
-          ),
           EventDetailError(:final message) => _DetailScaffold(
-            body: _MessageState(
-              message: message,
-              actionLabel: 'Retry',
-              onActionPressed: _controller.retry,
+              body: _MessageState(
+                message: message,
+                actionLabel: 'Retry',
+                onActionPressed: _controller.retry,
+              ),
             ),
-          ),
         };
       },
     );
@@ -127,13 +127,13 @@ class _DetailScaffold extends StatelessWidget {
         title: Text(
           'On This Day',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: AppColors.deepInk,
-            fontFamily: 'Georgia',
-            fontFamilyFallback: const ['Times New Roman', 'serif'],
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
+                color: AppColors.deepInk,
+                fontFamily: 'Georgia',
+                fontFamilyFallback: const ['Times New Roman', 'serif'],
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
         ),
         actions: const [SizedBox(width: 56)],
         bottom: const PreferredSize(
@@ -149,7 +149,7 @@ class _DetailScaffold extends StatelessWidget {
   }
 }
 
-class _LoadedState extends StatelessWidget {
+class _LoadedState extends StatefulWidget {
   const _LoadedState({
     required this.event,
     required this.onSourceSelected,
@@ -163,11 +163,51 @@ class _LoadedState extends StatelessWidget {
   final NotificationPromptCoordinator? notificationPrompt;
 
   @override
+  State<_LoadedState> createState() => _LoadedStateState();
+}
+
+class _LoadedStateState extends State<_LoadedState> {
+  final ScrollController _scrollController = ScrollController();
+  bool _reachedArticleEnd = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_revealPromptAtArticleEnd);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _revealPromptAtArticleEnd();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_revealPromptAtArticleEnd)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _revealPromptAtArticleEnd() {
+    if (_reachedArticleEnd || !_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    if (position.pixels < position.maxScrollExtent) {
+      return;
+    }
+    setState(() => _reachedArticleEnd = true);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final notificationPrompt = widget.notificationPrompt;
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
       children: [
-        _ArticleSurface(event: event, imageLoader: imageLoader),
+        _ArticleSurface(event: widget.event, imageLoader: widget.imageLoader),
         const SizedBox(height: 42),
         Row(
           children: [
@@ -176,19 +216,20 @@ class _LoadedState extends StatelessWidget {
             Text(
               'READ MORE',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.deepInk,
-                fontWeight: FontWeight.w700,
-              ),
+                    color: AppColors.deepInk,
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
           ],
         ),
         const SizedBox(height: 14),
-        for (final source in event.sources)
-          SourceRow(source: source, onTap: () => onSourceSelected(source)),
-        // Last item, so it is built and seen only when the reader reaches the
-        // end of the article.
-        if (notificationPrompt case final prompt?)
-          NotificationPrePrompt(coordinator: prompt),
+        for (final source in widget.event.sources)
+          SourceRow(
+            source: source,
+            onTap: () => widget.onSourceSelected(source),
+          ),
+        if (_reachedArticleEnd && notificationPrompt != null)
+          NotificationPrePrompt(coordinator: notificationPrompt),
       ],
     );
   }
@@ -216,11 +257,11 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.historicalDate.toUpperCase(),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.archivalCobalt,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
+                  color: AppColors.archivalCobalt,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
           ),
           const SizedBox(height: 12),
           const Divider(color: AppColors.mutedCopper),
@@ -228,12 +269,12 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.deepInk,
-              fontFamily: 'Georgia',
-              fontFamilyFallback: const ['Times New Roman', 'serif'],
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
+                  color: AppColors.deepInk,
+                  fontFamily: 'Georgia',
+                  fontFamilyFallback: const ['Times New Roman', 'serif'],
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
           ),
           if (image != null && loader != null) ...[
             OptionalEventImage(
@@ -247,10 +288,10 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.deepInk,
-              fontWeight: FontWeight.w400,
-              height: 1.5,
-            ),
+                  color: AppColors.deepInk,
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
+                ),
           ),
         ],
       ),
