@@ -68,27 +68,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         return switch (state) {
           EventDetailLoading() => const _DetailScaffold(body: _LoadingState()),
           EventDetailLoaded(:final event) => _DetailScaffold(
-              body: _LoadedState(
-                event: event,
-                onSourceSelected: _openSource,
-                imageLoader: widget.imageLoader,
-                notificationPrompt: widget.notificationPrompt,
-              ),
+            body: _LoadedState(
+              event: event,
+              onSourceSelected: _openSource,
+              imageLoader: widget.imageLoader,
+              notificationPrompt: widget.notificationPrompt,
             ),
+          ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
-              body: _MessageState(
-                message: message,
-                actionLabel: 'Retry',
-                onActionPressed: _controller.retry,
-              ),
+            body: _MessageState(
+              message: message,
+              actionLabel: 'Retry',
+              onActionPressed: _controller.retry,
             ),
+          ),
           EventDetailError(:final message) => _DetailScaffold(
-              body: _MessageState(
-                message: message,
-                actionLabel: 'Retry',
-                onActionPressed: _controller.retry,
-              ),
+            body: _MessageState(
+              message: message,
+              actionLabel: 'Retry',
+              onActionPressed: _controller.retry,
             ),
+          ),
         };
       },
     );
@@ -127,13 +127,13 @@ class _DetailScaffold extends StatelessWidget {
         title: Text(
           'On This Day',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.deepInk,
-                fontFamily: 'Georgia',
-                fontFamilyFallback: const ['Times New Roman', 'serif'],
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
+            color: AppColors.deepInk,
+            fontFamily: 'Georgia',
+            fontFamilyFallback: const ['Times New Roman', 'serif'],
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
         ),
         actions: const [SizedBox(width: 56)],
         bottom: const PreferredSize(
@@ -189,12 +189,17 @@ class _LoadedStateState extends State<_LoadedState> {
     super.dispose();
   }
 
+  /// Reveals the invitation once the reader is within this distance of the
+  /// article's end (sources included), so it is laid out before they stop and
+  /// they can keep scrolling into it.
+  static const _revealWithin = 180.0;
+
   void _revealPromptAtArticleEnd() {
     if (_reachedArticleEnd || !_scrollController.hasClients) {
       return;
     }
     final position = _scrollController.position;
-    if (position.pixels < position.maxScrollExtent) {
+    if (position.pixels < position.maxScrollExtent - _revealWithin) {
       return;
     }
     setState(() => _reachedArticleEnd = true);
@@ -216,9 +221,9 @@ class _LoadedStateState extends State<_LoadedState> {
             Text(
               'READ MORE',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.deepInk,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.deepInk,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -257,11 +262,11 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.historicalDate.toUpperCase(),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.archivalCobalt,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
+              color: AppColors.archivalCobalt,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
           ),
           const SizedBox(height: 12),
           const Divider(color: AppColors.mutedCopper),
@@ -269,12 +274,12 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.deepInk,
-                  fontFamily: 'Georgia',
-                  fontFamilyFallback: const ['Times New Roman', 'serif'],
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
-                ),
+              color: AppColors.deepInk,
+              fontFamily: 'Georgia',
+              fontFamilyFallback: const ['Times New Roman', 'serif'],
+              fontWeight: FontWeight.w700,
+              height: 1.1,
+            ),
           ),
           if (image != null && loader != null) ...[
             OptionalEventImage(
@@ -288,10 +293,10 @@ class _ArticleSurface extends StatelessWidget {
           Text(
             event.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.deepInk,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
-                ),
+              color: AppColors.deepInk,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
+            ),
           ),
         ],
       ),

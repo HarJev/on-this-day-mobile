@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
 import 'package:on_this_day_mobile/core/notifications/notification_prompt_coordinator.dart';
-import 'package:on_this_day_mobile/core/notifications/notification_prompt_store.dart';
 import 'package:on_this_day_mobile/core/notifications/notification_service.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/event_source.dart';
@@ -36,7 +35,9 @@ void main() {
     );
   });
 
-  testWidgets('is not built until the reader reaches the end', (tester) async {
+  testWidgets('is not built while the reader is far from the end', (
+    tester,
+  ) async {
     final permissions = FakePermissionGateway();
     await tester.pumpWidget(
       _app(
@@ -51,11 +52,48 @@ void main() {
       findsNothing,
     );
     expect(permissions.statusReadCount, 0);
+    expect(permissions.requestCount, 0);
+  });
 
-    await tester.fling(find.byType(ListView), const Offset(0, -10000), 5000);
+  testWidgets('appears before the bottom so ordinary scrolling reaches it', (
+    tester,
+  ) async {
+    final permissions = FakePermissionGateway();
+    await tester.pumpWidget(
+      _app(
+        coordinator: promptCoordinator(permissions: permissions),
+        event: _event(description: List.filled(60, _sentence).join(' ')),
+      ),
+    );
     await tester.pumpAndSettle();
+    ScrollPosition position() =>
+        tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+    final built = find.byType(NotificationPrePrompt, skipOffstage: false);
 
-    expect(prePrompt, findsOneWidget);
+    // Read down the article in ordinary, small drags.
+    var drags = 0;
+    while (built.evaluate().isEmpty && drags < 40) {
+      await tester.drag(find.byType(ListView), const Offset(0, -150));
+      await tester.pumpAndSettle();
+      drags++;
+    }
+    expect(built, findsOneWidget);
+    // Revealed while there was still article left to scroll, not only after
+    // the reader had already stopped at the very bottom.
+    final atReveal = position();
+    expect(atReveal.pixels, lessThan(atReveal.maxScrollExtent));
+
+    // Continuing the same small drags brings the actions on screen; no large
+    // fling is needed.
+    final enable = find.text(NotificationPrePrompt.enableLabel);
+    var more = 0;
+    while (!_onScreen(tester, enable) && more < 6) {
+      await tester.drag(find.byType(ListView), const Offset(0, -150));
+      await tester.pumpAndSettle();
+      more++;
+    }
+    expect(_onScreen(tester, enable), isTrue);
+    expect(more, lessThanOrEqualTo(6));
     expect(permissions.statusReadCount, 1);
     expect(permissions.requestCount, 0);
   });
@@ -98,7 +136,8 @@ void main() {
     expect(prePrompt, findsNothing);
     expect(outcome, findsNothing);
     expect(permissions.requestCount, 0);
-    expect(store.decision, NotificationPromptDecision.declined);
+    expect(store.record!.declineCount, 1);
+    expect(store.record!.requested, isFalse);
   });
 
   testWidgets('Turn on requests permission once and confirms', (tester) async {
@@ -306,4 +345,12 @@ Future<void> _tapPromptAction(WidgetTester tester, String label) async {
   await tester.ensureVisible(action);
   await tester.pumpAndSettle();
   await tester.tap(action);
+}
+
+bool _onScreen(WidgetTester tester, Finder finder) {
+  if (finder.evaluate().isEmpty) return false;
+  final rect = tester.getRect(finder.first);
+  final screen =
+      Offset.zero & tester.view.physicalSize / tester.view.devicePixelRatio;
+  return screen.contains(rect.topLeft) && screen.contains(rect.bottomRight);
 }

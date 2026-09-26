@@ -25,7 +25,9 @@ import 'core/notifications/local_notification_gateway.dart';
 import 'core/notifications/notification_navigation_coordinator.dart';
 import 'core/notifications/notification_prompt_coordinator.dart';
 import 'core/notifications/notification_prompt_store.dart';
+import 'core/notifications/notification_resume_reconciler.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/notifications/registered_token_store.dart';
 import 'features/on_this_day/data/backend_on_this_day_repository.dart';
 import 'features/quiz/application/quiz_completion_coordinator.dart';
 import 'features/quiz/application/quiz_completion_id_generator.dart';
@@ -96,8 +98,15 @@ Future<void> main() async {
     timezoneProvider: timezoneProvider,
     platformProvider: const PlatformDevicePlatformProvider(),
     notificationService: notificationService,
+    registeredTokens: FileRegisteredTokenStore(
+      directory: getApplicationSupportDirectory,
+    ),
   );
   unawaited(deviceRegistrationCoordinator.start(notificationStartup));
+  // Returning from device Settings may have changed the permission.
+  NotificationResumeReconciler(
+    reconcile: deviceRegistrationCoordinator.reconcile,
+  ).start();
   final notificationPrompt = NotificationPromptCoordinator(
     permissions: notificationService,
     store: FileNotificationPromptStore(

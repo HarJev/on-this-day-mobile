@@ -239,21 +239,41 @@ Permission timing (PD-035):
 
 - Startup (`NotificationService.start`) only reads the existing permission
   status and prepares tap routing; it never shows the system prompt.
-  `DeviceRegistrationCoordinator` fetches and registers a token only when the
-  status already allows delivery (authorized or provisional).
-- `NotificationPrePrompt` sits after the sources of a successfully loaded Event
-  Detail. `NotificationPromptCoordinator` offers it when no decision is stored
+- `NotificationPrePrompt` is added to a successfully loaded Event Detail once
+  the reader is within about 180 logical pixels of the end (immediately when
+  the article already fits), so ordinary scrolling continues into it.
+  `NotificationPromptCoordinator` offers it only when the stored record allows
   and the status is not determined (or, on Android 13+, denied before the app
   has ever asked). Authorized, provisional, and permanently denied states, and
   iOS denials, never show it.
 - Only "Turn on notifications" calls `NotificationService.requestPermission`.
   An allowed result starts token registration in the background; a denied or
-  undecided result points to device Settings. "Not now" and completed requests
-  are stored by `NotificationPromptStore` (app-support JSON file) so the
-  pre-prompt is not repeated. An unreadable or unknown stored decision fails
-  closed and also suppresses the offer; failed permission requests store
-  nothing.
-- Permanent denial is reported to the backend as `denied`.
+  undecided result points to device Settings. Failed requests store nothing.
+- "Not now": the first decline stores `declineCount = 1` and `declinedAt`; the
+  invitation may return once on a later eligible Event Detail visit at least
+  30 days later. A second decline, or any completed system request, ends the
+  offers. `NotificationPromptStore` keeps this in an app-support JSON file and
+  reads the first-release `{decision, updatedAt}` format as one decline (or a
+  completed request). Unreadable or unrecognized data fails closed.
+
+Registration reconciliation:
+
+- `DeviceRegistrationCoordinator` reconciles at startup, after the user allows
+  notifications, on token refresh, and whenever the app resumes
+  (`NotificationResumeReconciler`, for changes made in device Settings). It
+  never requests permission, and its operations run one at a time.
+- Allowed: register the current token, then persist it in
+  `RegisteredTokenStore` only after `POST /v1/devices` succeeds. An unchanged
+  registration is not re-posted within a session.
+- Not allowed (not determined, denied, permanently denied): delete only the
+  persisted token with `DELETE /v1/devices/{token}` and clear it only after the
+  delete succeeds; a failure keeps it for the next reconciliation. No token is
+  fetched or sent solely to delete a registration.
+- Token refresh while allowed: register the new token, delete the old one if
+  different, then persist the new one. A refreshed token is never sent while
+  notifications are not allowed.
+- Permanent denial is reported to the backend as `denied`. Device tokens are
+  never logged; API debug logs redact `/v1/devices/{token}`.
 
 Firebase-opened messages and debug local notifications both pass through the
 same `NotificationPayloadParser`, `NotificationService` tap stream, and
