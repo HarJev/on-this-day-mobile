@@ -235,6 +235,24 @@ eventId=<stable event id>
 The backend owns notification scheduling and copy. The app owns permission,
 device token lifecycle, and deep-link navigation.
 
+Permission timing (PD-035):
+
+- Startup (`NotificationService.start`) only reads the existing permission
+  status and prepares tap routing; it never shows the system prompt.
+  `DeviceRegistrationCoordinator` fetches and registers a token only when the
+  status already allows delivery (authorized or provisional).
+- `NotificationPrePrompt` sits after the sources of a successfully loaded Event
+  Detail. `NotificationPromptCoordinator` offers it when no decision is stored
+  and the status is not determined (or, on Android 13+, denied before the app
+  has ever asked). Authorized, provisional, and permanently denied states, and
+  iOS denials, never show it.
+- Only "Turn on notifications" calls `NotificationService.requestPermission`.
+  An allowed result starts token registration in the background; a denied or
+  undecided result points to device Settings. "Not now" and completed requests
+  are stored by `NotificationPromptStore` (app-support JSON file) so the
+  pre-prompt is not repeated. Failed requests store nothing.
+- Permanent denial is reported to the backend as `denied`.
+
 Firebase-opened messages and debug local notifications both pass through the
 same `NotificationPayloadParser`, `NotificationService` tap stream, and
 `NotificationNavigationCoordinator`. Debug builds may expose a local

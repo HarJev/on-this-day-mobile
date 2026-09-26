@@ -4,10 +4,12 @@ import 'widgets/optional_event_image.dart';
 import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/navigation/source_launcher.dart';
+import '../../../core/notifications/notification_prompt_coordinator.dart';
 import '../domain/event_source.dart';
 import '../domain/historical_event.dart';
 import '../domain/on_this_day_repository.dart';
 import 'event_detail_controller.dart';
+import 'widgets/notification_pre_prompt.dart';
 import 'widgets/source_row.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -17,12 +19,17 @@ class EventDetailScreen extends StatefulWidget {
     required this.eventId,
     required this.sourceLauncher,
     this.imageLoader,
+    this.notificationPrompt,
   }) : assert(eventId != '');
 
   final OnThisDayRepository repository;
   final String eventId;
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
+
+  /// When provided, a notification pre-prompt may appear after the sources of
+  /// a successfully loaded event.
+  final NotificationPromptCoordinator? notificationPrompt;
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -65,6 +72,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               event: event,
               onSourceSelected: _openSource,
               imageLoader: widget.imageLoader,
+              notificationPrompt: widget.notificationPrompt,
             ),
           ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
@@ -146,11 +154,13 @@ class _LoadedState extends StatelessWidget {
     required this.event,
     required this.onSourceSelected,
     this.imageLoader,
+    this.notificationPrompt,
   });
 
   final HistoricalEvent event;
   final ValueChanged<EventSource> onSourceSelected;
   final OptionalImageLoader? imageLoader;
+  final NotificationPromptCoordinator? notificationPrompt;
 
   @override
   Widget build(BuildContext context) {
@@ -175,6 +185,10 @@ class _LoadedState extends StatelessWidget {
         const SizedBox(height: 14),
         for (final source in event.sources)
           SourceRow(source: source, onTap: () => onSourceSelected(source)),
+        // Last item, so it is built and seen only when the reader reaches the
+        // end of the article.
+        if (notificationPrompt case final prompt?)
+          NotificationPrePrompt(coordinator: prompt),
       ],
     );
   }

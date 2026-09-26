@@ -12,9 +12,11 @@ import 'package:on_this_day_mobile/core/notifications/notification_service.dart'
 
 void main() {
   group('DeviceRegistrationCoordinator', () {
-    test('registers startup token without blocking on failures', () async {
+    test('registers the current token when already authorized', () async {
       final requests = <http.Request>[];
+      final messaging = _FakeNotificationMessaging(token: 'startup-token');
       final coordinator = _coordinator(
+        notificationService: NotificationService(messaging: messaging),
         httpClient: MockClient((request) async {
           requests.add(request);
           return http.Response('{"registered":true}', 200);
@@ -24,11 +26,11 @@ void main() {
       await coordinator.start(
         const NotificationStartupState(
           permissionStatus: NotificationPermissionStatus.authorized,
-          currentToken: 'startup-token',
           initialEventId: null,
         ),
       );
 
+      expect(messaging.permissionRequestCount, 0);
       expect(requests, hasLength(1));
       expect(requests.single.method, 'POST');
       expect(requests.single.body, contains('"token":"startup-token"'));
@@ -40,22 +42,117 @@ void main() {
       );
 
       await coordinator.dispose();
+      await messaging.dispose();
+    });
+
+    for (final status in [
+      NotificationPermissionStatus.notDetermined,
+      NotificationPermissionStatus.denied,
+      NotificationPermissionStatus.permanentlyDenied,
+    ]) {
+      test(
+        'does not fetch or register a token at startup when $status',
+        () async {
+          final requests = <http.Request>[];
+          final messaging = _FakeNotificationMessaging(token: 'startup-token');
+          final coordinator = _coordinator(
+            notificationService: NotificationService(messaging: messaging),
+            httpClient: MockClient((request) async {
+              requests.add(request);
+              return http.Response('{"registered":true}', 200);
+            }),
+          );
+
+          await coordinator.start(
+            NotificationStartupState(
+              permissionStatus: status,
+              initialEventId: null,
+            ),
+          );
+
+          expect(messaging.tokenRequestCount, 0);
+          expect(messaging.permissionRequestCount, 0);
+          expect(requests, isEmpty);
+
+          await coordinator.dispose();
+          await messaging.dispose();
+        },
+      );
+    }
+
+    test('registers after authorization with the granted status', () async {
+      final requests = <http.Request>[];
+      final messaging = _FakeNotificationMessaging(token: 'new-token');
+      final coordinator = _coordinator(
+        notificationService: NotificationService(messaging: messaging),
+        httpClient: MockClient((request) async {
+          requests.add(request);
+          return http.Response('{"registered":true}', 200);
+        }),
+      );
+      await coordinator.start(
+        const NotificationStartupState(
+          permissionStatus: NotificationPermissionStatus.notDetermined,
+          initialEventId: null,
+        ),
+      );
+
+      await coordinator.registerAfterAuthorization(
+        NotificationPermissionStatus.provisional,
+      );
+
+      expect(requests, hasLength(1));
+      expect(requests.single.body, contains('"token":"new-token"'));
+      expect(
+        requests.single.body,
+        contains('"notificationPermissionStatus":"provisional"'),
+      );
+
+      await coordinator.dispose();
+      await messaging.dispose();
+    });
+
+    test('skips registration when no token is available yet', () async {
+      final requests = <http.Request>[];
+      final messaging = _FakeNotificationMessaging(token: null);
+      final coordinator = _coordinator(
+        notificationService: NotificationService(messaging: messaging),
+        httpClient: MockClient((request) async {
+          requests.add(request);
+          return http.Response('{"registered":true}', 200);
+        }),
+      );
+
+      await coordinator.registerAfterAuthorization(
+        NotificationPermissionStatus.authorized,
+      );
+
+      expect(messaging.tokenRequestCount, 1);
+      expect(requests, isEmpty);
+
+      await coordinator.dispose();
+      await messaging.dispose();
     });
 
     test('does not throw when registration fails', () async {
+      final messaging = _FakeNotificationMessaging(token: 'startup-token');
       final coordinator = _coordinator(
+        notificationService: NotificationService(messaging: messaging),
         httpClient: MockClient((_) async => throw Exception('offline')),
       );
 
       await coordinator.start(
         const NotificationStartupState(
           permissionStatus: NotificationPermissionStatus.authorized,
-          currentToken: 'startup-token',
           initialEventId: null,
         ),
       );
+      await coordinator.registerAfterAuthorization(
+        NotificationPermissionStatus.authorized,
+      );
 
       await coordinator.dispose();
+      await messaging.dispose();
     });
 
     test(
@@ -87,7 +184,9 @@ void main() {
           requests.single.body,
           contains('"notificationPermissionStatus":"provisional"'),
         );
-        expect(messaging.permissionStatusRequestCount, 1);
+        // Once at startup (read only) and once to refresh on token rotation.
+        expect(messaging.permissionStatusRequestCount, 2);
+        expect(messaging.permissionRequestCount, 0);
 
         await coordinator.dispose();
         await service.dispose();
@@ -135,19 +234,24 @@ class _FakeNotificationMessaging implements NotificationMessaging {
   _FakeNotificationMessaging({
     this.permissionStatus = NotificationPermissionStatus.authorized,
     this.currentPermissionStatus = NotificationPermissionStatus.authorized,
+    this.token,
   });
 
   final NotificationPermissionStatus permissionStatus;
   final NotificationPermissionStatus currentPermissionStatus;
+  final String? token;
   final StreamController<String> _tokenRefreshController =
       StreamController<String>.broadcast();
   final StreamController<Map<String, Object?>> _openedMessageController =
       StreamController<Map<String, Object?>>.broadcast();
 
   int permissionStatusRequestCount = 0;
+  int permissionRequestCount = 0;
+  int tokenRequestCount = 0;
 
   @override
   Future<NotificationPermissionStatus> requestPermission() async {
+    permissionRequestCount += 1;
     return permissionStatus;
   }
 
@@ -159,7 +263,8 @@ class _FakeNotificationMessaging implements NotificationMessaging {
 
   @override
   Future<String?> getToken() async {
-    return null;
+    tokenRequestCount += 1;
+    return token;
   }
 
   @override

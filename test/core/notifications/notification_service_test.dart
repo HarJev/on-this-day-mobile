@@ -6,37 +6,98 @@ import 'package:on_this_day_mobile/core/notifications/notification_service.dart'
 
 void main() {
   group('NotificationService', () {
-    test('requests permission and returns current token', () async {
+    test(
+      'start reads permission without prompting or fetching a token',
+      () async {
+        final messaging = _FakeNotificationMessaging(
+          token: 'fcm-token',
+          permissionStatus: NotificationPermissionStatus.notDetermined,
+        );
+        final service = NotificationService(messaging: messaging);
+
+        final state = await service.start();
+
+        expect(messaging.permissionRequestCount, 0);
+        expect(messaging.tokenRequestCount, 0);
+        expect(
+          state.permissionStatus,
+          NotificationPermissionStatus.notDetermined,
+        );
+
+        await service.dispose();
+        await messaging.dispose();
+      },
+    );
+
+    test('start reports an existing authorization without prompting', () async {
       final messaging = _FakeNotificationMessaging(
-        token: 'fcm-token',
         permissionStatus: NotificationPermissionStatus.authorized,
       );
       final service = NotificationService(messaging: messaging);
 
       final state = await service.start();
 
-      expect(messaging.permissionRequestCount, 1);
-      expect(messaging.tokenRequestCount, 1);
+      expect(messaging.permissionRequestCount, 0);
       expect(state.permissionStatus, NotificationPermissionStatus.authorized);
-      expect(state.currentToken, 'fcm-token');
 
       await service.dispose();
       await messaging.dispose();
     });
 
-    test('keeps bootstrapping when current token lookup fails', () async {
+    test(
+      'start treats an unreadable permission status as undetermined',
+      () async {
+        final messaging = _FakeNotificationMessaging(
+          statusException: Exception('platform channel unavailable'),
+        );
+        final service = NotificationService(messaging: messaging);
+
+        final state = await service.start();
+
+        expect(
+          state.permissionStatus,
+          NotificationPermissionStatus.notDetermined,
+        );
+        expect(messaging.permissionRequestCount, 0);
+
+        await service.dispose();
+        await messaging.dispose();
+      },
+    );
+
+    test('requestPermission is the only call that prompts', () async {
       final messaging = _FakeNotificationMessaging(
-        tokenException: Exception('APNs token not ready'),
+        permissionStatus: NotificationPermissionStatus.provisional,
       );
       final service = NotificationService(messaging: messaging);
+      await service.start();
 
-      final state = await service.start();
+      final status = await service.requestPermission();
 
-      expect(state.currentToken, isNull);
-      expect(state.permissionStatus, NotificationPermissionStatus.authorized);
+      expect(status, NotificationPermissionStatus.provisional);
+      expect(messaging.permissionRequestCount, 1);
 
       await service.dispose();
       await messaging.dispose();
+    });
+
+    test('currentToken returns the token or null when lookup fails', () async {
+      final working = _FakeNotificationMessaging(token: 'fcm-token');
+      final failing = _FakeNotificationMessaging(
+        tokenException: Exception('APNs token not ready'),
+      );
+
+      expect(
+        await NotificationService(messaging: working).currentToken(),
+        'fcm-token',
+      );
+      expect(
+        await NotificationService(messaging: failing).currentToken(),
+        isNull,
+      );
+
+      await working.dispose();
+      await failing.dispose();
     });
 
     test('listens for token refresh', () async {
@@ -136,7 +197,9 @@ void main() {
     });
 
     test('shows a debug local notification with the shared payload', () async {
-      final messaging = _FakeNotificationMessaging();
+      final messaging = _FakeNotificationMessaging(
+        permissionStatus: NotificationPermissionStatus.notDetermined,
+      );
       final localNotifications = _FakeLocalNotificationGateway();
       final service = NotificationService(
         messaging: messaging,
@@ -148,6 +211,7 @@ void main() {
 
       expect(localNotifications.lastTitle, 'A moment in history is waiting');
       expect(localNotifications.lastPayload, '{"eventId":"test-event"}');
+      expect(messaging.permissionRequestCount, 0);
 
       await service.dispose();
       await messaging.dispose();
@@ -195,12 +259,14 @@ class _FakeNotificationMessaging implements NotificationMessaging {
   _FakeNotificationMessaging({
     this.token = 'token',
     this.tokenException,
+    this.statusException,
     this.permissionStatus = NotificationPermissionStatus.authorized,
     this.initialMessageData,
   });
 
   final String? token;
   final Object? tokenException;
+  final Object? statusException;
   final NotificationPermissionStatus permissionStatus;
   final Map<String, Object?>? initialMessageData;
 
@@ -220,6 +286,10 @@ class _FakeNotificationMessaging implements NotificationMessaging {
 
   @override
   Future<NotificationPermissionStatus> getPermissionStatus() async {
+    final exception = statusException;
+    if (exception != null) {
+      throw exception;
+    }
     return permissionStatus;
   }
 

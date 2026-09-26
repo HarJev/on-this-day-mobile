@@ -26,6 +26,8 @@ class DeviceRegistrationCoordinator {
   StreamSubscription<String>? _tokenRefreshSubscription;
   NotificationPermissionStatus? _lastPermissionStatus;
 
+  /// Listens for token refreshes and, when the user has already allowed
+  /// notifications, registers the current token. Never requests permission.
   Future<void> start(NotificationStartupState startupState) async {
     _lastPermissionStatus = startupState.permissionStatus;
     await _tokenRefreshSubscription?.cancel();
@@ -35,13 +37,29 @@ class DeviceRegistrationCoordinator {
       unawaited(_registerToken(token, refreshPermissionStatus: true));
     });
 
-    final token = startupState.currentToken;
-    if (token == null || token.isEmpty) {
-      _debugLog('startup_registration_skipped reason=missing_token');
+    if (!startupState.permissionStatus.allowsDelivery) {
+      _debugLog(
+        'startup_registration_skipped '
+        'reason=permission_${startupState.permissionStatus.name}',
+      );
       return;
     }
 
-    await _registerToken(token, refreshPermissionStatus: false);
+    await _registerCurrentToken();
+  }
+
+  /// Registers the device after the user has just allowed notifications.
+  Future<void> registerAfterAuthorization(
+    NotificationPermissionStatus status,
+  ) async {
+    _lastPermissionStatus = status;
+    if (!status.allowsDelivery) {
+      _debugLog(
+        'authorized_registration_skipped reason=permission_${status.name}',
+      );
+      return;
+    }
+    await _registerCurrentToken();
   }
 
   Future<void> deleteToken(String token) async {
@@ -56,6 +74,15 @@ class DeviceRegistrationCoordinator {
 
   Future<void> dispose() async {
     await _tokenRefreshSubscription?.cancel();
+  }
+
+  Future<void> _registerCurrentToken() async {
+    final token = await _notificationService.currentToken();
+    if (token == null || token.isEmpty) {
+      _debugLog('registration_skipped reason=missing_token');
+      return;
+    }
+    await _registerToken(token, refreshPermissionStatus: false);
   }
 
   Future<void> _registerToken(

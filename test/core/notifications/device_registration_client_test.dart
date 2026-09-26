@@ -27,6 +27,18 @@ void main() {
         'notificationPermissionStatus': 'not_determined',
       });
     });
+
+    test('reports permanent denial with the backend denied value', () {
+      const request = DeviceRegistrationRequest(
+        token: 'fcm-token',
+        platform: DevicePlatform.android,
+        timezone: 'America/Jamaica',
+        notificationPermissionStatus:
+            NotificationPermissionStatus.permanentlyDenied,
+      );
+
+      expect(request.toJson()['notificationPermissionStatus'], 'denied');
+    });
   });
 
   group('DeviceRegistrationClient', () {
