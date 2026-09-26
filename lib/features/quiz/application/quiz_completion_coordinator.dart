@@ -57,6 +57,16 @@ final class QuizCompletionCoordinator extends ChangeNotifier {
     );
   }
 
+  /// The frozen Daily result only after its claim was stored as official.
+  StoredQuizResult? confirmedOfficialDailyFor(QuizDate date) {
+    final completionId = _dailyReservations[date]?.completionId;
+    if (completionId == null) return null;
+    final stored = _entries[completionId]?.state.storedResult;
+    return stored?.classification == QuizSavedClassification.official
+        ? stored
+        : null;
+  }
+
   Future<void> Function(QuizResult) sinkFor(QuizSaveIntent intent) =>
       (result) => complete(QuizCompletion(result, intent)).then<void>((_) {});
 

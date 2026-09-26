@@ -72,10 +72,11 @@ Future<void> main() async {
   final routeObserver = RouteObserver<PageRoute<dynamic>>();
   final quizDatabase = QuizDatabase();
   final quizResultStore = SqliteQuizResultStore(database: quizDatabase);
+  final quizCompletionCoordinator = QuizCompletionCoordinator(quizResultStore);
   late final quizDependencies = QuizRouteDependencies(
     repository: BackendQuizRepository(apiClient: apiClient),
     resultStore: quizResultStore,
-    completionCoordinator: QuizCompletionCoordinator(quizResultStore),
+    completionCoordinator: quizCompletionCoordinator,
     imagePreparer: QuizImagePreparer(
       downloader: HttpQuizImageDownloader.fromDelegate(networkImageDownloader),
       decoder: FlutterQuizImageDecoder(),
@@ -84,7 +85,7 @@ Future<void> main() async {
     timezoneProvider: timezoneProvider,
     completionIdGenerator: SecureQuizCompletionIdGenerator(),
     sourceLauncher: const PlatformSourceLauncher(),
-    rootStatus: QuizRootStatus(),
+    rootStatus: QuizRootStatus(quizCompletionCoordinator),
   );
   final notificationService = NotificationService(
     messaging: FirebaseNotificationMessaging(),
@@ -133,10 +134,10 @@ Future<void> main() async {
         timezoneProvider: timezoneProvider,
         onShowDebugNotification: kDebugMode
             ? () => unawaited(
-                notificationService.showDebugTestNotification(
-                  eventId: _debugNotificationEventId,
-                ),
-              )
+                  notificationService.showDebugTestNotification(
+                    eventId: _debugNotificationEventId,
+                  ),
+                )
             : null,
         navigatorKey: navigatorKey,
         routeObserver: routeObserver,

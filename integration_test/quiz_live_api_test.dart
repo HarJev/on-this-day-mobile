@@ -52,10 +52,11 @@ void main() {
       final QuizImageDownloader downloader = fixtureImages
           ? BytesDownloader(await testImageBytes(width: 400, height: 200))
           : HttpQuizImageDownloader(client);
+      final coordinator = QuizCompletionCoordinator(store);
       final dependencies = QuizRouteDependencies(
         repository: repository,
         resultStore: store,
-        completionCoordinator: QuizCompletionCoordinator(store),
+        completionCoordinator: coordinator,
         imagePreparer: QuizImagePreparer(
           downloader: downloader,
           decoder: FlutterQuizImageDecoder(),
@@ -63,7 +64,7 @@ void main() {
         timezoneProvider: const _Timezone(),
         completionIdGenerator: SecureQuizCompletionIdGenerator(),
         sourceLauncher: const PlatformSourceLauncher(),
-        rootStatus: QuizRootStatus(),
+        rootStatus: QuizRootStatus(coordinator),
       );
       addTearDown(() async {
         client.close();
@@ -196,8 +197,7 @@ Future<void> _wait(WidgetTester tester, bool Function() ready) async {
   expect(
     ready(),
     isTrue,
-    reason:
-        'Live app did not reach the expected state. '
+    reason: 'Live app did not reach the expected state. '
         'Visible text: ${tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).join(" | ")}',
   );
   expect(tester.takeException(), isNull);
@@ -222,11 +222,9 @@ Future<void> _complete(WidgetTester tester, Set<Type> types) async {
         );
       } else if (question is ChronologicalOrderingQuestion) {
         // Exercise the same accessible movement buttons available to users.
-        for (
-          var position = 0;
-          position < question.correctOrderItemIds.length;
-          position++
-        ) {
+        for (var position = 0;
+            position < question.correctOrderItemIds.length;
+            position++) {
           final id = question.correctOrderItemIds[position];
           while ((_play(tester)!.controller.state as QuizAnswering)
                   .orderingDraft

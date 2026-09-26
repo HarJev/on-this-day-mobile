@@ -103,6 +103,39 @@ void main() {
     },
   );
 
+  test('confirms a Daily only once it is stored as official', () async {
+    final store = _ControlledStore();
+    final coordinator = QuizCompletionCoordinator(store);
+    final date = QuizDate('2026-09-13');
+    final completion = _completion('official');
+
+    final operation = coordinator.complete(completion);
+    expect(coordinator.confirmedOfficialDailyFor(date), isNull);
+
+    store.succeed(QuizSavedClassification.official);
+    await operation;
+
+    final confirmed = coordinator.confirmedOfficialDailyFor(date)!;
+    expect(confirmed.classification, QuizSavedClassification.official);
+    expect(confirmed.result, same(completion.result));
+  });
+
+  test('a failed or practice-classified claim is never confirmed', () async {
+    final store = _ControlledStore();
+    final coordinator = QuizCompletionCoordinator(store);
+    final date = QuizDate('2026-09-13');
+
+    final failed = coordinator.complete(_completion('failed'));
+    store.fail(StateError('disk unavailable'));
+    await expectLater(failed, throwsStateError);
+    expect(coordinator.confirmedOfficialDailyFor(date), isNull);
+
+    final retry = coordinator.retry('failed');
+    store.succeed(QuizSavedClassification.practice);
+    await retry;
+    expect(coordinator.confirmedOfficialDailyFor(date), isNull);
+  });
+
   test('retry uses the same frozen completion and effective intent', () async {
     final store = _ControlledStore();
     final coordinator = QuizCompletionCoordinator(store);
