@@ -100,6 +100,6 @@ belong in explicit integration verification.
 
 ## Git
 
-Use a dedicated `codex/` branch or the worktree named by the task. Preserve
+Use a dedicated `codex/` or claude/branch or the worktree named by the task. Preserve
 unrelated changes. Commit and push verified approved work, but do not merge or
 open a PR unless requested.
