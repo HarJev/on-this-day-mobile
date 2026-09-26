@@ -291,6 +291,7 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                                       images: controller.preparedImages!,
                                       metadata: q.image,
                                       launcher: widget.sourceLauncher,
+                                      creditAvailable: current.$3 != null,
                                     )
                                   : null,
                               onAnswer: (id) =>
