@@ -72,7 +72,7 @@ void main() {
 
     expect(factoryCalls, 1);
     expect(quizRepository.catalogCalls, 1);
-    expect(find.text('Daily Challenge'), findsOneWidget);
+    expect(find.text('Sep 13'), findsOneWidget);
     expect(find.byTooltip('Show test notification'), findsNothing);
 
     await tester.tap(find.byType(NavigationDestination).at(0));
@@ -95,8 +95,9 @@ void main() {
 
     Future<void> capture(String name) async {
       await tester.pumpAndSettle();
-      final boundary = captureKey.currentContext!.findRenderObject()!
-          as RenderRepaintBoundary;
+      final boundary =
+          captureKey.currentContext!.findRenderObject()!
+              as RenderRepaintBoundary;
       final image = (await tester.runAsync(boundary.toImage))!;
       final bytes = await tester.runAsync(
         () => image.toByteData(format: ui.ImageByteFormat.png),
@@ -141,7 +142,7 @@ void main() {
       final navigatorKey = await _pumpRoutedShell(tester, dependencies);
       dependencies.rootStatus.update(_dailyStatus);
       await tester.pumpAndSettle();
-      expect(find.text('Choose challenge'), findsOneWidget);
+      expect(find.text('Continue with 5 questions'), findsOneWidget);
 
       final completion = _dailyClaim('official-daily');
       await _finishDailyAndOpenResults(
@@ -160,7 +161,7 @@ void main() {
       expect(find.text('Today\'s score: 5 / 5'), findsOneWidget);
       expect(find.text('Today\'s official score is saved.'), findsOneWidget);
       expect(find.text('Practice again'), findsOneWidget);
-      expect(find.text('Choose challenge'), findsNothing);
+      expect(find.text('Continue with 5 questions'), findsNothing);
       expect(quizRepository.catalogCalls, 1);
 
       await tester.tap(find.byType(NavigationDestination).at(0));
@@ -400,32 +401,30 @@ final class _QuizRepository implements QuizRepository {
   Future<DailyQuizDefinition> getDaily({
     required String timezone,
     required int questionCount,
-  }) =>
-      throw UnimplementedError();
+  }) async => sessionQuiz(daily: true) as DailyQuizDefinition;
 
   @override
   Future<QuickPlayQuizDefinition> createQuickPlay({
     required int questionCount,
     String? collectionId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
 
 final class _TodayRepository implements OnThisDayRepository {
   @override
   Future<DailyContent> getTodayContent(String timezone) async => DailyContent(
-        displayDate: 'Sep 14',
-        featuredEvent: const FeaturedEvent(
-          id: 'test-event',
-          title: 'Test event',
-          year: '1900',
-          historicalDate: 'September 14, 1900',
-          summary: 'A short test summary.',
-          notificationTitle: 'Test',
-          notificationBody: 'Test',
-        ),
-        additionalEvents: const [],
-      );
+    displayDate: 'Sep 14',
+    featuredEvent: const FeaturedEvent(
+      id: 'test-event',
+      title: 'Test event',
+      year: '1900',
+      historicalDate: 'September 14, 1900',
+      summary: 'A short test summary.',
+      notificationTitle: 'Test',
+      notificationBody: 'Test',
+    ),
+    additionalEvents: const [],
+  );
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) =>
@@ -489,8 +488,7 @@ final class _NoopDownloader implements QuizImageDownloader {
     required int maxBytes,
     required void Function(int) reserveBytes,
     DateTime? deadline,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
 
 final class _NoopDecoder implements QuizImageDecoder {
@@ -500,6 +498,5 @@ final class _NoopDecoder implements QuizImageDecoder {
     dynamic cancellation, {
     required int maxEdge,
     required void Function(int) reserveDecodedBytes,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }

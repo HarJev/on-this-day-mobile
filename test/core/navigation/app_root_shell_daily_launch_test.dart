@@ -104,13 +104,14 @@ void main() {
 final class _Harness {
   final quiz = _QuizRepository();
   final store = _Store();
+  late final coordinator = QuizCompletionCoordinator(store);
   final navigator = GlobalKey<NavigatorState>();
   final pushed = <String>[];
   final launches = <QuizSessionLaunchRequest>[];
   late final QuizRouteDependencies dependencies = QuizRouteDependencies(
     repository: quiz,
     resultStore: store,
-    completionCoordinator: QuizCompletionCoordinator(store),
+    completionCoordinator: coordinator,
     imagePreparer: QuizImagePreparer(
       downloader: _NoopDownloader(),
       decoder: _NoopDecoder(),
@@ -118,7 +119,7 @@ final class _Harness {
     timezoneProvider: const _Timezone(),
     completionIdGenerator: const _Ids(),
     sourceLauncher: const PlatformSourceLauncher(),
-    rootStatus: QuizRootStatus(),
+    rootStatus: QuizRootStatus(coordinator),
   );
 
   Future<void> pump(WidgetTester tester) async {
