@@ -41,7 +41,7 @@ void main() {
     expect(harness.dependencies.rootStatus.value?.displayDate, 'Sep 14');
     await tester.tap(find.text('10'));
     await tester.pump();
-    await tester.tap(find.text('Continue with 10 questions'));
+    await tester.tap(find.text('Get ready for 10 questions'));
     await tester.pumpAndSettle();
 
     expect(harness.quiz.dailyCounts, [5, 10]);
@@ -57,7 +57,7 @@ void main() {
       (route) => route.settings.name == AppRoutes.root,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Continue with 10 questions'), findsOneWidget);
+    expect(find.text('Get ready for 10 questions'), findsOneWidget);
     expect(harness.quiz.catalogCalls, 1);
   });
 
@@ -70,7 +70,7 @@ void main() {
 
     final gate = Completer<void>();
     harness.quiz.hold = gate;
-    await tester.tap(find.text('Continue with 5 questions'));
+    await tester.tap(find.text('Get ready for 5 questions'));
     await tester.pump();
     await tester.tap(find.byType(NavigationDestination).at(0));
     await tester.pump();
@@ -90,9 +90,9 @@ void main() {
 
     final gate = Completer<void>();
     harness.quiz.hold = gate;
-    await tester.tap(find.text('Continue with 5 questions'));
+    await tester.tap(find.text('Get ready for 5 questions'));
     await tester.pump();
-    await tester.tap(find.text('Choose a round'));
+    await tester.tap(find.text('Set up a quick round'));
     await tester.pumpAndSettle();
     gate.complete();
     await tester.pumpAndSettle();

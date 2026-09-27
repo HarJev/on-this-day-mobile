@@ -91,9 +91,9 @@ void main() {
       await tester.tap(find.byType(NavigationDestination).at(1));
       await _wait(
         tester,
-        () => find.text('Choose a round').evaluate().isNotEmpty,
+        () => find.text('Set up a quick round').evaluate().isNotEmpty,
       );
-      await _tap(tester, find.text('Choose a round'));
+      await _tap(tester, find.text('Set up a quick round'));
       await _wait(tester, () => find.text('20').evaluate().isNotEmpty);
       await _tap(tester, find.text('20'));
       await _tap(tester, find.byType(SwitchListTile));
@@ -129,9 +129,9 @@ void main() {
       // The Hub offers the Daily count choice directly.
       await _wait(
         tester,
-        () => find.text('Continue with 5 questions').evaluate().isNotEmpty,
+        () => find.text('Get ready for 5 questions').evaluate().isNotEmpty,
       );
-      await _tap(tester, find.text('Continue with 5 questions'));
+      await _tap(tester, find.text('Get ready for 5 questions'));
       await _wait(tester, () => _play(tester)?.controller.state is QuizReady);
       final definition =
           _play(tester)!.controller.definition as DailyQuizDefinition;

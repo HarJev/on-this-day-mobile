@@ -142,7 +142,7 @@ void main() {
       final navigatorKey = await _pumpRoutedShell(tester, dependencies);
       dependencies.rootStatus.update(_dailyStatus);
       await tester.pumpAndSettle();
-      expect(find.text('Continue with 5 questions'), findsOneWidget);
+      expect(find.text('Get ready for 5 questions'), findsOneWidget);
 
       final completion = _dailyClaim('official-daily');
       await _finishDailyAndOpenResults(
@@ -161,7 +161,7 @@ void main() {
       expect(find.text('Today\'s score: 5 / 5'), findsOneWidget);
       expect(find.text('Today\'s official score is saved.'), findsOneWidget);
       expect(find.text('Practice again'), findsOneWidget);
-      expect(find.text('Continue with 5 questions'), findsNothing);
+      expect(find.text('Get ready for 5 questions'), findsNothing);
       expect(quizRepository.catalogCalls, 1);
 
       await tester.tap(find.byType(NavigationDestination).at(0));
@@ -216,7 +216,7 @@ void main() {
     );
     expect(find.textContaining('Today\'s score'), findsNothing);
     expect(find.text('Review answers'), findsNothing);
-    expect(find.text('Choose challenge'), findsOneWidget);
+    expect(find.text('Set up today\'s challenge'), findsOneWidget);
     expect(quizRepository.catalogCalls, 1);
   });
 

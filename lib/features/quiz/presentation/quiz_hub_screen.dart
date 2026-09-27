@@ -274,7 +274,7 @@ class _HubContent extends StatelessWidget {
         ),
         actionLabel: dailyStatus?.hasConfirmedOfficial == true
             ? 'Practice again'
-            : 'Choose challenge',
+            : 'Set up today\'s challenge',
         actionIcon: Icons.arrow_forward,
         onPressed: () => onOpenDaily(catalog),
         action: dailyAction,
@@ -284,7 +284,7 @@ class _HubContent extends StatelessWidget {
         eyebrow: 'QUICK PLAY',
         title: 'Practice any time',
         description: _quickDescription(catalog),
-        actionLabel: 'Choose a round',
+        actionLabel: 'Set up a quick round',
         actionIcon: Icons.tune,
         outlinedAction: true,
         onPressed: () => onOpenQuickPlay(catalog),
@@ -559,7 +559,7 @@ class _DailyLaunchPanel extends StatelessWidget {
         label: Text(
           starting
               ? 'Getting your challenge ready…'
-              : 'Continue with ${data.selectedQuestionCount} questions',
+              : 'Get ready for ${data.selectedQuestionCount} questions',
         ),
         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       ),

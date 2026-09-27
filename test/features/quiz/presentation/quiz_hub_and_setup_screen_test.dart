@@ -51,10 +51,10 @@ void main() {
     expect(find.text('QUICK PLAY'), findsOneWidget);
     expect(find.text('Practice any time'), findsOneWidget);
     expect(find.text('Quick Play'), findsNothing);
-    expect(find.text('Choose a round'), findsOneWidget);
+    expect(find.text('Set up a quick round'), findsOneWidget);
     expect(find.byTooltip('Back'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsNothing);
-    await tester.tap(find.text('Choose challenge'));
+    await tester.tap(find.text('Set up today\'s challenge'));
     expect(daily, 1);
     expect(quick, 0);
   });
@@ -85,17 +85,17 @@ void main() {
       expect(find.text('DAILY CHALLENGE'), findsOneWidget);
       expect(find.text('Sep 14'), findsOneWidget);
       expect(find.text('Today\'s challenge'), findsNothing);
-      expect(find.text('Choose challenge'), findsNothing);
+      expect(find.text('Set up today\'s challenge'), findsNothing);
       expect(find.textContaining('first completed result'), findsOneWidget);
       expect(find.text('2 min'), findsOneWidget);
       expect(find.text('4 min'), findsOneWidget);
       expect(find.text('8 min'), findsOneWidget);
-      expect(find.text('Continue with 5 questions'), findsOneWidget);
+      expect(find.text('Get ready for 5 questions'), findsOneWidget);
 
       await tester.tap(find.text('10'));
       await tester.pump();
       expect(repository.dailyCounts, [5]);
-      await tester.tap(find.text('Continue with 10 questions'));
+      await tester.tap(find.text('Get ready for 10 questions'));
       await tester.pumpAndSettle();
 
       expect(repository.dailyCounts, [5, 10]);
@@ -120,7 +120,7 @@ void main() {
 
       final gate = Completer<void>();
       repository.hold = gate;
-      await tester.tap(find.text('Continue with 5 questions'));
+      await tester.tap(find.text('Get ready for 5 questions'));
       await tester.pump();
       expect(find.text('Getting your challenge ready…'), findsOneWidget);
       expect(
@@ -164,14 +164,14 @@ void main() {
 
       expect(find.text('Could not determine your timezone.'), findsOneWidget);
       expect(find.text('Question count'), findsNothing);
-      await tester.tap(find.text('Choose a round'));
+      await tester.tap(find.text('Set up a quick round'));
       expect(quick, 1);
 
       timezone.value = 'America/Jamaica';
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
       expect(find.text('Could not determine your timezone.'), findsNothing);
-      expect(find.text('Continue with 5 questions'), findsOneWidget);
+      expect(find.text('Get ready for 5 questions'), findsOneWidget);
     });
 
     testWidgets('a failed start keeps the Hub recoverable without launching', (
@@ -189,7 +189,7 @@ void main() {
         QuizFailureKind.request,
         'Check your connection and try again.',
       );
-      await tester.tap(find.text('Continue with 5 questions'));
+      await tester.tap(find.text('Get ready for 5 questions'));
       await tester.pumpAndSettle();
       expect(launches, isEmpty);
       expect(find.text('Check your connection and try again.'), findsOneWidget);
@@ -200,7 +200,7 @@ void main() {
 
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
-      expect(find.text('Continue with 5 questions'), findsOneWidget);
+      expect(find.text('Get ready for 5 questions'), findsOneWidget);
       expect(launches, isEmpty);
     });
 
@@ -223,8 +223,8 @@ void main() {
       );
       expect(find.text('Today\'s challenge'), findsOneWidget);
       expect(find.text('Question count'), findsNothing);
-      expect(find.text('Choose challenge'), findsNothing);
-      expect(find.text('Choose a round'), findsOneWidget);
+      expect(find.text('Set up today\'s challenge'), findsNothing);
+      expect(find.text('Set up a quick round'), findsOneWidget);
       expect(repository.dailyCounts, isEmpty);
 
       repository.catalog = _catalog(mixedCount: 5);
@@ -236,7 +236,7 @@ void main() {
         find.text('Daily Challenge is not available right now.'),
         findsNothing,
       );
-      expect(find.text('Continue with 5 questions'), findsOneWidget);
+      expect(find.text('Get ready for 5 questions'), findsOneWidget);
     });
 
     testWidgets('a completed Daily keeps its score and Practice again', (
@@ -260,7 +260,7 @@ void main() {
       expect(find.textContaining('Today\'s score:'), findsOneWidget);
       expect(find.text('Review answers'), findsOneWidget);
       expect(find.text('Question count'), findsNothing);
-      expect(find.textContaining('Continue with'), findsNothing);
+      expect(find.textContaining('Get ready for'), findsNothing);
       await tester.tap(find.text('Practice again'));
       expect(setupOpened, 1);
     });
@@ -299,7 +299,7 @@ void main() {
         await tester.pumpAndSettle();
 
         store.official = _storedOfficial();
-        await tester.tap(find.text('Continue with 5 questions'));
+        await tester.tap(find.text('Get ready for 5 questions'));
         await tester.pumpAndSettle();
 
         expect(launches, isEmpty);
