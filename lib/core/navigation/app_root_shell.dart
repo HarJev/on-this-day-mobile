@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../features/on_this_day/domain/on_this_day_repository.dart';
 import '../../features/on_this_day/presentation/home_screen.dart';
+import '../../features/quiz/application/quiz_session_launch_request.dart';
 import '../../features/quiz/domain/quiz_catalog.dart';
 import '../../features/quiz/domain/quiz_result.dart';
+import '../../features/quiz/presentation/daily_challenge_setup_controller.dart';
 import '../../features/quiz/presentation/quiz_hub_screen.dart';
 import '../images/cached_optional_image_loader.dart';
 import '../config/app_colors.dart';
@@ -54,6 +56,17 @@ class _AppRootShellState extends State<AppRootShell> {
     );
   }
 
+  /// Pushes the Ready route above the retained root, but only while Quiz is
+  /// visible and no other route has been opened during the Daily request.
+  void _launchDaily(QuizSessionLaunchRequest launch) {
+    if (!mounted || _index != 1 || ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
+    Navigator.of(
+      context,
+    ).pushNamed(AppRoutes.gameplay, arguments: GameplayRouteArguments(launch));
+  }
+
   void _openQuick(QuizCatalog catalog) {
     Navigator.of(context).pushNamed(
       AppRoutes.quickPlaySetup,
@@ -98,6 +111,17 @@ class _AppRootShellState extends State<AppRootShell> {
                 onOpenDaily: _openDaily,
                 onOpenQuickPlay: _openQuick,
                 onReviewDailyResult: _openReview,
+                createDailySetup: (availability) =>
+                    DailyChallengeSetupController(
+                      repository: quiz.repository,
+                      timezoneProvider: quiz.timezoneProvider,
+                      resultStore: quiz.resultStore,
+                      completionCoordinator: quiz.completionCoordinator,
+                      completionIdGenerator: quiz.completionIdGenerator,
+                      availability: availability,
+                    ),
+                onLaunchDaily: _launchDaily,
+                onDailyStatusResolved: quiz.rootStatus.update,
               ),
             ),
         ],

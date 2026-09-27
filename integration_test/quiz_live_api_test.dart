@@ -126,7 +126,7 @@ void main() {
 
       navigation.currentState!.popUntil((route) => route.isFirst);
       await tester.pumpAndSettle();
-      await _tap(tester, find.text('Choose challenge'));
+      // The Hub offers the Daily count choice directly.
       await _wait(
         tester,
         () => find.text('Continue with 5 questions').evaluate().isNotEmpty,
