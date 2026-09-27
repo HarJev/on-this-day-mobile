@@ -461,6 +461,10 @@ class _SessionIntroduction extends StatelessWidget {
     final daily = definition is DailyQuizDefinition;
     final preparing = state is QuizPreparing;
     final failed = state is QuizPreparationFailed;
+    final imageFailed = switch (state) {
+      QuizPreparationFailed(cause: QuizImagePreparationException()) => true,
+      _ => false,
+    };
     final interrupted = state is QuizInterrupted;
     final abandoned = state is QuizAbandoned;
     final imageCount = definition.questions
@@ -483,6 +487,8 @@ class _SessionIntroduction extends StatelessWidget {
                 ? 'Quiz interrupted'
                 : abandoned
                 ? 'Quiz ended'
+                : imageFailed
+                ? 'A picture couldn\'t load'
                 : failed
                 ? 'We couldn\'t prepare this quiz'
                 : preparing
@@ -510,19 +516,21 @@ class _SessionIntroduction extends StatelessWidget {
                 : Icons.timer_off_outlined,
             label: _timingLabel(),
           ),
-          if (imageCount > 0) ...[
-            const SizedBox(height: 10),
-            _SessionFact(
-              icon: Icons.image_outlined,
-              label: preparing
-                  ? 'Preparing images'
-                  : state is QuizReady
-                  ? 'Images ready'
-                  : 'Images unavailable',
-            ),
-          ],
           const SizedBox(height: 22),
           const Divider(color: AppColors.mutedCopper),
+          if (failed) ...[
+            const SizedBox(height: 14),
+            Text(
+              imageFailed
+                  ? 'One of the pictures for this quiz isn\'t available right '
+                        'now. Nothing has been scored. Tap Retry to try again, '
+                        'or use Back to return to Quiz.'
+                  : 'Something went wrong while getting this quiz ready. '
+                        'Nothing has been scored. Tap Retry to try again, or '
+                        'use Back to return to Quiz.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
           if (state is QuizReady || failed) ...[
             const SizedBox(height: 16),
             FilledButton(
@@ -548,7 +556,9 @@ class _SessionIntroduction extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Getting everything in place…',
+                    imageCount > 0
+                        ? 'Loading pictures…'
+                        : 'Getting everything in place…',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),

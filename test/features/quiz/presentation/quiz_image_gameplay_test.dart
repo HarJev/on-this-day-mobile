@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
 import 'package:on_this_day_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparation_exception.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparer.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_decoder.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_controller.dart';
@@ -465,8 +466,14 @@ void main() {
       await pending;
       await tester.pump();
       expect(find.text('Retry'), findsOneWidget);
-      expect(find.text('Images ready'), findsNothing);
-      expect(find.text('Images unavailable'), findsOneWidget);
+      expect(find.text('We couldn\'t prepare this quiz'), findsOneWidget);
+      expect(
+        find.textContaining('Something went wrong while getting this quiz'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('picture'), findsNothing);
+      expect(find.textContaining('bad image'), findsNothing);
+      expect(find.textContaining('Images'), findsNothing);
       expect(completions, isEmpty);
       await tester.runAsync(controller.prepare);
       await tester.pump();
@@ -520,6 +527,100 @@ void main() {
     await pending;
     expect(fake.releases, 1);
   });
+  testWidgets('preparing shows loading copy without a countdown or result', (
+    tester,
+  ) async {
+    final fake = FakePreparation();
+    await mount(tester, start: false, prepare: fake.call);
+    final pending = controller.prepare();
+    await tester.pump();
+    expect(find.text('Preparing your quiz'), findsOneWidget);
+    expect(find.text('Loading pictures…'), findsOneWidget);
+    expect(find.textContaining('Images'), findsNothing);
+    expect(find.text('Start quiz'), findsNothing);
+    expect(find.text('Retry'), findsNothing);
+    expect(find.byKey(const Key('quiz-timer')), findsNothing);
+    expect(scheduler.activeCount, 0);
+    fake.succeed();
+    await pending;
+    await tester.pump();
+    expect(controller.state, isA<QuizReady>());
+    expect(find.text('Your quiz is ready'), findsOneWidget);
+    expect(find.text('5 questions'), findsOneWidget);
+    expect(find.text('30 seconds per question'), findsOneWidget);
+    expect(find.text('Start quiz'), findsOneWidget);
+    expect(find.textContaining('Images'), findsNothing);
+    expect(find.textContaining('picture'), findsNothing);
+    expect(find.byIcon(Icons.image_outlined), findsNothing);
+    expect(scheduler.activeCount, 0);
+    expect(completions, isEmpty);
+  });
+  testWidgets(
+    'image preparation failure explains retry and Back without scoring',
+    (tester) async {
+      final failed = FakePreparation();
+      final retry = FakePreparation();
+      var calls = 0;
+      await mount(
+        tester,
+        daily: true,
+        start: false,
+        prepare: (quiz) => calls++ == 0 ? failed.call(quiz) : retry.call(quiz),
+      );
+      final pending = controller.prepare();
+      failed.pending.single.completeError(
+        QuizImagePreparationException(
+          QuizImageFailure.http,
+          cause: HttpException(
+            'status 503',
+            uri: Uri.parse('https://images.example.org/secret.jpg'),
+          ),
+        ),
+      );
+      await pending;
+      await tester.pump();
+      expect(controller.state, isA<QuizPreparationFailed>());
+      expect(find.text('A picture couldn\'t load'), findsOneWidget);
+      expect(
+        find.text(
+          'One of the pictures for this quiz isn\'t available right now. '
+          'Nothing has been scored. Tap Retry to try again, or use Back to '
+          'return to Quiz.',
+        ),
+        findsOneWidget,
+      );
+      for (final hidden in [
+        'We couldn\'t prepare',
+        'Images',
+        'http',
+        '503',
+        'example.org',
+        'secret',
+        'Quiz image preparation failed',
+      ]) {
+        expect(find.textContaining(hidden), findsNothing, reason: hidden);
+      }
+      expect(find.text('Start challenge'), findsNothing);
+      expect(find.byTooltip('Leave quiz'), findsOneWidget);
+      expect(find.byKey(const Key('quiz-timer')), findsNothing);
+      expect(scheduler.activeCount, 0);
+      expect(completions, isEmpty);
+      await tap(tester, 'Retry');
+      expect(controller.state, isA<QuizPreparing>());
+      expect(find.text('Loading pictures…'), findsOneWidget);
+      expect(find.textContaining('picture couldn'), findsNothing);
+      expect(scheduler.activeCount, 0);
+      retry.succeed();
+      await tester.pump();
+      expect(controller.state, isA<QuizReady>());
+      expect(find.text('Your challenge is ready'), findsOneWidget);
+      expect(find.text('2 minutes total'), findsOneWidget);
+      expect(find.text('Start challenge'), findsOneWidget);
+      expect(find.textContaining('picture'), findsNothing);
+      expect(scheduler.activeCount, 0);
+      expect(completions, isEmpty);
+    },
+  );
   testWidgets('image feedback screenshots and large-text controls', (
     tester,
   ) async {
@@ -559,7 +660,23 @@ void main() {
       });
     }
 
-    await mount(tester, daily: true, start: false);
+    var attempts = 0;
+    await mount(
+      tester,
+      daily: true,
+      start: false,
+      prepare: (quiz) => attempts++ == 0
+          ? QuizPreparationAttempt(
+              Future.error(
+                const QuizImagePreparationException(QuizImageFailure.timeout),
+              ),
+            )
+          : preparer.call(quiz),
+    );
+    await tester.runAsync(controller.prepare);
+    await tester.pump();
+    await capture('session-image-failed');
+    expect(tester.getBottomRight(find.text('Retry')).dy, lessThan(844));
     await tester.runAsync(controller.prepare);
     await tester.pump();
     await capture('session-ready');
