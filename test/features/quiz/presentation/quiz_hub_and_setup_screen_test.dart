@@ -45,8 +45,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Daily Challenge'), findsOneWidget);
-    expect(find.text('Quick Play'), findsOneWidget);
+    expect(find.text('DAILY CHALLENGE'), findsOneWidget);
+    expect(find.text('Today\'s challenge'), findsOneWidget);
+    expect(find.text('Daily Challenge'), findsNothing);
+    expect(find.text('QUICK PLAY'), findsOneWidget);
+    expect(find.text('Practice any time'), findsOneWidget);
+    expect(find.text('Quick Play'), findsNothing);
+    expect(find.text('Choose a round'), findsOneWidget);
     expect(find.byTooltip('Back'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsNothing);
     await tester.tap(find.text('Choose challenge'));
@@ -77,7 +82,9 @@ void main() {
 
       expect(repository.dailyCounts, [5]);
       expect(statuses.single.displayDate, 'Sep 14');
+      expect(find.text('DAILY CHALLENGE'), findsOneWidget);
       expect(find.text('Sep 14'), findsOneWidget);
+      expect(find.text('Today\'s challenge'), findsNothing);
       expect(find.text('Choose challenge'), findsNothing);
       expect(find.textContaining('first completed result'), findsOneWidget);
       expect(find.text('2 min'), findsOneWidget);
@@ -214,6 +221,7 @@ void main() {
         find.text('Daily Challenge is not available right now.'),
         findsOneWidget,
       );
+      expect(find.text('Today\'s challenge'), findsOneWidget);
       expect(find.text('Question count'), findsNothing);
       expect(find.text('Choose challenge'), findsNothing);
       expect(find.text('Choose a round'), findsOneWidget);
@@ -247,6 +255,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('Sep 14'), findsOneWidget);
+      expect(find.text('Today\'s challenge'), findsNothing);
       expect(find.textContaining('Today\'s score:'), findsOneWidget);
       expect(find.text('Review answers'), findsOneWidget);
       expect(find.text('Question count'), findsNothing);

@@ -266,7 +266,7 @@ class _HubContent extends StatelessWidget {
       const SizedBox(height: 20),
       _ModeSurface(
         eyebrow: 'DAILY CHALLENGE',
-        title: dailyStatus?.displayDate ?? 'Daily Challenge',
+        title: dailyStatus?.displayDate ?? 'Today\'s challenge',
         description: _dailyDescription(dailyStatus),
         status: _DailyStatusLine(
           status: dailyStatus,
@@ -282,7 +282,7 @@ class _HubContent extends StatelessWidget {
       const SizedBox(height: 26),
       _ModeSurface(
         eyebrow: 'QUICK PLAY',
-        title: 'Quick Play',
+        title: 'Practice any time',
         description: _quickDescription(catalog),
         actionLabel: 'Choose a round',
         actionIcon: Icons.tune,
