@@ -146,13 +146,12 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
   Future<void> exit() async {
     if (exitPending || exited) return;
     exitPending = true;
+    // Only an attempt in play has progress to lose; unstarted and terminal
+    // states exit directly.
     final state = controller.state;
-    final terminal =
-        state is QuizCompleted ||
-        state is QuizAbandoned ||
-        state is QuizInterrupted;
+    final inPlay = state is QuizAnswering || state is QuizFeedback;
     final confirmed =
-        terminal ||
+        !inPlay ||
         await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(

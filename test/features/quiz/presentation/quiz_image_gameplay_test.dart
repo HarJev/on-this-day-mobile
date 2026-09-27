@@ -518,8 +518,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byTooltip('Leave quiz'));
     await tester.pumpAndSettle();
-    await tap(tester, 'Leave');
-    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
     expect(fake.cancellations, 1);
     expect(exits, 1);
     expect(completions, isEmpty);

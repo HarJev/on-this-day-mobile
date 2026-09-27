@@ -32,6 +32,7 @@ void main() {
   late FakeLauncher launcher;
   late List<QuizResult> results;
   late int exits;
+  late FakePreparation preparation;
   final captureKey = GlobalKey();
   setUp(() {
     clock = FakeSessionClock();
@@ -48,6 +49,7 @@ void main() {
     double scale = 1,
     Size size = const Size(390, 844),
     QuizQuestionType type = QuizQuestionType.multipleChoice,
+    _Stage stage = _Stage.started,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -77,7 +79,7 @@ void main() {
             },
             timingEnabledByDefault: true,
           );
-    final preparation = FakePreparation();
+    preparation = FakePreparation();
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
@@ -116,9 +118,22 @@ void main() {
       ),
     );
     final prepared = controller.prepare();
-    preparation.succeed();
+    if (stage == _Stage.preparing) {
+      await tester.pump();
+      return;
+    }
+    if (stage == _Stage.failed) {
+      preparation.pending.last.completeError(StateError('offline'));
+    } else {
+      preparation.succeed();
+    }
     await prepared;
-    controller.start();
+    if (stage == _Stage.started) controller.start();
+    await tester.pump();
+  }
+
+  Future<void> systemBack(WidgetTester tester) async {
+    await tester.binding.handlePopRoute();
     await tester.pump();
   }
 
@@ -229,6 +244,100 @@ void main() {
       expect(exits, 1);
     },
   );
+  for (final stage in [_Stage.preparing, _Stage.failed, _Stage.ready]) {
+    for (final system in [false, true]) {
+      testWidgets(
+        '${stage.name} ${system ? 'system' : 'app-bar'} Back exits directly',
+        (tester) async {
+          await mount(tester, daily: true, stage: stage);
+          expect(controller.state, switch (stage) {
+            _Stage.preparing => isA<QuizPreparing>(),
+            _Stage.failed => isA<QuizPreparationFailed>(),
+            _ => isA<QuizReady>(),
+          });
+          final cancellations = preparation.cancellations;
+          if (system) {
+            await systemBack(tester);
+          } else {
+            await tester.tap(find.byTooltip('Leave quiz'));
+            await tester.pump();
+          }
+          expect(find.byType(AlertDialog), findsNothing);
+          expect(controller.state, isA<QuizAbandoned>());
+          expect(exits, 1);
+          expect(results, isEmpty);
+          if (stage == _Stage.preparing) {
+            expect(preparation.cancellations, cancellations + 1);
+            preparation.succeed();
+            await tester.pump();
+            expect(preparation.releases, 1);
+            expect(controller.state, isA<QuizAbandoned>());
+          } else {
+            expect(preparation.cancellations, cancellations);
+            expect(preparation.releases, stage == _Stage.ready ? 1 : 0);
+          }
+          final releases = preparation.releases;
+          await tester.tap(find.byTooltip('Leave quiz'));
+          await systemBack(tester);
+          await tester.pumpWidget(const SizedBox());
+          expect(exits, 1);
+          expect(preparation.releases, releases);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+  testWidgets('overlapping pre-start Back signals exit once', (tester) async {
+    await mount(tester, stage: _Stage.ready);
+    await tester.tap(find.byTooltip('Leave quiz'));
+    await tester.binding.handlePopRoute();
+    await tester.tap(find.byTooltip('Leave quiz'));
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(exits, 1);
+    expect(preparation.releases, 1);
+  });
+  testWidgets('active play Back confirms; Stay keeps the attempt once', (
+    tester,
+  ) async {
+    await mount(tester);
+    await systemBack(tester);
+    await tester.tap(find.byTooltip('Leave quiz'), warnIfMissed: false);
+    await systemBack(tester);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Leave quiz?'), findsOneWidget);
+    expect(
+      find.text('This unfinished attempt will not be scored.'),
+      findsOneWidget,
+    );
+    await tap(tester, 'Stay');
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(controller.state, isA<QuizAnswering>());
+    expect(exits, 0);
+    expect(preparation.releases, 0);
+    await tap(tester, 'Option a');
+    await tester.tap(find.byTooltip('Leave quiz'));
+    await tester.pumpAndSettle();
+    expect(controller.state, isA<QuizFeedback>());
+    expect(find.text('Leave quiz?'), findsOneWidget);
+    await tap(tester, 'Leave');
+    await tester.pumpAndSettle();
+    expect(controller.state, isA<QuizAbandoned>());
+    expect(exits, 1);
+    expect(results, isEmpty);
+  });
+  testWidgets('completed quiz exits without confirmation', (tester) async {
+    await mount(tester, daily: true);
+    clock.advance(const Duration(seconds: 120));
+    scheduler.fire();
+    await tester.pump();
+    expect(controller.state, isA<QuizCompleted>());
+    await systemBack(tester);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(exits, 1);
+  });
   testWidgets('expiry inside exit confirmation does not discard result', (
     tester,
   ) async {
@@ -523,3 +632,5 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
+enum _Stage { preparing, failed, ready, started }
