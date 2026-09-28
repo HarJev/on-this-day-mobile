@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
@@ -22,6 +21,7 @@ import 'package:on_this_day_mobile/features/quiz/presentation/widgets/quiz_revie
 
 import '../support/quiz_completion_flow_host.dart';
 import '../support/session_fakes.dart';
+import '../../../support/capture_fonts.dart';
 
 void main() {
   testWidgets(
@@ -45,9 +45,14 @@ void main() {
 
       expect(find.text('Saving result…'), findsOneWidget);
       expect(find.textContaining('Official Daily result'), findsNothing);
-      expect(find.text('1 / 5'), findsOneWidget);
-      expect(find.text('Answered: 2'), findsOneWidget);
-      expect(find.text('Unanswered: 3'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('1 correct out of 5, 20 percent'),
+        findsOneWidget,
+      );
+      expect(find.text('Answered'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('Unanswered'), findsOneWidget);
 
       store.succeed(QuizSavedClassification.official);
       await tester.pump();
@@ -118,6 +123,27 @@ void main() {
       expect(find.text('Skipped'), findsOneWidget);
       expect(find.text('Image unavailable in review.'), findsOneWidget);
       expect(find.textContaining('Alt text:'), findsNothing);
+      // Sources and image credit start collapsed and expand in place.
+      final imageCredit = find.text('Image credit');
+      await tester.ensureVisible(imageCredit);
+      await tester.pumpAndSettle();
+      await tester.tap(imageCredit);
+      await tester.pumpAndSettle();
+      final imageCard = find.ancestor(
+        of: imageCredit,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget.key is ValueKey<String> &&
+              (widget.key as ValueKey<String>).value.startsWith('review-'),
+        ),
+      );
+      final sources = find.descendant(
+        of: imageCard,
+        matching: find.text('Sources (1)'),
+      );
+      await tester.ensureVisible(sources);
+      await tester.tap(sources);
+      await tester.pumpAndSettle();
       expect(find.text('Test museum'), findsWidgets);
       await tester.scrollUntilVisible(find.text('Timed out'), 200);
       expect(find.text('Timed out'), findsOneWidget);
@@ -277,7 +303,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await _loadCaptureFonts(tester);
+    await loadCaptureFonts(tester);
     final captureKey = GlobalKey();
     final store = _ControlledStore();
     final coordinator = QuizCompletionCoordinator(store);
@@ -349,20 +375,6 @@ Widget _captureApp(GlobalKey captureKey, Widget home, {double textScale = 1}) =>
       ),
       home: home,
     );
-
-Future<void> _loadCaptureFonts(WidgetTester tester) async {
-  for (final entry in {
-    'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-    'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-    'MaterialIcons':
-        '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-  }.entries) {
-    final bytes = await tester.runAsync(() => File(entry.value).readAsBytes());
-    final loader = FontLoader(entry.key)
-      ..addFont(Future.value(ByteData.sublistView(bytes!)));
-    await loader.load();
-  }
-}
 
 Future<void> _ignoreFailure(Future<Object?> operation) async {
   try {

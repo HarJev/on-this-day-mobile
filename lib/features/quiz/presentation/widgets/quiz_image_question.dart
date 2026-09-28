@@ -50,43 +50,57 @@ class _QuizQuestionImageState extends State<QuizQuestionImage> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Semantics(
-        image: true,
-        label: widget.metadata.altText,
-        child: ExcludeSemantics(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: (MediaQuery.sizeOf(context).height * 0.24).clamp(
-                150.0,
-                210.0,
+  Widget build(BuildContext context) {
+    final maxHeight = widget.creditAvailable
+        ? (MediaQuery.sizeOf(context).height * 0.2).clamp(130.0, 170.0)
+        : (MediaQuery.sizeOf(context).height * 0.28).clamp(150.0, 250.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          image: true,
+          label: widget.metadata.altText,
+          child: ExcludeSemantics(
+            // An ivory mat keeps portraits uncropped and framed.
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.softIvory,
+                border: Border.all(color: AppColors.paleStone),
+                borderRadius: BorderRadius.circular(6),
               ),
-            ),
-            child: AspectRatio(
-              aspectRatio: image.width / image.height,
-              child: RawImage(image: image, fit: BoxFit.contain),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxHeight),
+                    child: AspectRatio(
+                      aspectRatio: image.width / image.height,
+                      child: RawImage(image: image, fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-      ),
-      if (widget.creditAvailable)
-        _ImageCredit(
-          questionId: widget.questionId,
-          metadata: widget.metadata,
-          launcher: widget.launcher,
-        )
-      else
-        const _PendingCredit(),
-      const SizedBox(height: 4),
-    ],
-  );
+        if (widget.creditAvailable)
+          _ImageCredit(
+            key: ValueKey('credit-${widget.questionId}'),
+            metadata: widget.metadata,
+            launcher: widget.launcher,
+          )
+        else
+          const _PendingCredit(),
+        const SizedBox(height: 6),
+      ],
+    );
+  }
 }
 
-/// Holds the credit row's place while the question is answerable. It is the
-/// same compact tile as the credit row, disabled and without children or an
-/// expand icon, so nothing shifts when the credit becomes available. To
+const _creditRowHeight = 44.0;
+
+/// Holds the credit row's place while the question is answerable, at the
+/// same height as the credit row so nothing shifts once it is available. To
 /// accessibility services it is only the plain message: no button, state, or
 /// expand hint, and no credit content exists in the tree to find.
 class _PendingCredit extends StatelessWidget {
@@ -98,71 +112,128 @@ class _PendingCredit extends StatelessWidget {
     container: true,
     label: QuizQuestionImage.pendingCreditMessage,
     excludeSemantics: true,
-    child: Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        enabled: false,
-        showTrailingIcon: false,
-        tilePadding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        minTileHeight: 36,
-        title: Text(
-          QuizQuestionImage.pendingCreditMessage,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.mutedGray),
-        ),
-        children: const [],
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: _creditRowHeight),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_outline, size: 15, color: AppColors.mutedGray),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              QuizQuestionImage.pendingCreditMessage,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     ),
   );
 }
 
-class _ImageCredit extends StatelessWidget {
+/// The full credit behind one quiet row that expands in place.
+class _ImageCredit extends StatefulWidget {
   const _ImageCredit({
-    required this.questionId,
+    super.key,
     required this.metadata,
     required this.launcher,
   });
 
-  final String questionId;
   final QuizImage metadata;
   final SourceLauncher launcher;
 
   @override
-  Widget build(BuildContext context) => Theme(
-    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-    child: ExpansionTile(
-      key: ValueKey('credit-$questionId'),
-      tilePadding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      minTileHeight: 36,
-      title: Text('Image credit', style: Theme.of(context).textTheme.bodySmall),
+  State<_ImageCredit> createState() => _ImageCreditState();
+}
+
+class _ImageCreditState extends State<_ImageCredit> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final metadata = widget.metadata;
+    final textTheme = Theme.of(context).textTheme;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(metadata.attribution),
+        Semantics(
+          button: true,
+          expanded: _expanded,
+          label: 'Image credit',
+          excludeSemantics: true,
+          child: InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: _creditRowHeight),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.photo_camera_outlined,
+                    size: 15,
+                    color: AppColors.mutedGray,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('Image credit', style: textTheme.bodySmall),
+                  ),
+                  Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 20,
+                    color: AppColors.mutedGray,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        if (metadata.creator != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(metadata.creator!),
-          ),
-        QuizSourceRow(
-          source: QuizSource(
-            displayName: metadata.source,
-            url: metadata.sourceUrl,
-          ),
-          launcher: launcher,
-        ),
-        QuizSourceRow(
-          source: QuizSource(
-            displayName: metadata.license,
-            url: metadata.licenseUrl,
-          ),
-          launcher: launcher,
+        AnimatedSize(
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          alignment: Alignment.topCenter,
+          child: !_expanded
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(left: 21, bottom: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        metadata.attribution,
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.mutedGray,
+                          fontWeight: FontWeight.w400,
+                          height: 1.4,
+                        ),
+                      ),
+                      if (metadata.creator != null)
+                        Text(
+                          metadata.creator!,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.mutedGray,
+                            fontWeight: FontWeight.w400,
+                            height: 1.4,
+                          ),
+                        ),
+                      QuizSourceRow(
+                        source: QuizSource(
+                          displayName: metadata.source,
+                          url: metadata.sourceUrl,
+                        ),
+                        launcher: widget.launcher,
+                      ),
+                      QuizSourceRow(
+                        source: QuizSource(
+                          displayName: metadata.license,
+                          url: metadata.licenseUrl,
+                        ),
+                        launcher: widget.launcher,
+                      ),
+                    ],
+                  ),
+                ),
         ),
       ],
-    ),
-  );
+    );
+  }
 }

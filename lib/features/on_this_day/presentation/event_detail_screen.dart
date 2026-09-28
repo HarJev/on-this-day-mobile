@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../../../core/navigation/source_launcher.dart';
 import '../../../core/notifications/notification_prompt_coordinator.dart';
 import '../domain/event_source.dart';
@@ -12,6 +13,7 @@ import 'widgets/event_image_credit.dart';
 import 'widgets/notification_pre_prompt.dart';
 import 'widgets/optional_event_image.dart';
 import 'widgets/source_row.dart';
+import 'widgets/today_states.dart';
 
 class EventDetailScreen extends StatefulWidget {
   const EventDetailScreen({
@@ -84,16 +86,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
             body: _MessageState(
+              icon: Icons.event_busy_outlined,
               message: message,
-              actionLabel: 'Retry',
-              onActionPressed: _controller.retry,
+              help: 'Please try again in a little while.',
+              onRetry: _controller.retry,
             ),
           ),
           EventDetailError(:final message) => _DetailScaffold(
             body: _MessageState(
+              icon: Icons.error_outline,
               message: message,
-              actionLabel: 'Retry',
-              onActionPressed: _controller.retry,
+              help: 'Check your connection and try again.',
+              onRetry: _controller.retry,
             ),
           ),
         };
@@ -121,7 +125,7 @@ class _DetailScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 48,
+        toolbarHeight: 56,
         leadingWidth: 56,
         titleSpacing: 0,
         leading: Navigator.of(context).canPop()
@@ -131,17 +135,7 @@ class _DetailScaffold extends StatelessWidget {
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               )
             : const SizedBox.shrink(),
-        title: Text(
-          'On This Day',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: AppColors.deepInk,
-            fontFamily: 'Georgia',
-            fontFamilyFallback: const ['Times New Roman', 'serif'],
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
-        ),
+        title: Text('On This Day', style: AppText.navTitle),
         actions: const [SizedBox(width: 56)],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
@@ -221,33 +215,20 @@ class _LoadedStateState extends State<_LoadedState> {
     final notificationPrompt = widget.notificationPrompt;
     return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
         _ArticleSurface(
           event: widget.event,
           imageLoader: widget.imageLoader,
           sourceLauncher: widget.sourceLauncher,
         ),
-        const SizedBox(height: 42),
-        Row(
-          children: [
-            const Icon(Icons.book_outlined, size: 18, color: AppColors.deepInk),
-            const SizedBox(width: 8),
-            Text(
-              'READ MORE',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.deepInk,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        for (final source in widget.event.sources)
-          SourceRow(
-            source: source,
-            onTap: () => widget.onSourceSelected(source),
+        if (widget.event.sources.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          SourcesDisclosure(
+            sources: widget.event.sources,
+            onSourceSelected: widget.onSourceSelected,
           ),
+        ],
         if (widget.onTestWhatYouLearned case final onTest?)
           _TestWhatYouLearnedLink(onTap: onTest),
         if (_reachedArticleEnd && notificationPrompt != null)
@@ -264,23 +245,61 @@ class _TestWhatYouLearnedLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 24),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: onTap,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.archivalCobalt,
-            minimumSize: const Size(48, 48),
-            padding: EdgeInsets.zero,
+      child: Semantics(
+        button: true,
+        label: 'Test what you learned. Opens the quiz',
+        excludeSemantics: true,
+        child: Material(
+          color: AppColors.softIvory,
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(color: AppColors.paleStone),
+            borderRadius: BorderRadius.circular(14),
           ),
-          icon: const Icon(Icons.quiz_outlined, size: 20),
-          label: Text(
-            'Test what you learned',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColors.archivalCobalt,
-              fontWeight: FontWeight.w700,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.cobaltTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.quiz_outlined,
+                        size: 20,
+                        color: AppColors.archivalCobalt,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Test what you learned',
+                            style: textTheme.titleMedium,
+                          ),
+                          Text('Opens the quiz', style: textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.mutedGray),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -300,68 +319,82 @@ class _ArticleSurface extends StatelessWidget {
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
 
+  /// "August 22, 1485" reads as "August 22" beside the large year.
+  static String dayLabelFor(HistoricalEvent event) {
+    final suffix = ', ${event.year}';
+    final date = event.historicalDate;
+    return date.endsWith(suffix)
+        ? date.substring(0, date.length - suffix.length)
+        : date;
+  }
+
   @override
   Widget build(BuildContext context) {
     final image = event.primaryImage;
     final loader = imageLoader;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.softIvory,
-        border: Border.all(color: AppColors.paleStone),
-      ),
-      padding: const EdgeInsets.fromLTRB(30, 30, 30, 34),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            event.historicalDate.toUpperCase(),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.archivalCobalt,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          label: event.historicalDate,
+          excludeSemantics: true,
+          child: Wrap(
+            spacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: [
+              Text(
+                event.year,
+                style: textTheme.titleLarge?.copyWith(
+                  color: AppColors.archivalCobalt,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  dayLabelFor(event),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    color: AppColors.mutedGray,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          const Divider(color: AppColors.mutedCopper),
-          const SizedBox(height: 18),
-          Text(
-            event.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.deepInk,
-              fontFamily: 'Georgia',
-              fontFamilyFallback: const ['Times New Roman', 'serif'],
-              fontWeight: FontWeight.w700,
-              height: 1.1,
+        ),
+        const SizedBox(height: 12),
+        const Divider(color: Color(0x8CA66A3F)),
+        const SizedBox(height: 14),
+        Semantics(
+          header: true,
+          child: Text(event.title, style: textTheme.headlineLarge),
+        ),
+        if (image != null && loader != null)
+          OptionalEventImage(
+            url: image.url,
+            altText: image.altText,
+            loader: loader,
+            aspectRatio: null,
+            padding: const EdgeInsets.only(top: 20),
+            frame: (picture) => DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.paleStone),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: picture,
+              ),
             ),
+            caption: EventImageCredit(image: image, launcher: sourceLauncher),
           ),
-          if (image != null && loader != null) ...[
-            OptionalEventImage(
-              url: image.url,
-              altText: image.altText,
-              loader: loader,
-              padding: const EdgeInsets.only(top: 28),
-              caption: EventImageCredit(image: image, launcher: sourceLauncher),
-            ),
-          ],
-          SizedBox(
-            height:
-                image != null &&
-                    loader != null &&
-                    EventImageCredit.summaryFor(image) != null
-                ? 12
-                : 28,
-          ),
-          Text(
-            event.description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.deepInk,
-              fontWeight: FontWeight.w400,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 16),
+        Text(
+          event.description,
+          style: textTheme.bodyLarge?.copyWith(fontSize: 17, height: 1.6),
+        ),
+      ],
     );
   }
 }
@@ -369,46 +402,61 @@ class _ArticleSurface extends StatelessWidget {
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
 
+  static const semanticsLabel = 'Loading event';
+
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Loading event...'));
+    return SkeletonPulse(
+      label: semanticsLabel,
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        children: const [
+          SkeletonBlock(width: 140, height: 22),
+          SizedBox(height: 14),
+          SkeletonBlock(height: 1),
+          SizedBox(height: 14),
+          SkeletonBlock(height: 30),
+          SizedBox(height: 8),
+          SkeletonBlock(width: 220, height: 30),
+          SizedBox(height: 20),
+          SkeletonBlock(height: 200),
+          SizedBox(height: 18),
+          SkeletonBlock(height: 16),
+          SizedBox(height: 10),
+          SkeletonBlock(height: 16),
+          SizedBox(height: 10),
+          SkeletonBlock(width: 180, height: 16),
+        ],
+      ),
+    );
   }
 }
 
 class _MessageState extends StatelessWidget {
   const _MessageState({
+    required this.icon,
     required this.message,
-    required this.actionLabel,
-    required this.onActionPressed,
+    required this.help,
+    required this.onRetry,
   });
 
+  final IconData icon;
   final String message;
-  final String actionLabel;
-  final VoidCallback onActionPressed;
+  final String help;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.mutedGray),
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: onActionPressed,
-              child: Text(actionLabel),
-            ),
-          ],
-        ),
-      ),
+    final navigator = Navigator.of(context);
+    return TodayMessageCard(
+      icon: icon,
+      title: message,
+      message: help,
+      actionLabel: 'Try again',
+      onActionPressed: onRetry,
+      secondaryLabel: navigator.canPop() ? 'Back to Today' : null,
+      onSecondaryPressed: navigator.canPop() ? navigator.maybePop : null,
     );
   }
 }

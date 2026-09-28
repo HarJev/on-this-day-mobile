@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(OnThisDayApp(router: _router()));
 
     expect(find.text('On This Day'), findsOneWidget);
-    expect(find.text("Loading today's history..."), findsOneWidget);
+    expect(find.bySemanticsLabel("Loading today's history"), findsOneWidget);
   });
 
   testWidgets(
@@ -44,7 +44,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Loading event...'), findsOneWidget);
+    expect(find.bySemanticsLabel('Loading event'), findsOneWidget);
 
     await tester.pump();
 

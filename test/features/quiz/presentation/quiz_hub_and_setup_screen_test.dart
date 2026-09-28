@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
@@ -27,6 +26,7 @@ import 'package:on_this_day_mobile/features/quiz/presentation/quick_play_setup_s
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_hub_screen.dart';
 
 import '../support/session_fakes.dart';
+import '../../../support/capture_fonts.dart';
 
 void main() {
   testWidgets('Hub is a compact root surface without bottom navigation', (
@@ -45,12 +45,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('DAILY CHALLENGE'), findsOneWidget);
+    expect(find.text('Daily Challenge'), findsOneWidget);
     expect(find.text('Today\'s challenge'), findsOneWidget);
-    expect(find.text('Daily Challenge'), findsNothing);
-    expect(find.text('QUICK PLAY'), findsOneWidget);
+    expect(find.text('Quick Play'), findsOneWidget);
     expect(find.text('Practice any time'), findsOneWidget);
-    expect(find.text('Quick Play'), findsNothing);
     expect(find.text('Set up a quick round'), findsOneWidget);
     expect(find.byTooltip('Back'), findsNothing);
     expect(find.byType(BottomNavigationBar), findsNothing);
@@ -82,7 +80,7 @@ void main() {
 
       expect(repository.dailyCounts, [5]);
       expect(statuses.single.displayDate, 'Sep 14');
-      expect(find.text('DAILY CHALLENGE'), findsOneWidget);
+      expect(find.text('Daily Challenge'), findsOneWidget);
       expect(find.text('Sep 14'), findsOneWidget);
       expect(find.text('Today\'s challenge'), findsNothing);
       expect(find.text('Set up today\'s challenge'), findsNothing);
@@ -409,7 +407,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await _loadCaptureFonts(tester);
+    await loadCaptureFonts(tester);
     final captureKey = GlobalKey();
 
     Future<void> capture(String name) async {
@@ -554,20 +552,6 @@ Widget _captureApp(GlobalKey key, Widget home, {double textScale = 1}) =>
       ),
       home: home,
     );
-
-Future<void> _loadCaptureFonts(WidgetTester tester) async {
-  for (final entry in {
-    'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-    'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-    'MaterialIcons':
-        '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-  }.entries) {
-    final bytes = await tester.runAsync(() => File(entry.value).readAsBytes());
-    final loader = FontLoader(entry.key)
-      ..addFont(Future.value(ByteData.sublistView(bytes!)));
-    await loader.load();
-  }
-}
 
 QuizCatalog _catalog({
   int mixedCount = 5,

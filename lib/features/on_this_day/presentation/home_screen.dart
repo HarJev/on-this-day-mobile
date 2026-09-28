@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../../../core/config/timezone_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/event_detail_route_arguments.dart';
@@ -13,6 +14,7 @@ import 'home_controller.dart';
 import 'widgets/additional_event_row.dart';
 import 'widgets/featured_event_card.dart';
 import 'widgets/recent_day_row.dart';
+import 'widgets/today_states.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -78,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
           HomeLoading() => _HomeScaffold(
             embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
-            body: const _LoadingState(),
+            body: const TodayLoadingSkeleton(),
           ),
           HomeLoaded(:final content, :final recentDays) => _HomeScaffold(
             embedded: widget.embedded,
@@ -96,18 +98,22 @@ class _HomeScreenState extends State<HomeScreen> {
           HomeUnavailable(:final message) => _HomeScaffold(
             embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
-            body: _MessageState(
-              message: message,
-              actionLabel: 'Retry',
+            body: TodayMessageCard(
+              icon: Icons.event_busy_outlined,
+              title: message,
+              message: 'Please try again in a little while.',
+              actionLabel: 'Try again',
               onActionPressed: _controller.retry,
             ),
           ),
           HomeError(:final message) => _HomeScaffold(
             embedded: widget.embedded,
             onShowDebugNotification: widget.onShowDebugNotification,
-            body: _MessageState(
-              message: message,
-              actionLabel: 'Retry',
+            body: TodayMessageCard(
+              icon: Icons.cloud_off_outlined,
+              title: message,
+              message: 'Check your connection and try again.',
+              actionLabel: 'Try again',
               onActionPressed: _controller.retry,
             ),
           ),
@@ -152,26 +158,16 @@ class _HomeScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (embedded) return body;
-    final appBarSideWidth = onShowDebugNotification == null ? 88.0 : 144.0;
+    final appBarSideWidth = onShowDebugNotification == null ? 72.0 : 120.0;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        toolbarHeight: 48,
+        toolbarHeight: 56,
         leading: const SizedBox.shrink(),
         leadingWidth: appBarSideWidth,
         titleSpacing: 0,
-        title: Text(
-          'On This Day',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: AppColors.deepInk,
-            fontFamily: 'Georgia',
-            fontFamilyFallback: const ['Times New Roman', 'serif'],
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            height: 1,
-          ),
-        ),
+        title: const Text('On This Day', style: AppText.masthead),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: ColoredBox(
@@ -182,33 +178,28 @@ class _HomeScaffold extends StatelessWidget {
         actions: [
           SizedBox(
             width: appBarSideWidth,
-            child: Stack(
+            child: Row(
               children: [
                 if (onShowDebugNotification case final callback?)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      tooltip: 'Show test notification',
-                      onPressed: callback,
-                      icon: const Icon(Icons.notifications_outlined),
-                    ),
+                  IconButton(
+                    tooltip: 'Show test notification',
+                    onPressed: callback,
+                    icon: const Icon(Icons.notifications_outlined),
                   ),
-                Align(
-                  alignment: Alignment.centerRight,
+                Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 22),
+                    padding: const EdgeInsets.only(right: 20),
                     child: switch (displayDate) {
-                      final date? => FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          date,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.deepInk,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                height: 1,
-                              ),
+                      final date? => Align(
+                        alignment: Alignment.centerRight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            date,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelLarge?.copyWith(fontSize: 14),
+                          ),
                         ),
                       ),
                       null => const SizedBox.shrink(),
@@ -247,8 +238,15 @@ class _LoadedState extends StatelessWidget {
     final additionalEvents = content.additionalEvents;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(30, 16, 30, 44),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            'Featured',
+            style: AppText.eyebrow.copyWith(color: AppColors.archivalCobalt),
+          ),
+        ),
         FeaturedEventCard(
           event: content.featuredEvent,
           onTap: () => onEventSelected(content.featuredEvent.id),
@@ -256,9 +254,8 @@ class _LoadedState extends StatelessWidget {
           sourceLauncher: sourceLauncher,
         ),
         if (additionalEvents.isNotEmpty) ...[
-          const SizedBox(height: 34),
-          const _SectionHeading('Also on this day'),
-          const _SectionRule(),
+          const SizedBox(height: 32),
+          const TodaySectionHeader('Also on this day'),
           for (final event in additionalEvents)
             AdditionalEventRow(
               event: event,
@@ -266,9 +263,8 @@ class _LoadedState extends StatelessWidget {
             ),
         ],
         if (recentDays.isNotEmpty) ...[
-          const SizedBox(height: 34),
-          const _SectionHeading('Recent days'),
-          const _SectionRule(),
+          const SizedBox(height: 32),
+          const TodaySectionHeader('Recent days'),
           for (final day in recentDays)
             RecentDayRow(
               day: day,
@@ -276,87 +272,6 @@ class _LoadedState extends StatelessWidget {
             ),
         ],
       ],
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      header: true,
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: AppColors.deepInk,
-          fontFamily: 'Georgia',
-          fontFamilyFallback: const ['Times New Roman', 'serif'],
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionRule extends StatelessWidget {
-  const _SectionRule();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(top: 9, bottom: 14),
-      child: SizedBox(width: 198, child: Divider(color: AppColors.mutedCopper)),
-    );
-  }
-}
-
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("Loading today's history..."));
-  }
-}
-
-class _MessageState extends StatelessWidget {
-  const _MessageState({
-    required this.message,
-    required this.actionLabel,
-    required this.onActionPressed,
-  });
-
-  final String message;
-  final String actionLabel;
-  final VoidCallback onActionPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.mutedGray),
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: onActionPressed,
-              child: Text(actionLabel),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

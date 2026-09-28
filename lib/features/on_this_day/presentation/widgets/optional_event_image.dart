@@ -14,6 +14,8 @@ class OptionalEventImage extends StatefulWidget {
     required this.loader,
     this.padding = EdgeInsets.zero,
     this.caption,
+    this.aspectRatio = 2.05,
+    this.frame,
   });
 
   final Uri url;
@@ -23,6 +25,12 @@ class OptionalEventImage extends StatefulWidget {
 
   /// Shown under the image only once it has loaded, such as an image credit.
   final Widget? caption;
+
+  /// Fixed cover crop, or null to show the whole image at its natural aspect.
+  final double? aspectRatio;
+
+  /// Wraps the loaded picture, for example with a border and radius.
+  final Widget Function(Widget picture)? frame;
 
   @override
   State<OptionalEventImage> createState() => _OptionalEventImageState();
@@ -76,15 +84,18 @@ class _OptionalEventImageState extends State<OptionalEventImage> {
   Widget build(BuildContext context) {
     final image = _image;
     if (image == null) return const SizedBox.shrink();
+    final aspectRatio = widget.aspectRatio;
+    final raw = AspectRatio(
+      aspectRatio: aspectRatio ?? image.width / image.height,
+      child: RawImage(
+        image: image,
+        fit: aspectRatio == null ? BoxFit.contain : BoxFit.cover,
+      ),
+    );
     final picture = Semantics(
       image: true,
       label: widget.altText,
-      child: ExcludeSemantics(
-        child: AspectRatio(
-          aspectRatio: 2.05,
-          child: RawImage(image: image, fit: BoxFit.cover),
-        ),
-      ),
+      child: ExcludeSemantics(child: widget.frame?.call(raw) ?? raw),
     );
     final caption = widget.caption;
     return Semantics(

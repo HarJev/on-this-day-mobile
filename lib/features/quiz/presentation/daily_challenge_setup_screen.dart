@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../../../core/config/timezone_provider.dart';
 import '../application/daily_challenge_status.dart';
 import '../application/quiz_completion_coordinator.dart';
@@ -98,14 +99,7 @@ class _DailyChallengeSetupScreenState extends State<DailyChallengeSetupScreen> {
         onPressed: widget.onBack,
         icon: const Icon(Icons.arrow_back),
       ),
-      title: const Text(
-        'On This Day',
-        style: TextStyle(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: ['Times New Roman', 'serif'],
-          fontSize: 21,
-        ),
-      ),
+      title: const Text('Daily Challenge'),
     ),
     body: ListenableBuilder(
       listenable: _controller,
@@ -157,24 +151,19 @@ class _DailySetupBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
     children: [
       Text(
-        'Daily Challenge',
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: const ['Times New Roman', 'serif'],
-        ),
-      ),
-      const SizedBox(height: 6),
-      Text(
         data.status.displayDate,
-        style: Theme.of(context).textTheme.titleLarge,
+        style: Theme.of(context).textTheme.displaySmall,
       ),
       const SizedBox(height: 16),
       _DailyPolicy(status: data.status),
-      const SizedBox(height: 20),
-      Text('Question count', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 24),
+      Text(
+        'Question count',
+        style: AppText.eyebrow.copyWith(color: AppColors.mutedGray),
+      ),
       const SizedBox(height: 10),
       QuizQuestionCountSelector(
         selected: data.selectedQuestionCount,
@@ -209,15 +198,31 @@ class _DailyPolicy extends StatelessWidget {
         : status.reservation != null
         ? 'A result is already recorded for this date. A new play is practice.'
         : 'Your first completed result for this date is official. Later plays are practice.';
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        border: Border(
-          left: BorderSide(color: AppColors.mutedCopper, width: 2),
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.softIvory,
+        border: Border.all(color: AppColors.paleStone),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 14),
-        child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.verified_outlined,
+            size: 20,
+            color: AppColors.mutedCopper,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.bodySoft),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -243,27 +248,19 @@ class _SetupMessage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(message, textAlign: TextAlign.center),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           if (detail != null) ...[
             const SizedBox(height: 8),
             Text(detail!, textAlign: TextAlign.center),
           ],
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: onRetry,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: const Text('Retry'),
-          ),
+          FilledButton(onPressed: onRetry, child: const Text('Retry')),
           const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: onBack,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: const Text('Back'),
-          ),
+          OutlinedButton(onPressed: onBack, child: const Text('Back')),
         ],
       ),
     ),

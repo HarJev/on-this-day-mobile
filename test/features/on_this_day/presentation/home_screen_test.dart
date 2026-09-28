@@ -22,7 +22,7 @@ void main() {
 
     await tester.pumpWidget(_homeApp(repository));
 
-    expect(find.text("Loading today's history..."), findsOneWidget);
+    expect(find.bySemanticsLabel("Loading today's history"), findsOneWidget);
     await tester.pump();
     expect(repository.lastTimezone, 'Etc/UTC');
   });
@@ -51,12 +51,15 @@ void main() {
     await tester.pump();
 
     expect(find.text('Recent days'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Daguerreotype history'), 200);
+    await tester.scrollUntilVisible(
+      find.textContaining('Daguerreotype history'),
+      200,
+    );
     expect(find.text('Yesterday'), findsOneWidget);
-    expect(find.text('Hawaii history'), findsOneWidget);
+    expect(find.textContaining('Hawaii history'), findsOneWidget);
     expect(find.text('Aug 19'), findsOneWidget);
 
-    await tester.tap(find.text('Daguerreotype history'));
+    await tester.tap(find.textContaining('Daguerreotype history'));
     await tester.pumpAndSettle();
 
     expect(find.text('Route: /events/daguerreotype-event'), findsOneWidget);
@@ -141,7 +144,7 @@ void main() {
       find.text("Today's history is unavailable right now."),
       findsOneWidget,
     );
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
   });
 
   testWidgets('renders retryable error and recovers on retry', (
@@ -157,7 +160,7 @@ void main() {
 
     expect(find.text("Could not load today's history."), findsOneWidget);
 
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
 
     expect(find.text('Featured history'), findsOneWidget);

@@ -459,6 +459,17 @@ Verify with widget tests for each state. Capture normal-phone
 screenshots of each handoff screen and compare them. Check large text and
 reduced motion. The empty-day card stays parked with the empty-day fallback.
 
+Status (2026-09-28): steps 1 to 3 are implemented on branch
+`claude/design-typography-pass-joozy2`, with widget tests and screenshot
+captures for Today, Event detail and every Quiz screen. Motion keeps the
+existing transitions, and every new expand/collapse drops to no animation under
+reduced motion. Still open: an on-device check of large text and reduced motion.
+Deliberate differences from the mockups: ordering rows show no years (the API
+sends none), Quick Play feedback keeps its explanation inline above a sticky
+outcome summary so Continue stays reachable at large text, "Your choice" and
+"Practice again" keep the app's copy, and the notification explainer is
+restyled in place.
+
 ## Suggested Execution Order
 
 Completed L1-L5 foundations remain in place; L6/L7 content work continues in

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
@@ -14,6 +13,7 @@ import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_contr
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_state.dart';
 import '../support/session_fakes.dart';
 import '../support/quiz_gameplay_harness.dart';
+import '../../../support/capture_fonts.dart';
 
 class FakeLauncher implements SourceLauncher {
   int calls = 0;
@@ -142,6 +142,13 @@ void main() {
     await tester.pump();
   }
 
+  // Quick Play sources sit behind one quiet row that opens a sheet.
+  Future<void> openSources(WidgetTester tester) async {
+    await tester.ensureVisible(find.text('Sources (1)'));
+    await tester.tap(find.text('Sources (1)'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
     'immediate incorrect choice labels selection and correct answer; locks input',
     (tester) async {
@@ -173,9 +180,9 @@ void main() {
     clock.advance(const Duration(hours: 1));
     scheduler.fire();
     await tester.pump();
-    expect(find.text('Quick Play · 1 of 5'), findsOneWidget);
+    expect(find.text('Question 1 of 5'), findsOneWidget);
     await tap(tester, 'Continue');
-    expect(find.text('Quick Play · 2 of 5'), findsOneWidget);
+    expect(find.text('Question 2 of 5'), findsOneWidget);
   });
   testWidgets(
     'Daily expiry keeps context and pending result accessible exactly once',
@@ -188,7 +195,7 @@ void main() {
       scheduler.fire();
       await tester.pump();
       expect(find.text("Time's up"), findsOneWidget);
-      expect(find.text('Daily Challenge · 1 of 5'), findsOneWidget);
+      expect(find.text('Question 1 of 5'), findsOneWidget);
       expect(find.byKey(const Key('quiz-timer')), findsNothing);
       await tester.tap(find.text('View results'));
       await tester.tap(find.text('View results'));
@@ -221,7 +228,7 @@ void main() {
     await mount(tester);
     await tap(tester, 'Option a');
     launcher.response = () async => false;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
     expect(find.textContaining('Could not open source'), findsOneWidget);
     launcher.response = () async => throw StateError('no browser');
@@ -404,7 +411,7 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       await mount(tester, type: QuizQuestionType.chronologicalOrdering);
-      expect(find.text('Question 00:45'), findsOneWidget);
+      expect(find.text('Question time 00:45'), findsOneWidget);
       expect(find.byKey(const ValueKey('d')), findsOneWidget);
       expect(find.byKey(const ValueKey('b')), findsOneWidget);
       expect(
@@ -524,8 +531,10 @@ void main() {
     await tap(tester, 'Option a');
     final pending = Completer<bool>();
     launcher.response = () => pending.future;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
     await tap(tester, 'Continue');
     pending.completeError(StateError('late browser failure'));
     await tester.pump();
@@ -534,7 +543,7 @@ void main() {
     await tap(tester, 'Option a');
     final disposed = Completer<bool>();
     launcher.response = () => disposed.future;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
     await tester.pumpWidget(const SizedBox());
     disposed.complete(false);
@@ -545,19 +554,7 @@ void main() {
     const destination = String.fromEnvironment('QUIZ_SCREENSHOT_DIR');
     if (destination.isEmpty) return;
     // Optional local font loading makes captures readable rather than Ahem boxes.
-    for (final entry in {
-      'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-      'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-      'MaterialIcons':
-          '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-    }.entries) {
-      final bytes = await tester.runAsync(
-        () => File(entry.value).readAsBytes(),
-      );
-      final loader = FontLoader(entry.key)
-        ..addFont(Future.value(ByteData.sublistView(bytes!)));
-      await loader.load();
-    }
+    await loadCaptureFonts(tester);
     Future<void> capture(String name) async {
       await tester.pumpAndSettle();
       final boundary =

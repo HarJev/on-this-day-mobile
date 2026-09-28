@@ -50,16 +50,17 @@ class EventImageCredit extends StatelessWidget {
                     summary,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.mutedGray,
-                      height: 1.3,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 const Icon(
                   Icons.info_outline,
-                  size: 16,
+                  size: 14,
                   color: AppColors.mutedGray,
                 ),
               ],
@@ -73,9 +74,7 @@ class EventImageCredit extends StatelessWidget {
   Future<void> _showDetails(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: AppColors.softIvory,
       builder: (sheetContext) => _CreditDetails(
         image: image,
         onOpen: (url) => _open(sheetContext, url),
@@ -111,22 +110,14 @@ class _CreditDetails extends StatelessWidget {
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(30, 0, 30, 24),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Semantics(
               header: true,
-              child: Text(
-                'Image credit',
-                style: textTheme.titleLarge?.copyWith(
-                  color: AppColors.deepInk,
-                  fontFamily: 'Georgia',
-                  fontFamilyFallback: const ['Times New Roman', 'serif'],
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: Text('Image credit', style: textTheme.titleLarge),
             ),
             const SizedBox(height: 12),
             if (attribution != null) _DetailText(attribution),
@@ -169,12 +160,7 @@ class _DetailText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: AppColors.deepInk, height: 1.4),
-      ),
+      child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 }

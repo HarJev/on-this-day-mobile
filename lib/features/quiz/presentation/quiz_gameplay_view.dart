@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../../../core/navigation/source_launcher.dart';
 import '../domain/quiz_definition.dart';
 import '../domain/quiz_question.dart';
@@ -165,6 +166,9 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                     child: const Text('Stay'),
                   ),
                   TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.copperDark,
+                    ),
                     onPressed: () => Navigator.pop(context, true),
                     child: const Text('Leave'),
                   ),
@@ -227,13 +231,13 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'On This Day',
-            style: TextStyle(
-              fontFamily: 'Georgia',
-              fontFamilyFallback: ['Times New Roman', 'serif'],
-              fontSize: 21,
-            ),
+          title: Text(
+            daily ? 'Daily Challenge' : 'Quick Play',
+            style: AppText.navTitle,
+          ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, color: AppColors.hairline),
           ),
           leading: IconButton(
             tooltip: 'Leave quiz',
@@ -302,7 +306,6 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                                 daily: daily,
                                 expired: expired,
                                 launcher: widget.sourceLauncher,
-                                showLabel: q is! ImageIdentificationQuestion,
                               ),
                           ],
                           if (q is ChronologicalOrderingQuestion) ...[
@@ -333,73 +336,69 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
               ),
             ),
             if (hasFooterAction)
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButtonTheme(
-                      data: FilledButtonThemeData(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: AppColors.softIvory,
+                  border: Border(top: BorderSide(color: AppColors.hairline)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x0F171A1F),
+                      offset: Offset(0, -8),
+                      blurRadius: 24,
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (current?.$3 case final outcome?)
+                          QuizFeedbackSummary(
+                            outcome: outcome,
+                            expired: expired,
                           ),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (q is ImageIdentificationQuestion &&
-                              current?.$3 != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                QuizAnswerFeedback.label(current!.$3!, expired),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
+                        switch (state) {
+                          QuizFeedback(:final outcome) => FilledButton(
+                            onPressed: () => advance(outcome.question.id),
+                            child: const Text('Continue'),
+                          ),
+                          QuizCompleted(:final result) => FilledButton(
+                            onPressed: resultsOpened
+                                ? null
+                                : () {
+                                    if (resultsOpened) return;
+                                    setState(() {
+                                      resultsOpened = true;
+                                    });
+                                    controller.releaseCompletedImages();
+                                    widget.onViewResults(result);
+                                  },
+                            child: const Text('View results'),
+                          ),
+                          QuizAnswering(:final question)
+                              when question is ImageIdentificationQuestion &&
+                                  !missingImage =>
+                            TextButton(
+                              onPressed: () =>
+                                  controller.skipImage(question.id),
+                              child: const Text('Skip question'),
                             ),
-                          switch (state) {
-                            QuizFeedback(:final outcome) => FilledButton(
-                              onPressed: () => advance(outcome.question.id),
-                              child: const Text('Continue'),
+                          QuizAnswering(:final question)
+                              when question is ChronologicalOrderingQuestion =>
+                            FilledButton(
+                              key: const Key('submit-order'),
+                              onPressed: () =>
+                                  controller.submitOrder(question.id),
+                              child: const Text('Submit order'),
                             ),
-                            QuizCompleted(:final result) => FilledButton(
-                              onPressed: resultsOpened
-                                  ? null
-                                  : () {
-                                      if (resultsOpened) return;
-                                      setState(() {
-                                        resultsOpened = true;
-                                      });
-                                      controller.releaseCompletedImages();
-                                      widget.onViewResults(result);
-                                    },
-                              child: const Text('View results'),
-                            ),
-                            QuizAnswering(:final question)
-                                when question is ImageIdentificationQuestion &&
-                                    !missingImage =>
-                              TextButton(
-                                onPressed: () =>
-                                    controller.skipImage(question.id),
-                                child: const Text('Skip question'),
-                              ),
-                            QuizAnswering(:final question)
-                                when question
-                                    is ChronologicalOrderingQuestion =>
-                              FilledButton(
-                                key: const Key('submit-order'),
-                                onPressed: () =>
-                                    controller.submitOrder(question.id),
-                                child: const Text('Submit order'),
-                              ),
-                            _ => const SizedBox.shrink(),
-                          },
-                        ],
-                      ),
+                          _ => const SizedBox.shrink(),
+                        },
+                      ],
                     ),
                   ),
                 ),
@@ -428,13 +427,7 @@ class _OrderingQuestionHeading extends StatelessWidget {
       child: Text(
         question.prompt,
         key: const Key('quiz-heading'),
-        style: const TextStyle(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: ['Times New Roman', 'serif'],
-          fontSize: 24,
-          height: 1.2,
-          fontWeight: FontWeight.w500,
-        ),
+        style: AppText.questionPromptAnswered,
       ),
     ),
   );
@@ -475,10 +468,8 @@ class _SessionIntroduction extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            daily ? 'DAILY CHALLENGE' : 'QUICK PLAY',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+            daily ? 'Daily Challenge' : 'Quick Play',
+            style: AppText.eyebrow.copyWith(color: AppColors.archivalCobalt),
           ),
           const SizedBox(height: 8),
           Text(
@@ -497,11 +488,7 @@ class _SessionIntroduction extends StatelessWidget {
                 : daily
                 ? 'Your challenge is ready'
                 : 'Your quiz is ready',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Georgia',
-              fontFamilyFallback: const ['Times New Roman', 'serif'],
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 18),
           _SessionFact(
@@ -516,7 +503,11 @@ class _SessionIntroduction extends StatelessWidget {
             label: _timingLabel(),
           ),
           const SizedBox(height: 22),
-          const Divider(color: AppColors.mutedCopper),
+          const FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: 0.55,
+            child: Divider(color: AppColors.mutedCopper),
+          ),
           if (failed) ...[
             const SizedBox(height: 14),
             Text(
