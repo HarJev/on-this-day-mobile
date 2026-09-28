@@ -60,6 +60,7 @@ class AppRouter {
           quizDependencies: _quizDependencies,
           onShowDebugNotification: _onShowDebugNotification,
           optionalImageLoader: _optionalImageLoader,
+          sourceLauncher: _sourceLauncher,
         ),
         settings,
       );
@@ -72,6 +73,7 @@ class AppRouter {
           timezoneProvider: _timezoneProvider,
           onShowDebugNotification: _onShowDebugNotification,
           imageLoader: _optionalImageLoader,
+          sourceLauncher: _sourceLauncher,
         ),
         settings,
       );

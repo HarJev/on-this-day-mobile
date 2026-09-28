@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'widgets/optional_event_image.dart';
 
 import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
@@ -9,7 +8,9 @@ import '../domain/event_source.dart';
 import '../domain/historical_event.dart';
 import '../domain/on_this_day_repository.dart';
 import 'event_detail_controller.dart';
+import 'widgets/event_image_credit.dart';
 import 'widgets/notification_pre_prompt.dart';
+import 'widgets/optional_event_image.dart';
 import 'widgets/source_row.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -72,6 +73,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               event: event,
               onSourceSelected: _openSource,
               imageLoader: widget.imageLoader,
+              sourceLauncher: widget.sourceLauncher,
               notificationPrompt: widget.notificationPrompt,
             ),
           ),
@@ -153,12 +155,14 @@ class _LoadedState extends StatefulWidget {
   const _LoadedState({
     required this.event,
     required this.onSourceSelected,
+    required this.sourceLauncher,
     this.imageLoader,
     this.notificationPrompt,
   });
 
   final HistoricalEvent event;
   final ValueChanged<EventSource> onSourceSelected;
+  final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
   final NotificationPromptCoordinator? notificationPrompt;
 
@@ -212,7 +216,11 @@ class _LoadedStateState extends State<_LoadedState> {
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(30, 28, 30, 48),
       children: [
-        _ArticleSurface(event: widget.event, imageLoader: widget.imageLoader),
+        _ArticleSurface(
+          event: widget.event,
+          imageLoader: widget.imageLoader,
+          sourceLauncher: widget.sourceLauncher,
+        ),
         const SizedBox(height: 42),
         Row(
           children: [
@@ -241,9 +249,14 @@ class _LoadedStateState extends State<_LoadedState> {
 }
 
 class _ArticleSurface extends StatelessWidget {
-  const _ArticleSurface({required this.event, this.imageLoader});
+  const _ArticleSurface({
+    required this.event,
+    required this.sourceLauncher,
+    this.imageLoader,
+  });
 
   final HistoricalEvent event;
+  final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
 
   @override
@@ -287,9 +300,17 @@ class _ArticleSurface extends StatelessWidget {
               altText: image.altText,
               loader: loader,
               padding: const EdgeInsets.only(top: 28),
+              caption: EventImageCredit(image: image, launcher: sourceLauncher),
             ),
           ],
-          const SizedBox(height: 28),
+          SizedBox(
+            height:
+                image != null &&
+                    loader != null &&
+                    EventImageCredit.summaryFor(image) != null
+                ? 12
+                : 28,
+          ),
           Text(
             event.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
