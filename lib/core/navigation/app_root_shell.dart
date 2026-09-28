@@ -9,6 +9,7 @@ import '../../features/quiz/presentation/daily_challenge_setup_controller.dart';
 import '../../features/quiz/presentation/quiz_hub_screen.dart';
 import '../images/cached_optional_image_loader.dart';
 import '../config/app_colors.dart';
+import '../config/app_theme.dart';
 import '../config/timezone_provider.dart';
 import 'app_routes.dart';
 import 'quiz_route_arguments.dart';
@@ -163,21 +164,26 @@ class _AppRootShellState extends State<AppRootShell> {
             ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: _select,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Today',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.quiz_outlined),
-            selectedIcon: Icon(Icons.quiz),
-            label: 'Quiz',
-          ),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.paleStone)),
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: _select,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.menu_book_outlined),
+              selectedIcon: Icon(Icons.menu_book),
+              label: 'Today',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.quiz_outlined),
+              selectedIcon: Icon(Icons.quiz),
+              label: 'Quiz',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -185,17 +191,8 @@ class _AppRootShellState extends State<AppRootShell> {
   AppBar _appBar() => AppBar(
     automaticallyImplyLeading: false,
     centerTitle: true,
-    toolbarHeight: 48,
-    title: Text(
-      'On This Day',
-      style: const TextStyle(
-        fontFamily: 'Georgia',
-        fontFamilyFallback: ['Times New Roman', 'serif'],
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: AppColors.deepInk,
-      ),
-    ),
+    toolbarHeight: 56,
+    title: const Text('On This Day', style: AppText.masthead),
     actions: [
       if (_index == 0 && widget.onShowDebugNotification != null)
         IconButton(
@@ -206,7 +203,14 @@ class _AppRootShellState extends State<AppRootShell> {
       if (_index == 0 && _todayDate != null)
         Padding(
           padding: const EdgeInsets.only(right: 20),
-          child: Center(child: Text(_todayDate!)),
+          child: Center(
+            child: Text(
+              _todayDate!,
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontSize: 14),
+            ),
+          ),
         ),
     ],
     bottom: const PreferredSize(

@@ -4,15 +4,15 @@ import '../../../../core/config/app_colors.dart';
 import '../../../../core/notifications/notification_prompt_coordinator.dart';
 
 /// A quiet invitation to enable notifications, placed at the end of a loaded
-/// Event Detail so it is only reached after reading. Only "Turn on
-/// notifications" may lead to the system permission prompt.
+/// Event Detail so it is only reached after reading. Only "Enable daily
+/// history reminder" may lead to the system permission prompt.
 class NotificationPrePrompt extends StatefulWidget {
   const NotificationPrePrompt({super.key, required this.coordinator});
 
   final NotificationPromptCoordinator coordinator;
 
-  static const title = 'Get one moment from history each morning.';
-  static const enableLabel = 'Turn on notifications';
+  static const title = 'A daily note from history';
+  static const enableLabel = 'Enable daily history reminder';
   static const declineLabel = 'Not now';
 
   @override
@@ -93,33 +93,34 @@ class _Invitation extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(
-            Icons.notifications_none,
-            color: AppColors.archivalCobalt,
-            size: 22,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: AppColors.cobaltTint,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.notifications_none,
+                color: AppColors.archivalCobalt,
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Semantics(
             header: true,
             child: Text(
               NotificationPrePrompt.title,
-              style: textTheme.titleLarge?.copyWith(
-                color: AppColors.deepInk,
-                fontFamily: 'Georgia',
-                fontFamilyFallback: const ['Times New Roman', 'serif'],
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-              ),
+              style: textTheme.headlineSmall,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
-            'A short note about the day’s featured event. You can change '
-            'this anytime in your device Settings.',
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.mutedGray,
-              height: 1.45,
-            ),
+            'One notification a day with the featured event. You can turn '
+            'it off at any time in your device Settings.',
+            style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
           FilledButton(
@@ -178,10 +179,7 @@ class _OutcomeMessage extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.deepInk,
-                  height: 1.45,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
           ],
@@ -199,18 +197,14 @@ class _PromptFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 36),
+      padding: const EdgeInsets.only(top: 32),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.softIvory,
-          border: Border(
-            top: BorderSide(color: AppColors.mutedCopper),
-            left: BorderSide(color: AppColors.paleStone),
-            right: BorderSide(color: AppColors.paleStone),
-            bottom: BorderSide(color: AppColors.paleStone),
-          ),
+          border: Border.all(color: AppColors.paleStone),
+          borderRadius: BorderRadius.circular(16),
         ),
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
         child: child,
       ),
     );

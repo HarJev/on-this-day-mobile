@@ -4,7 +4,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
@@ -41,6 +40,7 @@ import 'package:on_this_day_mobile/features/quiz/presentation/quiz_full_review_s
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_results_screen.dart';
 
 import '../../features/quiz/support/session_fakes.dart';
+import '../../support/capture_fonts.dart';
 
 void main() {
   testWidgets('creates and loads Quiz only after first root selection', (
@@ -130,7 +130,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await _loadCaptureFonts(tester);
+    await loadCaptureFonts(tester);
     final captureKey = GlobalKey();
     final dependencies = _dependencies(_QuizRepository(), _Store());
 
@@ -268,7 +268,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await _loadCaptureFonts(tester);
+    await loadCaptureFonts(tester);
     final captureKey = GlobalKey();
     final store = _ControlledStore();
     final dependencies = _dependencies(_QuizRepository(), store);
@@ -407,20 +407,6 @@ QuizCompletion _dailyClaim(String id) {
     ),
     QuizSaveIntent.claimDailyIfAbsent,
   );
-}
-
-Future<void> _loadCaptureFonts(WidgetTester tester) async {
-  for (final entry in {
-    'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-    'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-    'MaterialIcons':
-        '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-  }.entries) {
-    final bytes = await tester.runAsync(() => File(entry.value).readAsBytes());
-    final loader = FontLoader(entry.key)
-      ..addFont(Future.value(ByteData.sublistView(bytes!)));
-    await loader.load();
-  }
 }
 
 final class _QuizRepository implements QuizRepository {

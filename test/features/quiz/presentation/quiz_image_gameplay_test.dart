@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
@@ -19,6 +18,7 @@ import 'package:on_this_day_mobile/features/quiz/domain/quiz_question.dart';
 import '../support/image_fakes.dart';
 import '../support/session_fakes.dart';
 import '../support/quiz_gameplay_harness.dart';
+import '../../../support/capture_fonts.dart';
 
 class CreditLauncher implements SourceLauncher {
   final opened = <Uri>[];
@@ -625,19 +625,7 @@ void main() {
   ) async {
     const destination = String.fromEnvironment('QUIZ_IMAGE_SCREENSHOT_DIR');
     if (destination.isNotEmpty) {
-      for (final entry in {
-        'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-        'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-        'MaterialIcons':
-            '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-      }.entries) {
-        final bytes = (await tester.runAsync(
-          () => File(entry.value).readAsBytes(),
-        ))!;
-        await (FontLoader(
-          entry.key,
-        )..addFont(Future.value(ByteData.sublistView(bytes)))).load();
-      }
+      await loadCaptureFonts(tester);
     }
     Future<void> capture(String name) async {
       if (destination.isEmpty) return;

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
@@ -14,6 +13,7 @@ import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_contr
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_state.dart';
 import '../support/session_fakes.dart';
 import '../support/quiz_gameplay_harness.dart';
+import '../../../support/capture_fonts.dart';
 
 class FakeLauncher implements SourceLauncher {
   int calls = 0;
@@ -545,19 +545,7 @@ void main() {
     const destination = String.fromEnvironment('QUIZ_SCREENSHOT_DIR');
     if (destination.isEmpty) return;
     // Optional local font loading makes captures readable rather than Ahem boxes.
-    for (final entry in {
-      'Roboto': '/System/Library/Fonts/Supplemental/Arial.ttf',
-      'Georgia': '/System/Library/Fonts/Supplemental/Georgia.ttf',
-      'MaterialIcons':
-          '${Platform.environment['FLUTTER_ROOT']}/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-    }.entries) {
-      final bytes = await tester.runAsync(
-        () => File(entry.value).readAsBytes(),
-      );
-      final loader = FontLoader(entry.key)
-        ..addFont(Future.value(ByteData.sublistView(bytes!)));
-      await loader.load();
-    }
+    await loadCaptureFonts(tester);
     Future<void> capture(String name) async {
       await tester.pumpAndSettle();
       final boundary =

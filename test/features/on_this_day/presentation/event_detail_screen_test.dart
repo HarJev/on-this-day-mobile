@@ -48,7 +48,7 @@ void main() {
 
     await tester.pumpWidget(_detailApp(repository: repository));
 
-    expect(find.text('Loading event...'), findsOneWidget);
+    expect(find.bySemanticsLabel('Loading event'), findsOneWidget);
     expect(repository.lastEventId, 'event-1');
   });
 
@@ -59,13 +59,18 @@ void main() {
     await tester.pump();
 
     expect(find.text('On This Day'), findsOneWidget);
-    expect(find.text('AUGUST 22, 1485'), findsOneWidget);
+    expect(find.text('1485'), findsOneWidget);
+    expect(find.text('August 22'), findsOneWidget);
     expect(find.text('A detailed historical event'), findsOneWidget);
     expect(
       find.text('A concise description of what happened and why it mattered.'),
       findsOneWidget,
     );
-    expect(find.text('READ MORE'), findsOneWidget);
+    // Sources start collapsed behind one quiet row and expand in place.
+    expect(find.text('Sources (1)'), findsOneWidget);
+    expect(find.text('Example Source'), findsNothing);
+    await tester.tap(find.text('Sources (1)'));
+    await tester.pumpAndSettle();
     expect(find.text('Example Source'), findsOneWidget);
   });
 
@@ -82,7 +87,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('This event is unavailable.'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
   });
 
   testWidgets('renders retryable error and recovers on retry', (
@@ -95,7 +100,7 @@ void main() {
 
     expect(find.text('Could not load this event.'), findsOneWidget);
 
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
 
     expect(find.text('A detailed historical event'), findsOneWidget);
@@ -110,6 +115,9 @@ void main() {
     await tester.pumpWidget(_detailApp(sourceLauncher: launcher));
     await tester.pump();
 
+    await tester.ensureVisible(find.text('Sources (1)'));
+    await tester.tap(find.text('Sources (1)'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Example Source'));
     await tester.pump();
     await tester.tap(find.text('Example Source'));
@@ -127,6 +135,9 @@ void main() {
     await tester.pumpWidget(_detailApp(sourceLauncher: launcher));
     await tester.pump();
 
+    await tester.ensureVisible(find.text('Sources (1)'));
+    await tester.tap(find.text('Sources (1)'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Example Source'));
     await tester.pump();
     await tester.tap(find.text('Example Source'));
@@ -143,7 +154,7 @@ void main() {
 
     expect(find.byType(Image), findsNothing);
     expect(find.text('A detailed historical event'), findsOneWidget);
-    expect(find.text('AUGUST 22, 1485'), findsOneWidget);
+    expect(find.text('1485'), findsOneWidget);
   });
 
   testWidgets('image credit sits under the image and opens the licence', (

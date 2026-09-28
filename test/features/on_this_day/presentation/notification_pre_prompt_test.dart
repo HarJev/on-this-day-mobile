@@ -32,7 +32,7 @@ void main() {
     // Placed after the sources.
     expect(
       tester.getTopLeft(prePrompt).dy,
-      greaterThan(tester.getTopLeft(find.text('Example Source')).dy),
+      greaterThan(tester.getTopLeft(find.text('Sources (1)')).dy),
     );
   });
 
@@ -117,7 +117,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    // The loading skeleton pulses, so settle a fixed number of frames.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(NotificationPrePrompt), findsNothing);
   });
 

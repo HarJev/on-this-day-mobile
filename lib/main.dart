@@ -47,6 +47,7 @@ const _debugNotificationEventId = String.fromEnvironment(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppFonts.registerLicences();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final config = AppConfig.fromEnvironment();
