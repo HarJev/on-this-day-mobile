@@ -4,6 +4,7 @@ import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/timezone_provider.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/navigation/source_launcher.dart';
 import '../domain/daily_content.dart';
 import '../domain/on_this_day_repository.dart';
 import 'home_controller.dart';
@@ -19,6 +20,7 @@ class HomeScreen extends StatefulWidget {
     this.embedded = false,
     this.onDisplayDateChanged,
     this.imageLoader,
+    this.sourceLauncher = const PlatformSourceLauncher(),
   });
 
   final OnThisDayRepository repository;
@@ -27,6 +29,7 @@ class HomeScreen extends StatefulWidget {
   final bool embedded;
   final ValueChanged<String?>? onDisplayDateChanged;
   final OptionalImageLoader? imageLoader;
+  final SourceLauncher sourceLauncher;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -82,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
               content: content,
               onEventSelected: _openEvent,
               imageLoader: widget.imageLoader,
+              sourceLauncher: widget.sourceLauncher,
             ),
           ),
           HomeUnavailable(:final message) => _HomeScaffold(
@@ -213,11 +217,13 @@ class _LoadedState extends StatelessWidget {
   const _LoadedState({
     required this.content,
     required this.onEventSelected,
+    required this.sourceLauncher,
     this.imageLoader,
   });
 
   final DailyContent content;
   final ValueChanged<String> onEventSelected;
+  final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
 
   @override
@@ -231,6 +237,7 @@ class _LoadedState extends StatelessWidget {
           event: content.featuredEvent,
           onTap: () => onEventSelected(content.featuredEvent.id),
           imageLoader: imageLoader,
+          sourceLauncher: sourceLauncher,
         ),
         if (additionalEvents.isNotEmpty) ...[
           const SizedBox(height: 34),

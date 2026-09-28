@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/images/cached_optional_image_loader.dart';
 import '../../../../core/config/app_colors.dart';
+import '../../../../core/navigation/source_launcher.dart';
+import '../../domain/event_image.dart';
 import '../../domain/featured_event.dart';
+import 'event_image_credit.dart';
 import 'optional_event_image.dart';
 
 class FeaturedEventCard extends StatelessWidget {
@@ -11,11 +14,13 @@ class FeaturedEventCard extends StatelessWidget {
     required this.event,
     required this.onTap,
     this.imageLoader,
+    this.sourceLauncher = const PlatformSourceLauncher(),
   });
 
   final FeaturedEvent event;
   final VoidCallback onTap;
   final OptionalImageLoader? imageLoader;
+  final SourceLauncher sourceLauncher;
 
   @override
   Widget build(BuildContext context) {
@@ -39,12 +44,7 @@ class FeaturedEventCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (image != null && loader != null) ...[
-                  OptionalEventImage(
-                    url: image.url,
-                    altText: image.altText,
-                    loader: loader,
-                    padding: const EdgeInsets.only(bottom: 22),
-                  ),
+                  _imageWithCredit(image, loader),
                 ],
                 Text(
                   event.year,
@@ -81,6 +81,20 @@ class FeaturedEventCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _imageWithCredit(EventImage image, OptionalImageLoader loader) {
+    final hasCredit = EventImageCredit.summaryFor(image) != null;
+    return OptionalEventImage(
+      url: image.url,
+      altText: image.altText,
+      loader: loader,
+      // The credit row's own 48pt target supplies most of the gap.
+      padding: EdgeInsets.only(bottom: hasCredit ? 8 : 22),
+      caption: hasCredit
+          ? EventImageCredit(image: image, launcher: sourceLauncher)
+          : null,
     );
   }
 }

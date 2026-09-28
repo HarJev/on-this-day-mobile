@@ -13,12 +13,16 @@ class OptionalEventImage extends StatefulWidget {
     required this.altText,
     required this.loader,
     this.padding = EdgeInsets.zero,
+    this.caption,
   });
 
   final Uri url;
   final String altText;
   final OptionalImageLoader loader;
   final EdgeInsetsGeometry padding;
+
+  /// Shown under the image only once it has loaded, such as an image credit.
+  final Widget? caption;
 
   @override
   State<OptionalEventImage> createState() => _OptionalEventImageState();
@@ -72,17 +76,27 @@ class _OptionalEventImageState extends State<OptionalEventImage> {
   Widget build(BuildContext context) {
     final image = _image;
     if (image == null) return const SizedBox.shrink();
-    return Semantics(
+    final picture = Semantics(
       image: true,
       label: widget.altText,
       child: ExcludeSemantics(
-        child: Padding(
-          padding: widget.padding,
-          child: AspectRatio(
-            aspectRatio: 2.05,
-            child: RawImage(image: image, fit: BoxFit.cover),
-          ),
+        child: AspectRatio(
+          aspectRatio: 2.05,
+          child: RawImage(image: image, fit: BoxFit.cover),
         ),
+      ),
+    );
+    final caption = widget.caption;
+    return Semantics(
+      container: true,
+      child: Padding(
+        padding: widget.padding,
+        child: caption == null
+            ? picture
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [picture, caption],
+              ),
       ),
     );
   }

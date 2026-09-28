@@ -13,6 +13,7 @@ import '../config/timezone_provider.dart';
 import 'app_routes.dart';
 import 'quiz_route_arguments.dart';
 import 'quiz_route_dependencies.dart';
+import 'source_launcher.dart';
 
 /// Retains Today and Quiz below focused pushed routes using one root navigator.
 final class AppRootShell extends StatefulWidget {
@@ -23,6 +24,7 @@ final class AppRootShell extends StatefulWidget {
     required this.quizDependencies,
     required this.onShowDebugNotification,
     this.optionalImageLoader,
+    this.sourceLauncher = const PlatformSourceLauncher(),
   });
 
   final OnThisDayRepository onThisDayRepository;
@@ -30,6 +32,7 @@ final class AppRootShell extends StatefulWidget {
   final QuizRouteDependencies Function() quizDependencies;
   final VoidCallback? onShowDebugNotification;
   final OptionalImageLoader? optionalImageLoader;
+  final SourceLauncher sourceLauncher;
 
   @override
   State<AppRootShell> createState() => _AppRootShellState();
@@ -92,6 +95,7 @@ class _AppRootShellState extends State<AppRootShell> {
             repository: widget.onThisDayRepository,
             timezoneProvider: widget.timezoneProvider,
             imageLoader: widget.optionalImageLoader,
+            sourceLauncher: widget.sourceLauncher,
             embedded: true,
             onDisplayDateChanged: (date) {
               if (mounted && date != _todayDate) {
