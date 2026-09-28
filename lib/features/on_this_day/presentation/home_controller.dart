@@ -5,6 +5,7 @@ import '../../../core/config/timezone_provider.dart';
 import '../domain/daily_content.dart';
 import '../domain/on_this_day_exceptions.dart';
 import '../domain/on_this_day_repository.dart';
+import '../domain/recent_day.dart';
 
 sealed class HomeState {
   const HomeState();
@@ -15,9 +16,13 @@ class HomeLoading extends HomeState {
 }
 
 class HomeLoaded extends HomeState {
-  const HomeLoaded(this.content);
+  const HomeLoaded(this.content, {this.recentDays = const []});
 
   final DailyContent content;
+
+  /// Featured events of the previous six dates, newest first. Empty until
+  /// they load, and stays empty if they cannot be loaded.
+  final List<RecentDay> recentDays;
 }
 
 class HomeUnavailable extends HomeState {
@@ -44,8 +49,10 @@ class HomeController extends ChangeNotifier {
 
   HomeState _state = const HomeLoading();
   HomeState get state => _state;
+  int _loadGeneration = 0;
 
   Future<void> loadToday() async {
+    final generation = ++_loadGeneration;
     _setState(const HomeLoading());
 
     final String timezone;
@@ -65,7 +72,9 @@ class HomeController extends ChangeNotifier {
       _debugLog('repository_getTodayContent_start timezone=$timezone');
       final content = await _repository.getTodayContent(timezone);
       _debugLog('repository_getTodayContent_success');
+      if (generation != _loadGeneration) return;
       _setState(HomeLoaded(content));
+      await _loadRecentDays(timezone, generation);
     } on TodayContentUnavailableException {
       _debugLog('repository_getTodayContent_unavailable');
       _setState(
@@ -86,6 +95,25 @@ class HomeController extends ChangeNotifier {
         'cause=$error',
       );
       _setState(const HomeError(message: "Could not load today's history."));
+    }
+  }
+
+  /// Recent days are secondary: a failure leaves Today as it is.
+  Future<void> _loadRecentDays(String timezone, int generation) async {
+    try {
+      final recentDays = await _repository.getRecentDays(timezone);
+      final current = _state;
+      if (recentDays.isEmpty ||
+          generation != _loadGeneration ||
+          current is! HomeLoaded) {
+        return;
+      }
+      _setState(HomeLoaded(current.content, recentDays: recentDays));
+    } catch (error) {
+      _debugLog(
+        'repository_getRecentDays_failure causeType=${error.runtimeType} '
+        'cause=$error',
+      );
     }
   }
 

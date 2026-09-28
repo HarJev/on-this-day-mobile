@@ -10,6 +10,7 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event_summary.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/home_screen.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/featured_event_card.dart';
 
@@ -38,6 +39,38 @@ void main() {
     expect(find.text('Also on this day'), findsOneWidget);
     expect(find.text('1770'), findsOneWidget);
     expect(find.text('Additional history'), findsOneWidget);
+  });
+
+  testWidgets('renders recent days and opens their events', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _homeApp(_StaticRepository(_dailyContent, recentDays: _recentDays)),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Recent days'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Daguerreotype history'), 200);
+    expect(find.text('Yesterday'), findsOneWidget);
+    expect(find.text('Hawaii history'), findsOneWidget);
+    expect(find.text('Aug 19'), findsOneWidget);
+
+    await tester.tap(find.text('Daguerreotype history'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Route: /events/daguerreotype-event'), findsOneWidget);
+    expect(find.text('Arguments: null'), findsOneWidget);
+  });
+
+  testWidgets('hides recent days when there are none', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_homeApp(_StaticRepository(_dailyContent)));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Recent days'), findsNothing);
   });
 
   testWidgets('does not render a back button on home', (
@@ -78,6 +111,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Route: /events/featured-event'), findsOneWidget);
+    expect(
+      find.text("Arguments: Instance of 'EventDetailRouteArguments'"),
+      findsOneWidget,
+    );
   });
 
   testWidgets('additional event tap navigates to event detail route', (
@@ -169,7 +206,14 @@ Widget _homeApp(
     ),
     onGenerateRoute: (settings) {
       return MaterialPageRoute<void>(
-        builder: (_) => Scaffold(body: Text('Route: ${settings.name}')),
+        builder: (_) => Scaffold(
+          body: Column(
+            children: [
+              Text('Route: ${settings.name}'),
+              Text('Arguments: ${settings.arguments}'),
+            ],
+          ),
+        ),
         settings: settings,
       );
     },
@@ -199,6 +243,29 @@ const _dailyContent = DailyContent(
   additionalEvents: [_additionalEvent],
 );
 
+const _recentDays = [
+  RecentDay(
+    daysAgo: 1,
+    displayDate: 'Aug 21',
+    featuredEvent: HistoricalEventSummary(
+      id: 'hawaii-event',
+      title: 'Hawaii history',
+      year: '1959',
+      historicalDate: 'August 21, 1959',
+    ),
+  ),
+  RecentDay(
+    daysAgo: 3,
+    displayDate: 'Aug 19',
+    featuredEvent: HistoricalEventSummary(
+      id: 'daguerreotype-event',
+      title: 'Daguerreotype history',
+      year: '1839',
+      historicalDate: 'August 19, 1839',
+    ),
+  ),
+];
+
 const _dailyContentEmpty = DailyContent(
   displayDate: 'Aug 22',
   featuredEvent: _featuredEvent,
@@ -217,15 +284,22 @@ class _PendingRepository implements OnThisDayRepository {
   }
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) {
     throw UnimplementedError();
   }
 }
 
 class _StaticRepository implements OnThisDayRepository {
-  const _StaticRepository(this.content);
+  const _StaticRepository(this.content, {this.recentDays = const []});
 
   final DailyContent content;
+  final List<RecentDay> recentDays;
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => recentDays;
 
   @override
   Future<DailyContent> getTodayContent(String timezone) async {
@@ -247,6 +321,9 @@ class _ThrowingRepository implements OnThisDayRepository {
   Future<DailyContent> getTodayContent(String timezone) async {
     throw exception;
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) {
@@ -272,6 +349,9 @@ class _SequenceRepository implements OnThisDayRepository {
 
     return result as DailyContent;
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) {

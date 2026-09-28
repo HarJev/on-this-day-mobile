@@ -4,6 +4,7 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/event_source.dart
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detail_controller.dart';
 
 void main() {
@@ -132,6 +133,9 @@ class _RecordingRepository implements OnThisDayRepository {
   }
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) async {
     loadCount += 1;
     lastEventId = eventId;
@@ -156,6 +160,9 @@ class _SequenceRepository implements OnThisDayRepository {
   Future<DailyContent> getTodayContent(String timezone) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) async {

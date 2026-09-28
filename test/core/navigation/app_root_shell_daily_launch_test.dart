@@ -13,6 +13,7 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dar
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_coordinator.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_id_generator.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_root_status.dart';
@@ -229,6 +230,9 @@ final class _TodayRepository implements OnThisDayRepository {
     ),
     additionalEvents: const [],
   );
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) =>

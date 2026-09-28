@@ -13,6 +13,7 @@ import '../config/timezone_provider.dart';
 import 'app_routes.dart';
 import 'quiz_route_arguments.dart';
 import 'quiz_route_dependencies.dart';
+import 'root_tab_controller.dart';
 import 'source_launcher.dart';
 
 /// Retains Today and Quiz below focused pushed routes using one root navigator.
@@ -25,6 +26,7 @@ final class AppRootShell extends StatefulWidget {
     required this.onShowDebugNotification,
     this.optionalImageLoader,
     this.sourceLauncher = const PlatformSourceLauncher(),
+    this.rootTabs,
   });
 
   final OnThisDayRepository onThisDayRepository;
@@ -33,6 +35,9 @@ final class AppRootShell extends StatefulWidget {
   final VoidCallback? onShowDebugNotification;
   final OptionalImageLoader? optionalImageLoader;
   final SourceLauncher sourceLauncher;
+
+  /// When provided, routes above the shell can switch the visible tab.
+  final RootTabController? rootTabs;
 
   @override
   State<AppRootShell> createState() => _AppRootShellState();
@@ -44,12 +49,40 @@ class _AppRootShellState extends State<AppRootShell> {
   String? _todayDate;
   QuizRouteDependencies? _quiz;
 
+  @override
+  void initState() {
+    super.initState();
+    widget.rootTabs?.addListener(_followRootTabs);
+  }
+
+  @override
+  void didUpdateWidget(AppRootShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rootTabs != widget.rootTabs) {
+      oldWidget.rootTabs?.removeListener(_followRootTabs);
+      widget.rootTabs?.addListener(_followRootTabs);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.rootTabs?.removeListener(_followRootTabs);
+    super.dispose();
+  }
+
+  void _followRootTabs() {
+    final tab = widget.rootTabs?.value;
+    if (tab != null && tab.index != _index) _select(tab.index);
+  }
+
   void _select(int index) {
     if (index == 1 && !_quizCreated) {
       _quizCreated = true;
       _quiz = widget.quizDependencies();
     }
     setState(() => _index = index);
+    final tabs = widget.rootTabs;
+    if (tabs != null) tabs.value = RootTab.values[index];
   }
 
   void _openDaily(QuizCatalog catalog) {

@@ -59,6 +59,48 @@ void main() {
       );
     });
 
+    test('loads recent days for the supplied timezone', () async {
+      late Uri capturedUri;
+      final repository = _repository((request) async {
+        capturedUri = request.url;
+        return http.Response(_recentDaysResponse, 200);
+      });
+
+      final days = await repository.getRecentDays('America/Jamaica');
+
+      expect(
+        capturedUri.toString(),
+        'http://127.0.0.1:3000/v1/days/recent?timezone=America%2FJamaica&days=7',
+      );
+      expect(days.map((day) => day.daysAgo), [1, 3]);
+      expect(days.first.displayDate, 'Aug 23');
+      expect(days.first.featuredEvent.id, 'hawaii-becomes-50th-state-1959');
+      expect(days.last.featuredEvent.year, '1839');
+    });
+
+    test('loads an empty recent days list', () async {
+      final repository = _repository(
+        (_) async => http.Response('{"days":[]}', 200),
+      );
+
+      expect(await repository.getRecentDays('America/Jamaica'), isEmpty);
+    });
+
+    test('rejects a malformed recent day', () async {
+      final repository = _repository(
+        (_) async => http.Response(
+          '{"days":[{"daysAgo":0,"date":{"displayDate":"Aug 23"},'
+          '"featuredEvent":{}}]}',
+          200,
+        ),
+      );
+
+      await expectLater(
+        repository.getRecentDays('America/Jamaica'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
     test('loads event detail by event ID', () async {
       late Uri capturedUri;
       final repository = _repository((request) async {
@@ -99,6 +141,34 @@ void main() {
     });
   });
 }
+
+const _recentDaysResponse = '''
+{
+  "days": [
+    {
+      "daysAgo": 1,
+      "date": {"month": 8, "day": 23, "displayDate": "Aug 23"},
+      "featuredEvent": {
+        "id": "hawaii-becomes-50th-state-1959",
+        "title": "Hawaii becomes the 50th US state",
+        "year": "1959",
+        "historicalDate": "August 21, 1959",
+        "dateNote": null
+      }
+    },
+    {
+      "daysAgo": 3,
+      "date": {"month": 8, "day": 21, "displayDate": "Aug 21"},
+      "featuredEvent": {
+        "id": "daguerreotype-announced-1839",
+        "title": "The daguerreotype process is made public",
+        "year": "1839",
+        "historicalDate": "August 19, 1839"
+      }
+    }
+  ]
+}
+''';
 
 BackendOnThisDayRepository _repository(
   Future<http.Response> Function(http.Request request) handler,

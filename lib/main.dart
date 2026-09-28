@@ -134,10 +134,10 @@ Future<void> main() async {
         timezoneProvider: timezoneProvider,
         onShowDebugNotification: kDebugMode
             ? () => unawaited(
-                  notificationService.showDebugTestNotification(
-                    eventId: _debugNotificationEventId,
-                  ),
-                )
+                notificationService.showDebugTestNotification(
+                  eventId: _debugNotificationEventId,
+                ),
+              )
             : null,
         navigatorKey: navigatorKey,
         routeObserver: routeObserver,

@@ -13,11 +13,34 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/event_source.dart
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detail_screen.dart';
 
 import '../../quiz/support/image_fakes.dart';
 
 void main() {
+  testWidgets('offers the quiz link only when a handler is provided', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_detailApp());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Test what you learned'), findsNothing);
+  });
+
+  testWidgets('quiz link invokes its handler', (WidgetTester tester) async {
+    var taps = 0;
+    await tester.pumpWidget(_detailApp(onTestWhatYouLearned: () => taps++));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.scrollUntilVisible(find.text('Test what you learned'), 200);
+    await tester.tap(find.text('Test what you learned'));
+
+    expect(taps, 1);
+  });
+
   testWidgets('renders loading while event content is pending', (
     WidgetTester tester,
   ) async {
@@ -187,6 +210,7 @@ Widget _detailApp({
   OnThisDayRepository? repository,
   SourceLauncher? sourceLauncher,
   OptionalImageLoader? imageLoader,
+  VoidCallback? onTestWhatYouLearned,
 }) {
   return MaterialApp(
     theme: AppTheme.light,
@@ -195,6 +219,7 @@ Widget _detailApp({
       eventId: 'event-1',
       sourceLauncher: sourceLauncher ?? _RecordingSourceLauncher(),
       imageLoader: imageLoader,
+      onTestWhatYouLearned: onTestWhatYouLearned,
     ),
   );
 }
@@ -225,6 +250,9 @@ class _PendingRepository implements OnThisDayRepository {
   }
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) {
     lastEventId = eventId;
     return _completer.future;
@@ -240,6 +268,9 @@ class _StaticRepository implements OnThisDayRepository {
   Future<DailyContent> getTodayContent(String timezone) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) async {
@@ -258,6 +289,9 @@ class _ThrowingRepository implements OnThisDayRepository {
   }
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) async {
     throw exception;
   }
@@ -274,6 +308,9 @@ class _SequenceRepository implements OnThisDayRepository {
   Future<DailyContent> getTodayContent(String timezone) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) async {

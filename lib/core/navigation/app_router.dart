@@ -12,9 +12,11 @@ import '../config/timezone_provider.dart';
 import '../notifications/notification_prompt_coordinator.dart';
 import 'app_root_shell.dart';
 import 'app_routes.dart';
+import 'event_detail_route_arguments.dart';
 import 'quiz_gameplay_route.dart';
 import 'quiz_route_arguments.dart';
 import 'quiz_route_dependencies.dart';
+import 'root_tab_controller.dart';
 import 'source_launcher.dart';
 
 class AppRouter {
@@ -28,6 +30,7 @@ class AppRouter {
     GlobalKey<NavigatorState>? navigatorKey,
     OptionalImageLoader? optionalImageLoader,
     NotificationPromptCoordinator? notificationPrompt,
+    RootTabController? rootTabs,
   }) : _repository = repository,
        _timezoneProvider = timezoneProvider,
        _sourceLauncher = sourceLauncher,
@@ -36,6 +39,7 @@ class AppRouter {
        _navigatorKey = navigatorKey,
        _optionalImageLoader = optionalImageLoader,
        _notificationPrompt = notificationPrompt,
+       rootTabs = rootTabs ?? RootTabController(),
        routeObserver = routeObserver ?? RouteObserver<PageRoute<dynamic>>();
 
   final OnThisDayRepository _repository;
@@ -47,6 +51,7 @@ class AppRouter {
   final OptionalImageLoader? _optionalImageLoader;
   final NotificationPromptCoordinator? _notificationPrompt;
   final RouteObserver<PageRoute<dynamic>> routeObserver;
+  final RootTabController rootTabs;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
     final routeName = settings.name ?? AppRoutes.today;
@@ -61,6 +66,7 @@ class AppRouter {
           onShowDebugNotification: _onShowDebugNotification,
           optionalImageLoader: _optionalImageLoader,
           sourceLauncher: _sourceLauncher,
+          rootTabs: rootTabs,
         ),
         settings,
       );
@@ -81,6 +87,11 @@ class AppRouter {
 
     final eventId = _eventIdFrom(uri);
     if (eventId != null) {
+      final args = settings.arguments;
+      final offersQuiz =
+          _quizDependencies != null &&
+          args is EventDetailRouteArguments &&
+          args.isToday;
       return _page(
         EventDetailScreen(
           repository: _repository,
@@ -88,6 +99,7 @@ class AppRouter {
           sourceLauncher: _sourceLauncher,
           imageLoader: _optionalImageLoader,
           notificationPrompt: _notificationPrompt,
+          onTestWhatYouLearned: offersQuiz ? _openQuizTab : null,
         ),
         settings,
       );
@@ -225,6 +237,11 @@ class AppRouter {
       _page(const UnavailableRouteScreen(), settings);
 
   NavigatorState? get _navigator => _navigatorKey?.currentState;
+
+  void _openQuizTab() {
+    rootTabs.value = RootTab.quiz;
+    _returnToRoot();
+  }
 
   void _returnToRoot() =>
       _navigator?.popUntil((route) => route.settings.name == AppRoutes.root);
