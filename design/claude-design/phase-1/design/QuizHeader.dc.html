@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="flex:none;background:#F7F3EA;padding:0 0 10px;font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:52px;display:flex;align-items:center;padding:0 8px"><button onClick="{{ back }}" aria-label="Back" style="width:48px;height:48px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:#171A1F;cursor:pointer"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></button><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">{{ title }}</div><div style="width:48px"></div></div>
+<div style="padding:0 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:28px;flex-wrap:wrap"><span style="font-size:14px;font-weight:600;flex:none;white-space:nowrap">Question {{ index }} of {{ total }}</span><sc-if value="{{ hasTimer }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:5px;font-size:14px;color:#2F5F8F;font-variant-numeric:tabular-nums;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:17px">timer</span>{{ timerLabel }} <span style="font-weight:600">{{ timer }}</span></span></sc-if></div>
+<div style="display:flex;gap:3px;padding:6px 20px 0"><sc-for list="{{ segs }}" as="g" hint-placeholder-count="5"><sc-if value="{{ g.done }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:3px;border-radius:2px;background:#171A1F"></div></sc-if><sc-if value="{{ g.cur }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:3px;border-radius:2px;background:#2F5F8F"></div></sc-if><sc-if value="{{ g.todo }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:3px;border-radius:2px;background:#D8D1C6"></div></sc-if></sc-for></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:100},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Daily Challenge&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;index&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;tsType&quot;:&quot;number&quot;},&quot;total&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;},&quot;timerLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Total time&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;timer&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;01:32&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onBack&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, idx = Number(p.index || 1), tot = Number(p.total || 5);
+    return {
+      hasTimer: !!p.timer,
+      segs: Array.from({ length: tot }, (_, k) => ({ done: k < idx - 1, cur: k === idx - 1, todo: k > idx - 1 })),
+      back: () => p.onBack && p.onBack()
+    };
+  }
+}
+</script>
+</body>
+</html>

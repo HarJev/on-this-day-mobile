@@ -2,8 +2,10 @@
 
 Sections 1-13 retain the canonical v0.0.1 direction. Section 14 defines the
 implemented Quiz v0.1.0 extension. Section 15 adds the approved post-audit UX
-direction. Earlier exclusions of quizzes, tabs, categories, and recent history
-are scoped to their original version.
+direction. Section 16 adopts the Claude Design visual refresh (2026-09-28) and
+supersedes older reference screenshots where they differ. Earlier exclusions of
+quizzes, tabs, categories, and recent history are scoped to their original
+version.
 
 **Status:** Design direction  
 **Version:** v0.1.0
@@ -97,6 +99,13 @@ Use an **Ink, Cobalt, Warm Paper** palette.
 | Secondary accent | Muted copper | `#A66A3F` |
 | Divider / border | Pale stone | `#D8D1C6` |
 | Subtle fill | Soft warm gray | `#EBE3D6` |
+| Small copper text | Copper dark | `#7E4E2C` |
+| Correct / selected fill | Cobalt tint | `#EAF0F6` |
+| Incorrect fill | Copper tint | `#F5ECE3` |
+| Dimmed row border | Hairline | `#E3DCD0` |
+| Summary text | Body soft | `#3A3D42` |
+| Primary pressed | Cobalt pressed | `#284F78` |
+| Sheet scrim | Ink at 38% | `rgba(23,26,31,.38)` |
 
 ### 4.1 Usage
 
@@ -109,6 +118,11 @@ Use an **Ink, Cobalt, Warm Paper** palette.
 - Use muted copper sparingly for rules, metadata separators, and small
   editorial accents.
 - Use pale stone for dividers and borders.
+- Use copper dark, not muted copper, for copper-coloured text under 18pt.
+  Muted copper is below 4.5:1 on paper and ivory, so keep it for icons, rules,
+  and borders.
+- Use cobalt tint and copper tint only as state fills behind an icon and a text
+  label. Never use them as the only signal.
 
 Avoid large blocks of red, bright primary colors, or a palette that feels fully
 beige, brown, or sepia.
@@ -124,8 +138,9 @@ Use an editorial type pairing:
 - **Display / titles:** elegant serif or editorial display face.
 - **Body / UI:** clean modern sans-serif with strong mobile readability.
 
-If the first implementation uses system fonts, preserve this relationship
-through size, weight, line height, and hierarchy.
+The refresh bundles **Source Serif 4** (serif) and **Public Sans** (sans) as app
+font assets (SIL OFL, no network loading), so iOS and Android render the same.
+Letter spacing is zero everywhere. Section 16 gives the full type scale.
 
 ### 5.1 Hierarchy
 
@@ -616,3 +631,103 @@ cached snapshot and opens Event Detail. It must have a clear stale/empty state.
 Share cards emphasize one event or one result, use restrained branding, avoid
 dense source text, and include imagery only when the reviewed license permits
 redistribution in the generated card.
+
+## 16. Visual Refresh (Claude Design, 2026-09-28)
+
+The owner ran Claude Design from
+[design/CLAUDE_DESIGN_PROMPT.md](../design/CLAUDE_DESIGN_PROMPT.md). The
+handoffs live in `design/claude-design/phase-1/` (Quiz) and `phase-2/` (Today,
+Event detail, states). Their `README.md` files are the exact spec, with values
+in logical pixels. [design/claude-design/REVIEW.md](../design/claude-design/REVIEW.md)
+lists the corrections. Those corrections and sections 14-15 win over any mockup
+detail. This section summarizes what the implementation pass must match.
+
+### Type scale
+
+| Role | Face | Size / line height | Weight |
+| --- | --- | --- | --- |
+| Masthead "On This Day" | serif | 22 | 600 |
+| Root page title (Quiz) | serif | 34 / 1.1 | 600 |
+| Setup page title | serif | 30 / 1.15 | 600 |
+| Featured title (with / without image) | serif | 28 / 30, 1.15 | 600 |
+| Featured year (with / without image) | serif | 40 / 56 | 600, cobalt |
+| Event detail title | serif | 32 / 1.15 | 600 |
+| Section header ("Also on this day", "Recent days") | serif | 22 | 600, 32x2 copper bar below |
+| Nav bar title | serif | 17 | 600 |
+| Question prompt (idle / answered) | serif | 23 / 20, 1.28 | 500 |
+| Feedback title | serif | 22 / 1.2 | 600 |
+| Result score | serif | 60-64 / 1 | 600, then "of n" 26-28 muted 400 |
+| List-row year | serif | 17 | 600, cobalt |
+| Detail description | sans | 17 / 1.6 | 400 |
+| Featured summary | sans | 16 / 1.5 | 400, body soft |
+| Body, answers, list titles | sans | 16 / 1.35-1.4 | 400 (600 when correct) |
+| Explanation | sans | 15 / 1.5 | 400 |
+| Secondary | sans | 14-15 / 1.45 | 400, muted |
+| Labels, eyebrows, tags | sans | 12-13 | 600 |
+| Timer | sans | 14, tabular figures | 600 value |
+
+One serif hierarchy applies everywhere: 600 for screen, card, and event titles,
+and 500 for question prompts, the same in Review.
+
+### Shape and spacing
+
+- Screen padding is 20. Today sections are 32 apart. The vertical rhythm steps
+  are 8, 10, 12, 14, and 16.
+- Radii: rows and buttons 12, cards and tiles 14-16, quiz link row 14, detail
+  image 8, image mat 6, sheet and feedback panel tops 20, pills fully rounded.
+- Primary button: 52 tall, cobalt, ivory 16/600 label. Secondary: 48 tall,
+  1px stone border, cobalt 15/600 label. Text button: 48 tall.
+- Shadows appear only on the Quiz feedback panel and on a dragged order row.
+- One back affordance everywhere: a 48x48 `arrow_back`.
+- Switches use cobalt, and the knob carries a check icon.
+- The tab bar is ivory with a top hairline. The active tab has a 56x28
+  cobalt-tint pill, a filled icon, and a cobalt 600 label.
+
+### Quiz components
+
+- **Header:** mode title, "Question n of total", the timer (per section 14),
+  and a segmented progress bar (done ink, current cobalt, upcoming stone).
+- **Type identity:** a copper icon plus a muted label above each prompt
+  (Multiple choice, True or false, Identify the image, Put in order).
+- **AnswerRow:** a lettered badge. The idle, pressed, correct, wrong, and dim
+  states each pair a fill and border with an icon and a "Your answer" or
+  "Correct answer" tag. True/false uses two tall tiles side by side.
+- **OrderRow:** a timeline rail with numbered nodes, a drag handle, and 40x48
+  up/down buttons. After submit, the year shows on each row with "In place" or
+  "Belongs nth", and the buttons disappear.
+- **FeedbackPanel:** a sticky footer. Daily shows the result, the answer with
+  its year or date, and Continue. Quick Play adds the explanation and a
+  "Sources (n)" row that opens the Sources sheet.
+- **Results:** a per-question strip (each cell opens that question in Review),
+  an Answered/Correct/Unanswered row, and an official or practice line. A
+  "Worth revisiting" card shows the first missed question with an explanation.
+  Daily adds a "new Daily Challenge tomorrow" note.
+- **Full review:** one card per question with a status pill, a per-type answer
+  block, the explanation, and collapsed "Image credit" and "Sources (n)" rows.
+
+### Today and Event detail
+
+- The featured card is ivory with a full-bleed 16:9.5 image. It shows the year
+  with the place in copper dark, a copper hairline, the title, the summary, and
+  "Read the full story". The whole card is tappable.
+- List rows use a fixed year column (52) or date column (64) with a wrapping
+  title and a chevron. Recent days prefix the title with its year in muted text
+  and label the current date "Today".
+- Event detail shows the image at its natural aspect, with the credit as a
+  12/1.4 caption directly below. A 52px "Sources (n)" row starts collapsed and
+  expands in place. The quiz link is a 64px ivory row.
+- Loading uses skeletons that mirror the real layout and are static under
+  reduced motion. Errors use an ivory card with an icon, a title, one line of
+  help, and "Try again". Detail errors also offer "Back to Today".
+- The notification explainer is a bottom sheet with a preview notification,
+  "Enable daily history reminder", and "Not now". Only Enable triggers the OS
+  prompt.
+
+### Motion
+
+Answer commit: 120-200 ms fill and icon crossfade, other rows dim, light
+haptic. Feedback panel: 220 ms slide and fade. Next question: 200 ms crossfade.
+Ordering neighbours slide in 180 ms, and years fade in on submit with a 40 ms
+stagger. Results strip cells reveal with a 30 ms stagger, and there are no
+count-ups. Sources expand in 180 ms. Under reduced motion, use no translation,
+scale, or stagger, only a 100 ms opacity change or none.

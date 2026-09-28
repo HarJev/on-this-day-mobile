@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<sc-if value="{{ isIdle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ tap }}" style="width:100%;height:100%;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;color:#171A1F;cursor:pointer;box-sizing:border-box;padding:16px" style-hover="border-color:#62656A;background:#FFFFFF"><span style="width:52px;height:52px;border-radius:50%;border:1px solid #D8D1C6;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:28px">{{ icon }}</span></span><span style="font:600 24px/1 'Source Serif 4',serif">{{ value }}</span></button></sc-if>
+<sc-if value="{{ isCorrect }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#EAF0F6;border:2px solid #2F5F8F;border-radius:16px;color:#171A1F;box-sizing:border-box;padding:15px"><span style="width:52px;height:52px;border-radius:50%;background:#2F5F8F;color:#FFFDF7;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:28px;font-weight:600">check</span></span><span style="font:600 24px/1 'Source Serif 4',serif">{{ value }}</span><sc-if value="{{ hasTag }}" hint-placeholder-val="{{ false }}"><span style="font:600 13px/1.3 'Public Sans',sans-serif;color:#2F5F8F;text-align:center">{{ tag }}</span></sc-if></div></sc-if>
+<sc-if value="{{ isWrong }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#F5ECE3;border:2px solid #A66A3F;border-radius:16px;color:#171A1F;box-sizing:border-box;padding:15px"><span style="width:52px;height:52px;border-radius:50%;background:#A66A3F;color:#FFFDF7;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:28px;font-weight:600">close</span></span><span style="font:600 24px/1 'Source Serif 4',serif">{{ value }}</span><sc-if value="{{ hasTag }}" hint-placeholder-val="{{ false }}"><span style="font:600 13px/1.3 'Public Sans',sans-serif;color:#7E4E2C;text-align:center">{{ tag }}</span></sc-if></div></sc-if>
+<sc-if value="{{ isDim }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:transparent;border:1px solid #E3DCD0;border-radius:16px;color:#62656A;box-sizing:border-box;padding:16px"><span style="width:52px;height:52px;border-radius:50%;border:1px solid #E3DCD0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:28px">{{ icon }}</span></span><span style="font:600 24px/1 'Source Serif 4',serif">{{ value }}</span></div></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:170,&quot;height&quot;:160},&quot;value&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;True&quot;,&quot;False&quot;],&quot;default&quot;:&quot;True&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;correct&quot;,&quot;wrong&quot;,&quot;dim&quot;],&quot;default&quot;:&quot;idle&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tag&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.props.state || 'idle';
+    return {
+      isIdle: s === 'idle', isCorrect: s === 'correct', isWrong: s === 'wrong', isDim: s === 'dim',
+      icon: this.props.value === 'False' ? 'close' : 'check',
+      hasTag: !!this.props.tag,
+      tap: () => this.props.onTap && this.props.onTap()
+    };
+  }
+}
+</script>
+</body>
+</html>

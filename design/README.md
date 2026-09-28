@@ -19,8 +19,13 @@ Quiz first, then Today and Event detail.
 | [CLAUDE_DESIGN_PROMPT.md](CLAUDE_DESIGN_PROMPT.md) | The prompt to paste into Claude Design, plus which screenshots to attach and what to do with the results |
 | [QUIZ_SOURCES_NOTE.md](QUIZ_SOURCES_NOTE.md) | Owner direction: put quiz source links behind one tappable "Sources" control instead of showing them up front |
 | [references/](references/) | Screenshots that motivated the work |
+| [claude-design/](claude-design/) | Claude Design handoffs: `phase-1/` Quiz, `phase-2/` Today and Event detail, each with a README spec, PNG screens and HTML source |
+| [claude-design/REVIEW.md](claude-design/REVIEW.md) | Review of the handoffs and the corrections that win over them |
 
 ## Process
+
+Status (2026-09-28): steps 1-4 are done. Both phases were exported, reviewed,
+and folded into DESIGN.md section 16. Step 5 is next.
 
 1. Run the prompt in Claude Design (Phase 1: quiz). Save exports to
    `design/claude-design/phase-1/`.
@@ -40,5 +45,5 @@ Quiz first, then Today and Event detail.
   previous six dates (tracker PR-03). Needs a new backend endpoint.
 - A "Test what you learned" link from Event detail into the quiz (PR-02).
 
-These may ship in the current style before the design pass and get restyled
-in it.
+All three have shipped in the current style (mobile PRs #4 and #5) and are
+restyled in the design pass.

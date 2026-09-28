@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<title>On This Day · Quiz refresh (Phase 1)</title>
+</head>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2F5F8F"/><text x="50" y="64" text-anchor="middle" font-family="Georgia,serif" font-size="40" font-weight="700" fill="#F7F3EA">Q</text></svg></template>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=block" rel="stylesheet"><style>body{margin:0;background:#E9E4DA;font-family:'Public Sans',system-ui,sans-serif;color:#171A1F}a{color:#2F5F8F}a:hover{color:#1F4468}button{font-family:inherit}@keyframes fbIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}.dv-turn{padding:40px 44px 36px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 22px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#171A1F;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 15px/1.2 'Public Sans',sans-serif;color:#171A1F}.dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#171A1F;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 12px/1.3 'Public Sans',sans-serif;color:rgba(0,0,0,.62);max-width:390px}.dv-opt:target .dv-oid{background:#2F5F8F;color:#fff}.dv-next{margin:24px 0 0;font:12px/1.5 'Public Sans',sans-serif;color:rgba(0,0,0,.55)}</style></helmet>
+
+<section class="dv-turn" id="t0" style="padding-top:48px">
+<div style="max-width:1100px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:48px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="font:600 13px 'Public Sans';color:#2F5F8F">On This Day · Visual refresh · Phase 1 of 2</div>
+<h1 style="margin:0;font:600 44px/1.1 'Source Serif 4',serif;text-wrap:pretty">The quiz, made calmer to read and more satisfying to play</h1>
+<p style="margin:0;font:400 17px/1.55 'Public Sans';color:#3A3D42;text-wrap:pretty">Same palette, same two-tab navigation, same screens. The changes are in rhythm and feedback: each question type now has its own label and answer treatment, answers sit high enough to be tapped without scrolling, the moment of answering has a clear reveal with the year or context attached, and results show the round question by question instead of a single number.</p>
+<p style="margin:0;font:400 15px/1.55 'Public Sans';color:#62656A">Start with the playable flow below, then the static boards for every screen and state. Components and motion notes are at the bottom.</p>
+</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;font:400 14px/1.5 'Public Sans';color:#171A1F">
+<div style="font:600 13px 'Public Sans';color:#A66A3F">Assumptions to confirm</div>
+<div style="display:flex;gap:10px"><span style="color:#62656A">1</span><span>Type is Source Serif 4 (titles, questions) and Public Sans (UI) as stand-ins. Swap to the app's actual families if different.</span></div>
+<div style="display:flex;gap:10px"><span style="color:#62656A">2</span><span>All questions, explanations, collection names and source titles are <strong>sample content</strong>. The portrait is cropped from the existing app screenshot.</span></div>
+<div style="display:flex;gap:10px"><span style="color:#62656A">3</span><span>Two tints were added for answer states, derived from the palette: cobalt tint #EAF0F6 and copper tint #F5ECE3, plus a darker copper #7E4E2C for small text on copper tint (contrast).</span></div>
+<div style="display:flex;gap:10px"><span style="color:#62656A">4</span><span>"Replay as practice" on the finished-Daily hub assumes replays already exist (the results screen distinguishes official vs practice).</span></div>
+</div>
+</div>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">P</a><span class="dv-tname">Playable Daily Challenge · 5 questions, one of each type</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="play">
+<div class="dv-olabel"><a class="dv-oid" href="#play">play</a>Tap through: hub → setup → play → results. Sample content.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 16px 40px rgba(0,0,0,.10);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+
+<sc-if value="{{ isHub }}" hint-placeholder-val="{{ true }}">
+<div style="height:56px;flex:none;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #D8D1C6;font:600 22px 'Source Serif 4',serif">On This Day</div>
+<div style="flex:1;overflow:auto;padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font:600 34px/1.1 'Source Serif 4',serif">Quiz</div><div style="font-size:15px;line-height:1.45;color:#62656A;margin-top:6px">Choose today's challenge or build a quick round.</div></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">today</span>Daily Challenge</span><sc-if value="{{ hubDone }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600"><span class="material-symbols-outlined" style="font-size:17px;color:#2F5F8F;font-variation-settings:'FILL' 1">check_circle</span>Done</span></sc-if><sc-if value="{{ hubFresh }}" hint-placeholder-val="{{ true }}"><span style="font-size:13px;color:#62656A">Not played yet</span></sc-if></div>
+<sc-if value="{{ hubFresh }}" hint-placeholder-val="{{ true }}">
+<div style="font:600 26px/1.15 'Source Serif 4',serif">Monday, September 28</div>
+<div style="font-size:15px;line-height:1.45;color:#62656A">A timed mix of history questions, refreshed daily.</div>
+<div style="height:1px;background:#A66A3F;opacity:.55"></div>
+<button onClick="{{ goSetup }}" style="height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">Choose challenge<span class="material-symbols-outlined" style="font-size:20px">arrow_forward</span></button>
+</sc-if>
+<sc-if value="{{ hubDone }}" hint-placeholder-val="{{ false }}">
+<div style="font:600 26px/1.15 'Source Serif 4',serif">{{ score }} of 5 correct</div>
+<div style="display:flex;gap:6px"><sc-for list="{{ strip }}" as="c" hint-placeholder-count="5"><sc-if value="{{ c.right }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:40px;border-radius:8px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div></sc-if><sc-if value="{{ c.wrong }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:40px;border-radius:8px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">close</span></div></sc-if><sc-if value="{{ c.skip }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:40px;border-radius:8px;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#62656A"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">remove</span></div></sc-if></sc-for></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:14px"><span class="material-symbols-outlined" style="font-size:18px;color:#62656A">event_upcoming</span>Next challenge tomorrow, September 29.</div>
+<button onClick="{{ goSetup }}" style="height:48px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 15px 'Public Sans';cursor:pointer">Replay as practice</button>
+</sc-if>
+</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">tune</span>Quick Play</span>
+<div style="font-size:15px;line-height:1.45;color:#62656A">Choose Mixed or one of 9 curated collections.</div>
+<button style="height:48px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 15px 'Public Sans';cursor:pointer">Choose a round</button>
+</div>
+</div>
+<div style="flex:none;background:#FFFDF7;border-top:1px solid #D8D1C6;display:flex;padding:0 0 26px"><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#62656A"><span class="material-symbols-outlined" style="font-size:24px">menu_book</span><span style="font-size:12px;font-weight:500">Today</span></div><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#2F5F8F"><span style="width:56px;height:28px;border-radius:14px;background:#EAF0F6;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1">quiz</span></span><span style="font-size:12px;font-weight:600">Quiz</span></div></div>
+</sc-if>
+
+<sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><button onClick="{{ goHub }}" aria-label="Back" style="width:48px;height:48px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></button><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Daily Challenge</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:13px;font-weight:600;color:#2F5F8F">Monday, September 28</div>
+<div style="font:600 30px/1.15 'Source Serif 4',serif">Today's challenge</div>
+<div style="font-size:15px;line-height:1.45;color:#62656A">A timed mix of history questions, refreshed daily.</div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Length</div>
+<div style="display:flex;gap:10px"><sc-for list="{{ lens }}" as="l" hint-placeholder-count="3"><sc-if value="{{ l.sel }}" hint-placeholder-val="{{ false }}"><button onClick="{{ l.pick }}" style="flex:1;height:88px;border-radius:14px;background:#EAF0F6;border:2px solid #2F5F8F;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#171A1F"><span class="material-symbols-outlined" style="position:absolute;top:6px;right:6px;font-size:18px;color:#2F5F8F;font-variation-settings:'FILL' 1">check_circle</span><span style="font:600 30px/1 'Source Serif 4',serif">{{ l.n }}</span><span style="font-size:13px;color:#2F5F8F;font-weight:600">questions</span></button></sc-if><sc-if value="{{ l.unsel }}" hint-placeholder-val="{{ true }}"><button onClick="{{ l.pick }}" style="flex:1;height:88px;border-radius:14px;background:#FFFDF7;border:1px solid #D8D1C6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#171A1F"><span style="font:600 30px/1 'Source Serif 4',serif">{{ l.n }}</span><span style="font-size:13px;color:#62656A">questions</span></button></sc-if></sc-for></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px;padding:14px 16px;display:flex;gap:12px;margin-top:8px"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">verified</span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Official result</span><span style="font-size:14px;line-height:1.45;color:#62656A">Your first completed run today is saved as your Daily result. Replays count as practice.</span></div></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 2px"><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">timer</span>One clock for the whole set</div>
+<div style="font-size:12px;color:#62656A">Prototype always plays 5 sample questions.</div>
+</div>
+<div style="flex:none;padding:12px 20px 34px;border-top:1px solid #EBE3D6"><button onClick="{{ start }}" style="width:100%;height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';cursor:pointer">Start challenge</button></div>
+</sc-if>
+
+<sc-if value="{{ isQ }}" hint-placeholder-val="{{ false }}">
+<dc-import name="QuizHeader" title="Daily Challenge" index="{{ qNum }}" total="5" timer-label="Total time" timer="{{ timeStr }}" on-back="{{ goHub }}" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">{{ q.icon }}</span>{{ q.tag }}</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif;text-wrap:pretty">{{ q.prompt }}</div>
+<sc-if value="{{ isMC }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:10px;margin-top:8px"><sc-for list="{{ opts }}" as="o" hint-placeholder-count="4"><dc-import name="AnswerRow" letter="{{ o.letter }}" label="{{ o.label }}" state="{{ o.state }}" tag="{{ o.tag }}" note="{{ o.note }}" on-tap="{{ o.onTap }}" hint-size="100%,56px"></dc-import></sc-for></div></sc-if>
+<sc-if value="{{ isTF }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px"><sc-for list="{{ opts }}" as="o" hint-placeholder-count="2"><dc-import name="TFTile" value="{{ o.label }}" state="{{ o.state }}" tag="{{ o.tag }}" on-tap="{{ o.onTap }}" hint-size="100%,150px"></dc-import></sc-for></div></sc-if>
+<sc-if value="{{ isImage }}" hint-placeholder-val="{{ false }}">
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:6px;padding:10px;display:flex;justify-content:center"><img src="assets/portrait-sample.png" alt="Portrait for identification" style="height:210px;display:block"></div>
+<sc-if value="{{ creditLocked }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#62656A"><span class="material-symbols-outlined" style="font-size:15px">lock</span>Image credit after answering</div></sc-if>
+<sc-if value="{{ ansCaption }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;line-height:1.4;color:#62656A;animation:fbIn 220ms cubic-bezier(.2,.7,.2,1)">Gilbert Stuart, <em>George Washington</em> · Corcoran Gallery of Art, Washington, D.C. (sample credit)</div></sc-if><sc-if value="{{ ansRow }}" hint-placeholder-val="{{ false }}"><div style="height:44px;display:flex;align-items:center;gap:8px;font-size:14px;color:#171A1F;border-bottom:1px solid #EBE3D6"><span class="material-symbols-outlined" style="font-size:18px;color:#62656A">photo_camera</span><span style="flex:1">Image credit</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div></sc-if>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ opts }}" as="o" hint-placeholder-count="4"><dc-import name="AnswerRow" letter="{{ o.letter }}" label="{{ o.label }}" state="{{ o.state }}" tag="{{ o.tag }}" on-tap="{{ o.onTap }}" hint-size="100%,64px"></dc-import></sc-for></div>
+</sc-if>
+<sc-if value="{{ isOrder }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;margin-top:6px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#62656A;padding:0 0 6px 4px"><span class="material-symbols-outlined" style="font-size:16px">north</span>Earliest</div><sc-for list="{{ orderRows }}" as="r" hint-placeholder-count="4"><dc-import name="OrderRow" pos="{{ r.pos }}" label="{{ r.label }}" year="{{ r.year }}" state="{{ r.state }}" hint="{{ r.hint }}" first="{{ r.first }}" last="{{ r.last }}" on-up="{{ r.onUp }}" on-down="{{ r.onDown }}" hint-size="100%,64px"></dc-import></sc-for><div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#62656A;padding:0 0 0 4px"><span class="material-symbols-outlined" style="font-size:16px">south</span>Latest</div></div></sc-if>
+</div>
+<sc-if value="{{ showSubmit }}" hint-placeholder-val="{{ false }}"><div style="flex:none;padding:10px 20px 34px;border-top:1px solid #EBE3D6;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;color:#62656A;text-align:center">Drag rows or use the arrows</span><button onClick="{{ submit }}" style="height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';cursor:pointer">Submit order</button></div></sc-if>
+<sc-if value="{{ showSkip }}" hint-placeholder-val="{{ false }}"><div style="flex:none;padding:6px 20px 30px;display:flex;justify-content:center"><button onClick="{{ skip }}" style="height:48px;padding:0 20px;border:0;background:none;color:#2F5F8F;font:600 15px 'Public Sans';cursor:pointer">Skip question</button></div></sc-if>
+<sc-if value="{{ ans }}" hint-placeholder-val="{{ false }}"><dc-import name="FeedbackPanel" kind="{{ fb.kind }}" extra="{{ fb.extra }}" answer-label="{{ fb.answerLabel }}" answer="{{ fb.answer }}" context="{{ fb.context }}" cta="{{ fb.cta }}" on-continue="{{ next }}" hint-size="100%,220px"></dc-import></sc-if>
+</sc-if>
+
+<sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><button onClick="{{ goHub }}" aria-label="Back" style="width:48px;height:48px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></button><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Daily Challenge</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:auto;padding:8px 20px 20px;display:flex;flex-direction:column;gap:16px">
+<div><div style="font-size:13px;color:#62656A">Monday, September 28</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><span style="font:600 64px/1 'Source Serif 4',serif">{{ score }}</span><span style="font:400 28px/1 'Source Serif 4',serif;color:#62656A">of 5</span></div><div style="font-size:16px;font-weight:600;color:#2F5F8F;margin-top:6px">{{ pct }}% correct</div></div>
+<div style="display:flex;gap:8px"><sc-for list="{{ strip }}" as="c" hint-placeholder-count="5"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><sc-if value="{{ c.right }}" hint-placeholder-val="{{ true }}"><div style="width:100%;height:48px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">check</span></div></sc-if><sc-if value="{{ c.wrong }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:48px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">close</span></div></sc-if><sc-if value="{{ c.skip }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:48px;border-radius:10px;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#62656A"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">remove</span></div></sc-if><span style="font-size:12px;color:#62656A">{{ c.n }}</span></div></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #D8D1C6;border-bottom:1px solid #D8D1C6;padding:12px 0"><div><div style="font:600 22px 'Source Serif 4',serif">{{ answeredN }}</div><div style="font-size:13px;color:#62656A">Answered</div></div><div><div style="font:600 22px 'Source Serif 4',serif">{{ score }}</div><div style="font-size:13px;color:#62656A">Correct</div></div><div><div style="font:600 22px 'Source Serif 4',serif">{{ skippedN }}</div><div style="font-size:13px;color:#62656A">Unanswered</div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">verified</span><span style="font-size:15px;font-weight:600">Official Daily result</span></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#171A1F;background:#EBE3D6;border-radius:12px;padding:12px 14px"><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">event_upcoming</span>A new Daily Challenge arrives tomorrow.</div>
+</div>
+<div style="flex:none;padding:12px 20px 30px;border-top:1px solid #EBE3D6;display:flex;flex-direction:column;gap:4px"><a href="#r3" style="height:52px;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:20px">fact_check</span>Review answers</a><button onClick="{{ goHub }}" style="height:48px;border:0;background:none;color:#2F5F8F;font:600 15px 'Public Sans';cursor:pointer">Done</button></div>
+</sc-if>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">1</a><span class="dv-tname">Quiz hub and setup</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="h1">
+<div class="dv-olabel"><a class="dv-oid" href="#h1">h1</a>Hub, fresh. The Daily reads as today's edition: date as headline, question types previewed.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:56px;flex:none;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #D8D1C6;font:600 22px 'Source Serif 4',serif">On This Day</div>
+<div style="flex:1;overflow:hidden;padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font:600 34px/1.1 'Source Serif 4',serif">Quiz</div><div style="font-size:15px;line-height:1.45;color:#62656A;margin-top:6px">Choose today's challenge or build a quick round.</div></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">today</span>Daily Challenge</span><span style="font-size:13px;color:#62656A">Not played yet</span></div>
+<div style="font:600 26px/1.15 'Source Serif 4',serif">Monday, September 28</div>
+<div style="font-size:15px;line-height:1.45;color:#62656A">A timed mix of history questions, refreshed daily.</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#F7F3EA;border:1px solid #EBE3D6;font-size:13px"><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">format_list_bulleted</span>Choice</span><span style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#F7F3EA;border:1px solid #EBE3D6;font-size:13px"><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">rule</span>True or false</span><span style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#F7F3EA;border:1px solid #EBE3D6;font-size:13px"><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">imagesmode</span>Image</span><span style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#F7F3EA;border:1px solid #EBE3D6;font-size:13px"><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">swap_vert</span>Order</span></div>
+<div style="height:1px;background:#A66A3F;opacity:.55"></div>
+<button style="height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';display:flex;align-items:center;justify-content:center;gap:8px">Choose challenge<span class="material-symbols-outlined" style="font-size:20px">arrow_forward</span></button>
+</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">tune</span>Quick Play</span>
+<div style="font-size:15px;line-height:1.45;color:#62656A">Choose Mixed or one of 9 curated collections.</div>
+<button style="height:48px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 15px 'Public Sans'">Choose a round</button>
+</div>
+</div>
+<div style="flex:none;background:#FFFDF7;border-top:1px solid #D8D1C6;display:flex;padding:0 0 26px"><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#62656A"><span class="material-symbols-outlined" style="font-size:24px">menu_book</span><span style="font-size:12px;font-weight:500">Today</span></div><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#2F5F8F"><span style="width:56px;height:28px;border-radius:14px;background:#EAF0F6;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1">quiz</span></span><span style="font-size:12px;font-weight:600">Quiz</span></div></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="h2">
+<div class="dv-olabel"><a class="dv-oid" href="#h2">h2</a>Hub, Daily done. Result strip and a quiet "tomorrow" note replace the call to action.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:56px;flex:none;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #D8D1C6;font:600 22px 'Source Serif 4',serif">On This Day</div>
+<div style="flex:1;overflow:hidden;padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font:600 34px/1.1 'Source Serif 4',serif">Quiz</div><div style="font-size:15px;line-height:1.45;color:#62656A;margin-top:6px">Choose today's challenge or build a quick round.</div></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">today</span>Daily Challenge</span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600"><span class="material-symbols-outlined" style="font-size:17px;color:#2F5F8F;font-variation-settings:'FILL' 1">check_circle</span>Done</span></div>
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 26px/1.15 'Source Serif 4',serif">3 of 5 correct</span><span style="font-size:13px;color:#62656A">Official · 01:04</span></div>
+<div style="display:flex;gap:6px"><div style="flex:1;height:40px;border-radius:8px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">close</span></div><div style="flex:1;height:40px;border-radius:8px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div><div style="flex:1;height:40px;border-radius:8px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div><div style="flex:1;height:40px;border-radius:8px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div><div style="flex:1;height:40px;border-radius:8px;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#62656A"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">remove</span></div></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:14px"><span class="material-symbols-outlined" style="font-size:18px;color:#62656A">event_upcoming</span>Next challenge tomorrow, September 29.</div>
+<div style="display:flex;gap:8px"><button style="flex:1;height:48px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 15px 'Public Sans'">Review answers</button><button style="flex:1;height:48px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 15px 'Public Sans'">Replay as practice</button></div>
+</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:18px">tune</span>Quick Play</span>
+<div style="font-size:15px;line-height:1.45;color:#62656A">Choose Mixed or one of 9 curated collections.</div>
+<button style="height:48px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 15px 'Public Sans'">Choose a round</button>
+</div>
+</div>
+<div style="flex:none;background:#FFFDF7;border-top:1px solid #D8D1C6;display:flex;padding:0 0 26px"><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#62656A"><span class="material-symbols-outlined" style="font-size:24px">menu_book</span><span style="font-size:12px;font-weight:500">Today</span></div><div style="flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#2F5F8F"><span style="width:56px;height:28px;border-radius:14px;background:#EAF0F6;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1">quiz</span></span><span style="font-size:12px;font-weight:600">Quiz</span></div></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="h3">
+<div class="dv-olabel"><a class="dv-oid" href="#h3">h3</a>Daily setup. Length as three large tiles; official status explained in one line.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><button aria-label="Back" style="width:48px;height:48px;border:0;background:none;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></button><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Daily Challenge</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:hidden;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:13px;font-weight:600;color:#2F5F8F">Monday, September 28</div>
+<div style="font:600 30px/1.15 'Source Serif 4',serif">Today's challenge</div>
+<div style="font-size:15px;line-height:1.45;color:#62656A">A timed mix of history questions, refreshed daily.</div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Length</div>
+<div style="display:flex;gap:10px"><div style="flex:1;height:88px;border-radius:14px;background:#FFFDF7;border:1px solid #D8D1C6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font:600 30px/1 'Source Serif 4',serif">5</span><span style="font-size:13px;color:#62656A">questions</span></div><div style="flex:1;height:88px;border-radius:14px;background:#EAF0F6;border:2px solid #2F5F8F;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span class="material-symbols-outlined" style="position:absolute;top:6px;right:6px;font-size:18px;color:#2F5F8F;font-variation-settings:'FILL' 1">check_circle</span><span style="font:600 30px/1 'Source Serif 4',serif">10</span><span style="font-size:13px;color:#2F5F8F;font-weight:600">questions</span></div><div style="flex:1;height:88px;border-radius:14px;background:#FFFDF7;border:1px solid #D8D1C6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font:600 30px/1 'Source Serif 4',serif">20</span><span style="font-size:13px;color:#62656A">questions</span></div></div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Question types in today's set</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;font-size:14px"><span style="display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="font-size:19px;color:#A66A3F">format_list_bulleted</span>Multiple choice</span><span style="display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="font-size:19px;color:#A66A3F">rule</span>True or false</span><span style="display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="font-size:19px;color:#A66A3F">imagesmode</span>Identify the image</span><span style="display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="font-size:19px;color:#A66A3F">swap_vert</span>Put in order</span></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px;padding:14px 16px;display:flex;gap:12px;margin-top:14px"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">verified</span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Official result</span><span style="font-size:14px;line-height:1.45;color:#62656A">Your first completed run today is saved as your Daily result. Replays count as practice.</span></div></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 2px"><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">timer</span>One clock for the whole set</div>
+</div>
+<div style="flex:none;padding:12px 20px 34px;border-top:1px solid #EBE3D6"><button style="width:100%;height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans'">Start challenge</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="h4">
+<div class="dv-olabel"><a class="dv-oid" href="#h4">h4</a>Quick Play setup. Collection as one tappable row; timer as a labelled switch (On/Off text, not colour alone).</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><button aria-label="Back" style="width:48px;height:48px;border:0;background:none;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></button><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Quick Play</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:hidden;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="font:600 30px/1.15 'Source Serif 4',serif">Build a round</div>
+<div style="font-size:15px;line-height:1.45;color:#62656A">Practice at your own pace. Results here don't affect your Daily.</div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Collection</div>
+<div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px"><span class="material-symbols-outlined" style="font-size:22px;color:#A66A3F">collections_bookmark</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:16px;font-weight:600">Mixed</span><span style="font-size:13px;color:#62656A">Questions from all 9 collections</span></div><span style="font-size:14px;font-weight:600;color:#2F5F8F">Change</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">chevron_right</span></div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Questions</div>
+<div style="display:flex;gap:10px"><div style="flex:1;height:64px;border-radius:14px;background:#FFFDF7;border:1px solid #D8D1C6;display:flex;align-items:center;justify-content:center;font:600 24px 'Source Serif 4',serif">5</div><div style="flex:1;height:64px;border-radius:14px;background:#EAF0F6;border:2px solid #2F5F8F;display:flex;align-items:center;justify-content:center;gap:6px;font:600 24px 'Source Serif 4',serif"><span class="material-symbols-outlined" style="font-size:18px;color:#2F5F8F;font-variation-settings:'FILL' 1">check_circle</span>10</div><div style="flex:1;height:64px;border-radius:14px;background:#FFFDF7;border:1px solid #D8D1C6;display:flex;align-items:center;justify-content:center;font:600 24px 'Source Serif 4',serif">20</div></div>
+<div style="font-size:13px;font-weight:600;color:#62656A;margin-top:12px">Timer</div>
+<div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px"><span class="material-symbols-outlined" style="font-size:22px;color:#A66A3F">timer</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:16px;font-weight:600">Timed questions</span><span style="font-size:13px;color:#62656A">Each question has its own clock</span></div><span style="font-size:14px;font-weight:600;color:#2F5F8F">On</span><div style="width:52px;height:32px;border-radius:16px;background:#2F5F8F;position:relative;flex:none"><div style="position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:50%;background:#FFFDF7;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:16px;font-weight:700">check</span></div></div></div>
+</div>
+<div style="flex:none;padding:12px 20px 34px;border-top:1px solid #EBE3D6"><button style="width:100%;height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans'">Start round</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="h5">
+<div class="dv-olabel"><a class="dv-oid" href="#h5">h5</a>Collection picker sheet. Sample collection names.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></span><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Quick Play</div><div style="width:48px"></div></div>
+<div style="padding:8px 20px;font:600 30px/1.15 'Source Serif 4',serif">Build a round</div>
+<div style="position:absolute;inset:0;background:rgba(23,26,31,.38)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:680px;background:#FFFDF7;border-radius:20px 20px 0 0;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:center;padding:8px 0 0"><div style="width:36px;height:5px;border-radius:3px;background:#D8D1C6"></div></div>
+<div style="display:flex;align-items:center;padding:6px 8px 8px 20px"><span style="flex:1;font:600 22px 'Source Serif 4',serif">Choose a collection</span><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">close</span></span></div>
+<div style="display:flex;flex-direction:column;padding:0 20px">
+<div style="min-height:60px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">radio_button_checked</span><div style="flex:1;display:flex;flex-direction:column"><span style="font-size:16px;font-weight:600">Mixed</span><span style="font-size:13px;color:#62656A">All collections</span></div><span style="font-size:13px;font-weight:600;color:#2F5F8F">Selected</span></div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Ancient world</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Medieval Europe</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Age of exploration</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Revolutions</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Science and invention</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>The world wars</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>The space age</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #EBE3D6;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Art and culture</div>
+<div style="min-height:52px;display:flex;align-items:center;gap:14px;font-size:16px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">radio_button_unchecked</span>Everyday life</div>
+</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">2</a><span class="dv-tname">Gameplay · one treatment per question type</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="g1">
+<div class="dv-olabel"><a class="dv-oid" href="#g1">g1</a>Multiple choice · Daily · total time. Lettered rows; hint that a tap locks in.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="3" total="10" timer-label="Total time" timer="01:32" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">format_list_bulleted</span>Multiple choice</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif;text-wrap:pretty">Which battle in 1485 brought Henry Tudor to the English throne?</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#62656A"><span class="material-symbols-outlined" style="font-size:16px">touch_app</span>Tap an answer to lock it in</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+<dc-import name="AnswerRow" letter="A" label="Battle of Towton" state="idle" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="B" label="Battle of Bosworth Field" state="idle" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="C" label="Battle of Tewkesbury" state="idle" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="D" label="Battle of Barnet" state="idle" hint-size="100%,56px"></dc-import>
+</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="g2">
+<div class="dv-olabel"><a class="dv-oid" href="#g2">g2</a>True or false · timed Quick Play · question time. Two large tiles.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Quick Play" index="4" total="10" timer-label="Question time" timer="00:18" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">rule</span>True or false</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif;text-wrap:pretty">NASA's DART spacecraft deliberately struck an asteroid in 2022.</div>
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#62656A"><span class="material-symbols-outlined" style="font-size:16px">touch_app</span>Tap to lock in</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+<dc-import name="TFTile" value="True" state="idle" hint-size="100%,150px"></dc-import>
+<dc-import name="TFTile" value="False" state="idle" hint-size="100%,150px"></dc-import>
+</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="g3">
+<div class="dv-olabel"><a class="dv-oid" href="#g3">g3</a>Identify the image · untimed Quick Play. Matted image, 2×2 answers, credit locked.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Quick Play" index="5" total="10" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">imagesmode</span>Identify the image</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif">Who is shown in this portrait?</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:6px;padding:10px;display:flex;justify-content:center"><img src="assets/portrait-sample.png" alt="Portrait for identification" style="height:250px;display:block"></div>
+<sc-if value="{{ creditHint }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#62656A"><span class="material-symbols-outlined" style="font-size:15px">lock</span>Image credit after answering</div></sc-if>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<dc-import name="AnswerRow" letter="A" label="Thomas Jefferson" state="idle" hint-size="100%,64px"></dc-import>
+<dc-import name="AnswerRow" letter="B" label="Alexander Hamilton" state="idle" hint-size="100%,64px"></dc-import>
+<dc-import name="AnswerRow" letter="C" label="George Washington" state="idle" hint-size="100%,64px"></dc-import>
+<dc-import name="AnswerRow" letter="D" label="Marquis de Lafayette" state="idle" hint-size="100%,64px"></dc-import>
+</div>
+</div>
+<div style="flex:none;padding:0 20px 30px;display:flex;justify-content:center"><button style="height:48px;padding:0 20px;border:0;background:none;color:#2F5F8F;font:600 15px 'Public Sans'">Skip question</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="g4">
+<div class="dv-olabel"><a class="dv-oid" href="#g4">g4</a>Put in order · Daily. Rows hang off a timeline rail, earliest to latest; sticky Submit.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="1" total="5" timer-label="Total time" timer="01:58" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">swap_vert</span>Put in order</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif;text-wrap:pretty">Put these communication milestones in order from earliest to latest.</div>
+<div style="display:flex;flex-direction:column;margin-top:6px">
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#62656A;padding:0 0 6px 4px"><span class="material-symbols-outlined" style="font-size:16px">north</span>Earliest</div>
+<dc-import name="OrderRow" pos="1" label="Bell receives a telephone patent" state="idle" first="true" hint-size="100%,64px"></dc-import>
+<dc-import name="OrderRow" pos="2" label="CERN releases Web software into the public domain" state="idle" hint-size="100%,64px"></dc-import>
+<dc-import name="OrderRow" pos="3" label="Morse receives a telegraph patent" state="idle" hint-size="100%,64px"></dc-import>
+<dc-import name="OrderRow" pos="4" label="First ARPANET message sent" state="idle" last="true" hint-size="100%,64px"></dc-import>
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#62656A;padding:0 0 0 4px"><span class="material-symbols-outlined" style="font-size:16px">south</span>Latest</div>
+</div>
+</div>
+<div style="flex:none;padding:10px 20px 34px;border-top:1px solid #EBE3D6;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;color:#62656A;text-align:center">Drag rows or use the arrows</span><button style="height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans'">Submit order</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">3</a><span class="dv-tname">Answer feedback · Daily is compact, Quick Play adds the explanation</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="f1">
+<div class="dv-olabel"><a class="dv-oid" href="#f1">f1</a>Correct · Daily. Chosen row turns cobalt with the date attached; others step back.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="3" total="10" timer-label="Total time" timer="01:27" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:8px 20px 16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">format_list_bulleted</span>Multiple choice</div>
+<div style="font:500 23px/1.28 'Source Serif 4',serif;text-wrap:pretty">Which battle in 1485 brought Henry Tudor to the English throne?</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+<dc-import name="AnswerRow" letter="A" label="Battle of Towton" state="dim" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="B" label="Battle of Bosworth Field" state="correct" tag="Your answer" note="August 22, 1485" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="C" label="Battle of Tewkesbury" state="dim" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="D" label="Battle of Barnet" state="dim" hint-size="100%,56px"></dc-import>
+</div>
+</div>
+<dc-import name="FeedbackPanel" kind="correct" answer="Battle of Bosworth Field" context="1485" hint-size="100%,210px"></dc-import>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="f2">
+<div class="dv-olabel"><a class="dv-oid" href="#f2">f2</a>Incorrect · Quick Play. Your pick in copper, the answer in cobalt, explanation and one Sources row.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Quick Play" index="4" total="10" timer-label="Question time" timer="00:09" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:4px 20px 12px;display:flex;flex-direction:column;gap:8px">
+<div style="font:500 20px/1.28 'Source Serif 4',serif;text-wrap:pretty">Which battle in 1485 brought Henry Tudor to the English throne?</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+<dc-import name="AnswerRow" letter="B" label="Battle of Bosworth Field" state="correct" tag="Correct answer" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="C" label="Battle of Tewkesbury" state="wrong" tag="Your answer" hint-size="100%,56px"></dc-import>
+</div>
+<div style="font-size:12px;color:#62656A;padding-left:4px">2 other options hidden · scroll to see</div>
+</div>
+<dc-import name="FeedbackPanel" kind="incorrect" answer="Battle of Bosworth Field" context="August 22, 1485" explanation="Henry Tudor defeated Richard III at Bosworth Field and became Henry VII, founding the Tudor dynasty. Tewkesbury (1471) was a Yorkist victory." sources="2" hint-size="100%,340px"></dc-import>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="f3">
+<div class="dv-olabel"><a class="dv-oid" href="#f3">f3</a>Time's up · Quick Play. Neutral ink icon, no blame; correct tile marked.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Quick Play" index="7" total="10" timer-label="Question time" timer="00:00" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:4px 20px 12px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#62656A"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">rule</span>True or false</div>
+<div style="font:500 20px/1.28 'Source Serif 4',serif;text-wrap:pretty">NASA's DART spacecraft deliberately struck an asteroid in 2022.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+<dc-import name="TFTile" value="True" state="correct" tag="Correct answer" hint-size="100%,150px"></dc-import>
+<dc-import name="TFTile" value="False" state="dim" hint-size="100%,150px"></dc-import>
+</div>
+</div>
+<dc-import name="FeedbackPanel" kind="timeup" extra="No answer recorded" answer="True" context="September 26, 2022" explanation="DART hit Dimorphos, the small moon of asteroid Didymos, and shortened its orbit. It was the first test of moving an asteroid by impact." sources="2" hint-size="100%,340px"></dc-import>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="f4">
+<div class="dv-olabel"><a class="dv-oid" href="#f4">f4</a>Skipped image · Daily. Image credit unlocks as a quiet row under the image.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="5" total="5" timer-label="Total time" timer="00:41" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:4px 20px 12px;display:flex;flex-direction:column;gap:8px">
+<div style="font:500 20px/1.28 'Source Serif 4',serif">Who is shown in this portrait?</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:6px;padding:8px;display:flex;justify-content:center"><img src="assets/portrait-sample.png" alt="Portrait of George Washington" style="height:170px;display:block"></div>
+<sc-if value="{{ creditCaption }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;line-height:1.4;color:#62656A">Gilbert Stuart, <em>George Washington</em> · Corcoran Gallery of Art, Washington, D.C. (sample credit)</div></sc-if><sc-if value="{{ creditRow }}" hint-placeholder-val="{{ false }}"><div style="height:44px;display:flex;align-items:center;gap:8px;font-size:14px;border-bottom:1px solid #EBE3D6"><span class="material-symbols-outlined" style="font-size:18px;color:#62656A">photo_camera</span><span style="flex:1">Image credit</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div></sc-if>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<dc-import name="AnswerRow" letter="A" label="Thomas Jefferson" state="dim" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="B" label="Alexander Hamilton" state="dim" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="C" label="George Washington" state="correct" tag="Correct answer" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="D" label="Marquis de Lafayette" state="dim" hint-size="100%,56px"></dc-import>
+</div>
+</div>
+<dc-import name="FeedbackPanel" kind="skipped" answer="George Washington" context="portrait by Gilbert Stuart" cta="See results" hint-size="100%,210px"></dc-import>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="f5">
+<div class="dv-olabel"><a class="dv-oid" href="#f5">f5</a>Ordering submitted · Daily. Years appear on every row; each position is marked in place or where it belongs.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="1" total="5" timer-label="Total time" timer="01:40" hint-size="100%,100px"></dc-import>
+<div style="flex:1;overflow:hidden;padding:4px 20px 12px;display:flex;flex-direction:column;gap:8px">
+<div style="font:500 20px/1.28 'Source Serif 4',serif;text-wrap:pretty">Put these communication milestones in order from earliest to latest.</div>
+<div style="display:flex;flex-direction:column;margin-top:4px">
+<dc-import name="OrderRow" pos="1" label="Morse receives a telegraph patent" year="1840" state="right" first="true" hint-size="100%,72px"></dc-import>
+<dc-import name="OrderRow" pos="2" label="Bell receives a telephone patent" year="1876" state="right" hint-size="100%,72px"></dc-import>
+<dc-import name="OrderRow" pos="3" label="CERN releases Web software into the public domain" year="1993" state="wrong" hint="Belongs 4th" hint-size="100%,72px"></dc-import>
+<dc-import name="OrderRow" pos="4" label="First ARPANET message sent" year="1969" state="wrong" hint="Belongs 3rd" last="true" hint-size="100%,72px"></dc-import>
+</div>
+</div>
+<dc-import name="FeedbackPanel" kind="incorrect" extra="2 of 4 in place" answer-label="Correct order" answer="Morse, Bell, ARPANET, CERN" hint-size="100%,210px"></dc-import>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="f6">
+<div class="dv-olabel"><a class="dv-oid" href="#f6">f6</a>Sources sheet from <a class="dv-oid" href="#f2">f2</a>. Image credits use the same sheet. Sample sources.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<dc-import name="QuizHeader" title="Quick Play" index="4" total="10" timer-label="Question time" timer="00:09" hint-size="100%,100px"></dc-import>
+<div style="padding:4px 20px;font:500 20px/1.28 'Source Serif 4',serif">Which battle in 1485 brought Henry Tudor to the English throne?</div>
+<div style="position:absolute;inset:0;background:rgba(23,26,31,.38)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#FFFDF7;border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding-bottom:34px">
+<div style="display:flex;justify-content:center;padding:8px 0 0"><div style="width:36px;height:5px;border-radius:3px;background:#D8D1C6"></div></div>
+<div style="display:flex;align-items:center;padding:6px 8px 4px 20px"><span style="flex:1;font:600 22px 'Source Serif 4',serif">Sources</span><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">close</span></span></div>
+<div style="padding:0 20px 8px;font-size:14px;color:#62656A">Opens in your browser.</div>
+<div style="display:flex;flex-direction:column;padding:0 20px">
+<div style="min-height:64px;display:flex;align-items:center;gap:12px;border-top:1px solid #EBE3D6"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Encyclopaedia Britannica</span><span style="font-size:13px;color:#62656A">Battle of Bosworth Field</span></div><span class="material-symbols-outlined" style="font-size:20px;color:#2F5F8F">open_in_new</span></div>
+<div style="min-height:64px;display:flex;align-items:center;gap:12px;border-top:1px solid #EBE3D6;border-bottom:1px solid #EBE3D6"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Historic Royal Palaces</span><span style="font-size:13px;color:#62656A">Henry VII</span></div><span class="material-symbols-outlined" style="font-size:20px;color:#2F5F8F">open_in_new</span></div>
+</div>
+</div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t5">
+<div class="dv-thd"><a class="dv-tid" href="#t5">4</a><span class="dv-tname">Results and full review</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="r1">
+<div class="dv-olabel"><a class="dv-oid" href="#r1">r1</a>Daily results · official. Per-question strip, one explanation worth revisiting, tomorrow note.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></span><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Daily Challenge</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:hidden;padding:6px 20px 12px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font-size:13px;color:#62656A">Monday, September 28</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:2px"><span style="font:600 60px/1 'Source Serif 4',serif">3</span><span style="font:400 26px/1 'Source Serif 4',serif;color:#62656A">of 5</span><span style="margin-left:auto;font-size:16px;font-weight:600;color:#2F5F8F">60% correct</span></div></div>
+<div style="display:flex;gap:8px">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:48px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">close</span></div><span class="material-symbols-outlined" style="font-size:15px;color:#62656A">swap_vert</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:48px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">check</span></div><span class="material-symbols-outlined" style="font-size:15px;color:#62656A">format_list_bulleted</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:48px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">check</span></div><span class="material-symbols-outlined" style="font-size:15px;color:#62656A">rule</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:48px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">check</span></div><span class="material-symbols-outlined" style="font-size:15px;color:#62656A">format_list_bulleted</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:48px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">close</span></div><span class="material-symbols-outlined" style="font-size:15px;color:#62656A">imagesmode</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #D8D1C6;border-bottom:1px solid #D8D1C6;padding:10px 0"><div><div style="font:600 22px 'Source Serif 4',serif">5</div><div style="font-size:13px;color:#62656A">Answered</div></div><div><div style="font:600 22px 'Source Serif 4',serif">3</div><div style="font-size:13px;color:#62656A">Correct</div></div><div><div style="font:600 22px 'Source Serif 4',serif">0</div><div style="font-size:13px;color:#62656A">Unanswered</div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">verified</span><span style="flex:1;font-size:15px;font-weight:600">Official Daily result</span><span style="font-size:13px;color:#62656A">Total time 01:04</span></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px"><span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#A66A3F"><span class="material-symbols-outlined" style="font-size:17px">bookmark</span>Worth revisiting · Question 1</span><span style="font:600 17px/1.3 'Source Serif 4',serif">Communication milestones in order</span><span style="font-size:14px;line-height:1.45;color:#3A3D42">The first ARPANET message (1969) came 24 years before CERN put the Web in the public domain (1993).</span><span style="font-size:14px;font-weight:600;color:#2F5F8F">Open in review</span></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:14px;background:#EBE3D6;border-radius:12px;padding:11px 14px"><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">event_upcoming</span>A new Daily Challenge arrives tomorrow.</div>
+</div>
+<div style="flex:none;padding:10px 20px 28px;border-top:1px solid #EBE3D6;display:flex;gap:8px"><button style="flex:2;height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';display:flex;align-items:center;justify-content:center;gap:8px"><span class="material-symbols-outlined" style="font-size:20px">fact_check</span>Review answers</button><button style="flex:1;height:52px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 16px 'Public Sans'">Done</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="r2">
+<div class="dv-olabel"><a class="dv-oid" href="#r2">r2</a>Quick Play results · practice. Ten-cell strip in two rows; unanswered shown with a dash.</div>
+<div style="width:390px;height:844px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></span><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Quick Play</div><div style="width:48px"></div></div>
+<div style="flex:1;overflow:hidden;padding:6px 20px 12px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font-size:13px;color:#62656A">Mixed · Timed</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:2px"><span style="font:600 60px/1 'Source Serif 4',serif">7</span><span style="font:400 26px/1 'Source Serif 4',serif;color:#62656A">of 10</span><span style="margin-left:auto;font-size:16px;font-weight:600;color:#2F5F8F">70% correct</span></div></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">close</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#62656A"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">remove</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="height:44px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">close</span></div>
+<div style="height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+</div>
+<div style="display:flex;gap:14px;font-size:12px;color:#62656A"><span style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:15px">check</span>Correct</span><span style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:15px">close</span>Incorrect</span><span style="display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:15px">remove</span>Unanswered</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #D8D1C6;border-bottom:1px solid #D8D1C6;padding:10px 0"><div><div style="font:600 22px 'Source Serif 4',serif">9</div><div style="font-size:13px;color:#62656A">Answered</div></div><div><div style="font:600 22px 'Source Serif 4',serif">7</div><div style="font-size:13px;color:#62656A">Correct</div></div><div><div style="font:600 22px 'Source Serif 4',serif">1</div><div style="font-size:13px;color:#62656A">Unanswered</div></div></div>
+<div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">history_edu</span><span style="font-size:15px;font-weight:600">Practice round</span><span style="font-size:13px;color:#62656A">Not an official result</span></div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px"><span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#A66A3F"><span class="material-symbols-outlined" style="font-size:17px">bookmark</span>Worth revisiting · Question 4</span><span style="font:600 17px/1.3 'Source Serif 4',serif">The battle that crowned Henry VII</span><span style="font-size:14px;line-height:1.45;color:#3A3D42">Bosworth Field (1485), not Tewkesbury (1471), brought the Tudors to the throne.</span><span style="font-size:14px;font-weight:600;color:#2F5F8F">Open in review</span></div>
+</div>
+<div style="flex:none;padding:10px 20px 28px;border-top:1px solid #EBE3D6;display:flex;gap:8px"><button style="flex:2;height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans';display:flex;align-items:center;justify-content:center;gap:8px"><span class="material-symbols-outlined" style="font-size:20px">fact_check</span>Review answers</button><button style="flex:1;height:52px;border:1px solid #D8D1C6;border-radius:12px;background:transparent;color:#2F5F8F;font:600 16px 'Public Sans'">New round</button></div>
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#171A1F"></div>
+</div>
+</div>
+
+<div class="dv-opt" id="r3">
+<div class="dv-olabel"><a class="dv-oid" href="#r3">r3</a>Full review (scrolling, shown tall). One card per question; sources behind a single row that expands in place.</div>
+<div style="width:390px;background:#F7F3EA;border-radius:40px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.08);font-family:'Public Sans',sans-serif;color:#171A1F">
+<div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 34px;font:600 16px 'Public Sans'"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span class="material-symbols-outlined" style="font-size:18px">signal_cellular_alt</span><span class="material-symbols-outlined" style="font-size:18px">wifi</span><span class="material-symbols-outlined" style="font-size:24px">battery_horiz_075</span></span></div>
+<div style="height:52px;flex:none;display:flex;align-items:center;padding:0 8px"><span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px">arrow_back</span></span><div style="flex:1;text-align:center;font:600 17px 'Source Serif 4',serif">Full review</div><div style="width:48px"></div></div>
+<div style="padding:6px 20px 40px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;font-size:14px;color:#62656A"><span>Daily Challenge · September 28</span><span style="font-weight:600;color:#171A1F">3 of 5</span></div>
+
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#62656A"><span style="font-weight:600;color:#171A1F">Question 1</span><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">swap_vert</span>Put in order<span style="margin-left:auto;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:#F5ECE3;color:#7E4E2C;font-weight:600"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">close</span>Incorrect</span></div>
+<div style="font:500 19px/1.3 'Source Serif 4',serif;text-wrap:pretty">Put these communication milestones in order from earliest to latest.</div>
+<div style="font-size:12px;font-weight:600;color:#62656A">Correct order · your placement</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid #EBE3D6"><span style="font:600 16px 'Source Serif 4',serif;color:#2F5F8F">1840</span><span style="font-size:15px;line-height:1.35">Morse receives a telegraph patent</span><span style="display:flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">check</span>1st</span></div>
+<div style="display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid #EBE3D6"><span style="font:600 16px 'Source Serif 4',serif;color:#2F5F8F">1876</span><span style="font-size:15px;line-height:1.35">Bell receives a telephone patent</span><span style="display:flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">check</span>2nd</span></div>
+<div style="display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid #EBE3D6"><span style="font:600 16px 'Source Serif 4',serif;color:#2F5F8F">1969</span><span style="font-size:15px;line-height:1.35">First ARPANET message sent</span><span style="display:flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">close</span>You: 4th</span></div>
+<div style="display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid #EBE3D6;border-bottom:1px solid #EBE3D6"><span style="font:600 16px 'Source Serif 4',serif;color:#2F5F8F">1993</span><span style="font-size:15px;line-height:1.35">CERN releases Web software into the public domain</span><span style="display:flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">close</span>You: 3rd</span></div>
+</div>
+<p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">The milestones span 153 years: Morse's telegraph patent in 1840, Bell's telephone patent in 1876, the first ARPANET message in 1969 and CERN's public-domain release of the Web in 1993.</p>
+<div style="display:flex;flex-direction:column">
+<div style="height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6;font-size:15px;font-weight:500"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">menu_book</span><span style="flex:1">Sources (4)</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_less</span></div>
+<div style="display:flex;flex-direction:column;padding-left:29px">
+<div style="min-height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6"><span style="flex:1;font-size:14px;line-height:1.35">Library of Congress · Samuel F. B. Morse Papers</span><span class="material-symbols-outlined" style="font-size:18px;color:#2F5F8F">open_in_new</span></div>
+<div style="min-height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6"><span style="flex:1;font-size:14px;line-height:1.35">Library of Congress · Alexander Graham Bell Papers</span><span class="material-symbols-outlined" style="font-size:18px;color:#2F5F8F">open_in_new</span></div>
+<div style="min-height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6"><span style="flex:1;font-size:14px;line-height:1.35">Computer History Museum · Internet history</span><span class="material-symbols-outlined" style="font-size:18px;color:#2F5F8F">open_in_new</span></div>
+<div style="min-height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6"><span style="flex:1;font-size:14px;line-height:1.35">CERN · The birth of the Web</span><span class="material-symbols-outlined" style="font-size:18px;color:#2F5F8F">open_in_new</span></div>
+</div>
+</div>
+</div>
+
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#62656A"><span style="font-weight:600;color:#171A1F">Question 2</span><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">format_list_bulleted</span>Multiple choice<span style="margin-left:auto;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:#EAF0F6;color:#2F5F8F;font-weight:600"><span class="material-symbols-outlined" style="font-size:15px;font-weight:600">check</span>Correct</span></div>
+<div style="font:500 19px/1.3 'Source Serif 4',serif;text-wrap:pretty">Which battle in 1485 brought Henry Tudor to the English throne?</div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;color:#62656A">Your answer</span><span style="font-size:16px;font-weight:600">Battle of Bosworth Field <span style="font-weight:400;color:#62656A">· August 22, 1485</span></span></div>
+<p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">Henry Tudor defeated Richard III at Bosworth Field and became Henry VII, founding the Tudor dynasty.</p>
+<div style="height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6;font-size:15px;font-weight:500"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">menu_book</span><span style="flex:1">Sources (2)</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div>
+</div>
+
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#62656A"><span style="font-weight:600;color:#171A1F">Question 5</span><span class="material-symbols-outlined" style="font-size:16px;color:#A66A3F">imagesmode</span>Identify the image<span style="margin-left:auto;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:#EBE3D6;color:#171A1F;font-weight:600"><span class="material-symbols-outlined" style="font-size:15px">redo</span>Skipped</span></div>
+<div style="display:flex;gap:14px;align-items:center"><img src="assets/portrait-sample.png" alt="Portrait of George Washington" style="height:88px;border:1px solid #D8D1C6;border-radius:4px;display:block"><div style="display:flex;flex-direction:column;gap:6px"><div style="font:500 19px/1.3 'Source Serif 4',serif">Who is shown in this portrait?</div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;color:#62656A">Correct answer</span><span style="font-size:16px;font-weight:600">George Washington</span></div></div></div>
+<div style="display:flex;flex-direction:column">
+<div style="height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6;font-size:15px;font-weight:500"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">photo_camera</span><span style="flex:1">Image credit</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div>
+<div style="height:48px;display:flex;align-items:center;gap:10px;border-top:1px solid #EBE3D6;font-size:15px;font-weight:500"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">menu_book</span><span style="flex:1">Sources (1)</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t6">
+<div class="dv-thd"><a class="dv-tid" href="#t6">5</a><span class="dv-tname">Components</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:24px;max-width:1640px">
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 20px 'Source Serif 4',serif">Answer row</div>
+<div style="font-size:13px;line-height:1.5;color:#62656A">Min height 56, wraps to any length. State always carries an icon and a text tag, never colour alone. Used as a 2×2 grid for image questions.</div>
+<div style="font-size:12px;font-weight:600;color:#62656A">Idle · Pressed</div>
+<dc-import name="AnswerRow" letter="A" label="Battle of Towton" state="idle" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="A" label="Battle of Towton" state="pressed" hint-size="100%,56px"></dc-import>
+<div style="font-size:12px;font-weight:600;color:#62656A">Correct, chosen · Correct, not chosen</div>
+<dc-import name="AnswerRow" letter="B" label="Battle of Bosworth Field" state="correct" tag="Your answer" note="August 22, 1485" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="B" label="Battle of Bosworth Field" state="correct" tag="Correct answer" hint-size="100%,56px"></dc-import>
+<div style="font-size:12px;font-weight:600;color:#62656A">Incorrect, chosen · Dimmed</div>
+<dc-import name="AnswerRow" letter="C" label="Battle of Tewkesbury" state="wrong" tag="Your answer" hint-size="100%,56px"></dc-import>
+<dc-import name="AnswerRow" letter="D" label="Battle of Barnet" state="dim" hint-size="100%,56px"></dc-import>
+</div>
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 20px 'Source Serif 4',serif">Order row</div>
+<div style="font-size:13px;line-height:1.5;color:#62656A">Rows sit on a timeline rail. Drag handle plus 40×48 up/down buttons (first/last disabled). After submit, the year appears in cobalt and each node shows in place or where it belongs.</div>
+<div style="font-size:12px;font-weight:600;color:#62656A">Idle · Dragging</div>
+<div style="display:flex;flex-direction:column">
+<dc-import name="OrderRow" pos="1" label="Bell receives a telephone patent" state="idle" first="true" hint-size="100%,64px"></dc-import>
+<dc-import name="OrderRow" pos="2" label="Morse receives a telegraph patent" state="lifted" last="true" hint-size="100%,64px"></dc-import>
+</div>
+<div style="font-size:12px;font-weight:600;color:#62656A">After submit · in place · wrong position</div>
+<div style="display:flex;flex-direction:column">
+<dc-import name="OrderRow" pos="1" label="Morse receives a telegraph patent" year="1840" state="right" first="true" hint-size="100%,72px"></dc-import>
+<dc-import name="OrderRow" pos="2" label="First ARPANET message sent" year="1969" state="wrong" hint="Belongs 3rd" last="true" hint-size="100%,72px"></dc-import>
+</div>
+</div>
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;padding:22px 0;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 20px 'Source Serif 4',serif;padding:0 22px">Progress header</div>
+<div style="font-size:13px;line-height:1.5;color:#62656A;padding:0 22px">Segmented bar: done in ink, current in cobalt, upcoming in stone. Timer text always includes its label.</div>
+<div style="font-size:12px;font-weight:600;color:#62656A;padding:0 22px">Daily · total time</div>
+<dc-import name="QuizHeader" title="Daily Challenge" index="3" total="10" timer-label="Total time" timer="01:32" hint-size="100%,100px"></dc-import>
+<div style="font-size:12px;font-weight:600;color:#62656A;padding:0 22px">Timed Quick Play · question time</div>
+<dc-import name="QuizHeader" title="Quick Play" index="6" total="20" timer-label="Question time" timer="00:18" hint-size="100%,100px"></dc-import>
+<div style="font-size:12px;font-weight:600;color:#62656A;padding:0 22px">Untimed · no clock</div>
+<dc-import name="QuizHeader" title="Quick Play" index="2" total="5" hint-size="100%,100px"></dc-import>
+</div>
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 20px 'Source Serif 4',serif">True/false tile · type labels</div>
+<div style="font-size:13px;line-height:1.5;color:#62656A">Two equal tiles, full-width grid. Each question type has a copper icon and a plain label above the question.</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+<dc-import name="TFTile" value="True" state="idle" hint-size="100%,150px"></dc-import>
+<dc-import name="TFTile" value="True" state="correct" tag="Your answer" hint-size="100%,150px"></dc-import>
+<dc-import name="TFTile" value="False" state="wrong" tag="Your answer" hint-size="100%,150px"></dc-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;font-size:13px;font-weight:600;color:#62656A">
+<span style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">format_list_bulleted</span>Multiple choice</span>
+<span style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">rule</span>True or false</span>
+<span style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">imagesmode</span>Identify the image</span>
+<span style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:18px;color:#A66A3F">swap_vert</span>Put in order</span>
+</div>
+</div>
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;overflow:hidden;display:flex;flex-direction:column">
+<div style="padding:22px 22px 12px;display:flex;flex-direction:column;gap:8px"><div style="font:600 20px 'Source Serif 4',serif">Feedback panel</div><div style="font-size:13px;line-height:1.5;color:#62656A">Sticky footer that slides up on commit. Four kinds: correct, incorrect, time's up, skipped. Daily: result, answer, Continue. Quick Play adds explanation and a Sources row. Last question's button reads "See results".</div></div>
+<dc-import name="FeedbackPanel" kind="correct" answer="Battle of Bosworth Field" context="1485" hint-size="100%,210px"></dc-import>
+</div>
+
+<div style="background:#F7F3EA;border:1px solid #D8D1C6;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 20px 'Source Serif 4',serif">Sources disclosure · status lines · result cells</div>
+<div style="font-size:13px;line-height:1.5;color:#62656A">One 48pt row with a count. Expands in place in Full review; opens a sheet in Quick Play feedback. Image credit uses the same row.</div>
+<div style="background:#FFFDF7;border:1px solid #D8D1C6;border-radius:12px;padding:0 14px">
+<div style="height:48px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">menu_book</span><span style="flex:1">Sources (4)</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div>
+<div style="height:48px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;border-top:1px solid #EBE3D6"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">photo_camera</span><span style="flex:1">Image credit</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">expand_more</span></div>
+<sc-if value="{{ creditHint }}" hint-placeholder-val="{{ false }}"><div style="height:40px;display:flex;align-items:center;gap:6px;font-size:13px;color:#62656A;border-top:1px solid #EBE3D6"><span class="material-symbols-outlined" style="font-size:15px">lock</span>Image credit after answering</div></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+<div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:22px;color:#2F5F8F;font-variation-settings:'FILL' 1">verified</span><span style="font-size:15px;font-weight:600">Official Daily result</span></div>
+<div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:22px;color:#62656A">history_edu</span><span style="font-size:15px;font-weight:600">Practice round</span><span style="font-size:13px;color:#62656A">Not an official result</span></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:4px">
+<div style="width:52px;height:44px;border-radius:10px;background:#EAF0F6;border:1px solid #2F5F8F;display:flex;align-items:center;justify-content:center;color:#2F5F8F"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">check</span></div>
+<div style="width:52px;height:44px;border-radius:10px;background:#F5ECE3;border:1px solid #A66A3F;display:flex;align-items:center;justify-content:center;color:#7E4E2C"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">close</span></div>
+<div style="width:52px;height:44px;border-radius:10px;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#62656A"><span class="material-symbols-outlined" style="font-size:20px;font-weight:600">remove</span></div>
+<span style="font-size:13px;color:#62656A;align-self:center">Result cells: each opens that question in review</span>
+</div>
+</div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t7">
+<div class="dv-thd"><a class="dv-tid" href="#t7">6</a><span class="dv-tname">Motion</span></div>
+<div style="max-width:1000px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px 36px;font-size:14px;line-height:1.55">
+<div><div style="font-weight:600;margin-bottom:4px">Commit an answer</div>Tapped row fills and thickens its border in 120 ms. The badge swaps letter for check or cross with a 160 ms crossfade and a 0.9 → 1 scale, ease-out, no overshoot. Other rows fade to their dimmed state over 200 ms. Light haptic on commit.</div>
+<div><div style="font-weight:600;margin-bottom:4px">Feedback panel</div>Slides up 16 px while fading in, 220 ms, cubic-bezier(.2,.7,.2,1). Focus moves to the panel title for screen readers, which announce "Correct" / "Incorrect" plus the answer.</div>
+<div><div style="font-weight:600;margin-bottom:4px">Ordering</div>Dragged row lifts (shadow, 1% scale) and neighbours slide 180 ms. Arrow buttons animate the same swap. On submit, years fade in row by row with a 40 ms stagger, then node marks appear. Selection haptic on each swap.</div>
+<div><div style="font-weight:600;margin-bottom:4px">Between questions</div>Question and answers crossfade with a 12 px leftward shift, 200 ms. The current progress segment fills from stone to cobalt over 240 ms; the previous one settles to ink.</div>
+<div><div style="font-weight:600;margin-bottom:4px">Results</div>Strip cells reveal left to right with a 30 ms stagger. The score appears fully formed; no count-up, no confetti.</div>
+<div><div style="font-weight:600;margin-bottom:4px">Reduced motion</div>All translations and scales removed. State changes become 100 ms opacity crossfades or instant. Stagger removed. Haptics unchanged (system setting governs).</div>
+</div>
+<p class="dv-next">Try next: "approve and move to Phase 2" · "try a darker ink feedback panel" · "make the ordering rail more prominent"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showCreditHint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Image credit&quot;},&quot;creditReveal&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Caption&quot;,&quot;Disclosure row&quot;],&quot;default&quot;:&quot;Caption&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Image credit&quot;}}">
+const QS = [
+  { type: 'order', icon: 'swap_vert', tag: 'Put in order', prompt: 'Put these communication milestones in order from earliest to latest.',
+    items: [
+      { id: 'bell', label: 'Bell receives a telephone patent', year: '1876', short: 'Bell' },
+      { id: 'cern', label: 'CERN releases Web software into the public domain', year: '1993', short: 'CERN' },
+      { id: 'morse', label: 'Morse receives a telegraph patent', year: '1840', short: 'Morse' },
+      { id: 'arpa', label: 'First ARPANET message sent', year: '1969', short: 'ARPANET' }],
+    correct: ['morse', 'bell', 'arpa', 'cern'] },
+  { type: 'mc', icon: 'format_list_bulleted', tag: 'Multiple choice', prompt: 'Which battle in 1485 brought Henry Tudor to the English throne?',
+    options: ['Battle of Towton', 'Battle of Bosworth Field', 'Battle of Tewkesbury', 'Battle of Barnet'], answer: 1, context: 'August 22, 1485' },
+  { type: 'tf', icon: 'rule', tag: 'True or false', prompt: "NASA's DART spacecraft deliberately struck an asteroid in 2022.",
+    options: ['True', 'False'], answer: 0, context: 'September 26, 2022' },
+  { type: 'mc', icon: 'format_list_bulleted', tag: 'Multiple choice', prompt: 'Which country became a dominion of the British Empire in September 1907?',
+    options: ['Canada', 'New Zealand', 'Australia', 'South Africa'], answer: 1, context: 'September 26, 1907' },
+  { type: 'image', icon: 'imagesmode', tag: 'Identify the image', prompt: 'Who is shown in this portrait?',
+    options: ['Thomas Jefferson', 'Alexander Hamilton', 'George Washington', 'Marquis de Lafayette'], answer: 2, context: 'portrait by Gilbert Stuart' }
+];
+const ORD = ['1st', '2nd', '3rd', '4th'];
+
+class Component extends DCLogic {
+  state = { screen: 'hub', i: 0, picked: null, order: QS[0].items.map(x => x.id), submitted: false, results: [], time: 150, len: 5, done: false };
+  componentDidMount() {
+    this.t = setInterval(() => { const s = this.state; if (s.screen === 'q' && s.time > 0) this.setState({ time: s.time - 1 }); }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.t); }
+  answered() { return this.state.picked !== null || this.state.submitted; }
+  pick(k) {
+    if (this.answered()) return;
+    const q = QS[this.state.i];
+    const r = k === 'skip' ? 'skip' : k === q.answer ? 'right' : 'wrong';
+    this.setState(s => ({ picked: k, results: [...s.results, r] }));
+  }
+  move(idx, d) {
+    if (this.state.submitted) return;
+    const o = [...this.state.order], j = idx + d;
+    if (j < 0 || j > 3) return;
+    [o[idx], o[j]] = [o[j], o[idx]];
+    this.setState({ order: o });
+  }
+  submit() {
+    const q = QS[this.state.i];
+    const ok = this.state.order.every((id, k) => q.correct[k] === id);
+    this.setState(s => ({ submitted: true, results: [...s.results, ok ? 'right' : 'wrong'] }));
+  }
+  next() {
+    const s = this.state;
+    if (s.i < QS.length - 1) this.setState({ i: s.i + 1, picked: null, submitted: false });
+    else this.setState({ screen: 'results', done: true });
+  }
+  start() { this.setState({ screen: 'q', i: 0, picked: null, submitted: false, results: [], order: QS[0].items.map(x => x.id), time: 150 }); }
+
+  renderVals() {
+    const s = this.state, q = QS[s.i], ans = this.answered();
+    const fmt = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+    const opts = (q.options || []).map((label, k) => {
+      const isA = k === q.answer, isP = k === s.picked;
+      return {
+        letter: 'ABCD'[k], label,
+        state: !ans ? 'idle' : isA ? 'correct' : isP ? 'wrong' : 'dim',
+        tag: !ans ? '' : isA ? (isP ? 'Your answer' : 'Correct answer') : isP ? 'Your answer' : '',
+        note: ans && isA && isP ? q.context : '',
+        onTap: () => this.pick(k)
+      };
+    });
+    const orderRows = q.type === 'order' ? s.order.map((id, idx) => {
+      const it = q.items.find(x => x.id === id), ok = q.correct[idx] === id;
+      return {
+        pos: idx + 1, label: it.label, year: it.year,
+        state: !s.submitted ? 'idle' : ok ? 'right' : 'wrong',
+        hint: s.submitted && !ok ? 'Belongs ' + ORD[q.correct.indexOf(id)] : '',
+        first: idx === 0, last: idx === 3,
+        onUp: () => this.move(idx, -1), onDown: () => this.move(idx, 1)
+      };
+    }) : [];
+    let fb = {};
+    if (ans) {
+      const r = s.results[s.results.length - 1];
+      const kind = r === 'right' ? 'correct' : r === 'skip' ? 'skipped' : 'incorrect';
+      const inPlace = q.type === 'order' ? s.order.filter((id, k) => q.correct[k] === id).length : 0;
+      fb = {
+        kind,
+        extra: q.type === 'order' && kind !== 'correct' ? inPlace + ' of 4 in place' : '',
+        answerLabel: q.type === 'order' ? 'Correct order' : 'Answer',
+        answer: q.type === 'order' ? q.correct.map(id => { const it = q.items.find(x => x.id === id); return it.short + ' ' + it.year; }).join(', ') : q.options[q.answer],
+        context: q.type === 'order' ? '' : q.context,
+        cta: s.i === QS.length - 1 ? 'See results' : 'Continue'
+      };
+    }
+    const score = s.results.filter(r => r === 'right').length;
+    const strip = s.results.map((r, k) => ({ n: k + 1, right: r === 'right', wrong: r === 'wrong', skip: r === 'skip' }));
+    return {
+      isHub: s.screen === 'hub', isSetup: s.screen === 'setup', isQ: s.screen === 'q', isResults: s.screen === 'results',
+      hubDone: s.done, hubFresh: !s.done,
+      goSetup: () => this.setState({ screen: 'setup' }), goHub: () => this.setState({ screen: 'hub' }),
+      start: () => this.start(),
+      lens: [5, 10, 20].map(n => ({ n, sel: s.len === n, unsel: s.len !== n, pick: () => this.setState({ len: n }) })),
+      q, qNum: s.i + 1, timeStr: fmt(s.time), ans,
+      isMC: q.type === 'mc', isTF: q.type === 'tf', isImage: q.type === 'image', isOrder: q.type === 'order',
+      creditHint: !!this.props.showCreditHint,
+      creditLocked: q.type === 'image' && !ans && !!this.props.showCreditHint,
+      creditCaption: (this.props.creditReveal ?? 'Caption') === 'Caption',
+      creditRow: this.props.creditReveal === 'Disclosure row',
+      ansCaption: ans && (this.props.creditReveal ?? 'Caption') === 'Caption',
+      ansRow: ans && this.props.creditReveal === 'Disclosure row',
+      opts, orderRows, fb,
+      showSubmit: q.type === 'order' && !s.submitted,
+      showSkip: q.type === 'image' && !ans,
+      submit: () => this.submit(), skip: () => this.pick('skip'), next: () => this.next(),
+      score, strip, pct: Math.round(score / 5 * 100),
+      answeredN: s.results.filter(r => r !== 'skip').length, skippedN: s.results.filter(r => r === 'skip').length
+    };
+  }
+}
+</script>
+</body>
+</html>
