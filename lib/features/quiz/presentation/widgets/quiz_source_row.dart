@@ -38,24 +38,62 @@ class _QuizSourceRowState extends State<QuizSourceRow> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      TextButton(
-        onPressed: busy ? null : open,
-        child: Row(
-          children: [
-            Expanded(child: Text(widget.source.displayName)),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.open_in_new,
-              size: 18,
-              color: AppColors.archivalCobalt,
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final host = widget.source.url.host.replaceFirst(RegExp(r'^www\.'), '');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          button: true,
+          enabled: !busy,
+          label: 'Open source: ${widget.source.displayName}',
+          excludeSemantics: true,
+          child: InkWell(
+            onTap: busy ? null : open,
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 52),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: AppColors.softWarmGray),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.source.displayName,
+                          style: textTheme.titleSmall,
+                        ),
+                        if (host.isNotEmpty)
+                          Text(host, style: textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Icon(
+                    Icons.open_in_new,
+                    size: 18,
+                    color: AppColors.archivalCobalt,
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
-      ),
-      if (failed) const Text('Could not open source. Tap the source to retry.'),
-    ],
-  );
+        if (failed)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Text(
+              'Could not open source. Tap the source to retry.',
+              style: textTheme.bodySmall?.copyWith(color: AppColors.copperDark),
+            ),
+          ),
+      ],
+    );
+  }
 }

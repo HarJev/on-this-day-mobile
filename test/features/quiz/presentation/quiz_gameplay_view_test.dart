@@ -142,6 +142,13 @@ void main() {
     await tester.pump();
   }
 
+  // Quick Play sources sit behind one quiet row that opens a sheet.
+  Future<void> openSources(WidgetTester tester) async {
+    await tester.ensureVisible(find.text('Sources (1)'));
+    await tester.tap(find.text('Sources (1)'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
     'immediate incorrect choice labels selection and correct answer; locks input',
     (tester) async {
@@ -173,9 +180,9 @@ void main() {
     clock.advance(const Duration(hours: 1));
     scheduler.fire();
     await tester.pump();
-    expect(find.text('Quick Play · 1 of 5'), findsOneWidget);
+    expect(find.text('Question 1 of 5'), findsOneWidget);
     await tap(tester, 'Continue');
-    expect(find.text('Quick Play · 2 of 5'), findsOneWidget);
+    expect(find.text('Question 2 of 5'), findsOneWidget);
   });
   testWidgets(
     'Daily expiry keeps context and pending result accessible exactly once',
@@ -188,7 +195,7 @@ void main() {
       scheduler.fire();
       await tester.pump();
       expect(find.text("Time's up"), findsOneWidget);
-      expect(find.text('Daily Challenge · 1 of 5'), findsOneWidget);
+      expect(find.text('Question 1 of 5'), findsOneWidget);
       expect(find.byKey(const Key('quiz-timer')), findsNothing);
       await tester.tap(find.text('View results'));
       await tester.tap(find.text('View results'));
@@ -221,7 +228,7 @@ void main() {
     await mount(tester);
     await tap(tester, 'Option a');
     launcher.response = () async => false;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
     expect(find.textContaining('Could not open source'), findsOneWidget);
     launcher.response = () async => throw StateError('no browser');
@@ -404,7 +411,7 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       await mount(tester, type: QuizQuestionType.chronologicalOrdering);
-      expect(find.text('Question 00:45'), findsOneWidget);
+      expect(find.text('Question time 00:45'), findsOneWidget);
       expect(find.byKey(const ValueKey('d')), findsOneWidget);
       expect(find.byKey(const ValueKey('b')), findsOneWidget);
       expect(
@@ -524,8 +531,10 @@ void main() {
     await tap(tester, 'Option a');
     final pending = Completer<bool>();
     launcher.response = () => pending.future;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
     await tap(tester, 'Continue');
     pending.completeError(StateError('late browser failure'));
     await tester.pump();
@@ -534,7 +543,7 @@ void main() {
     await tap(tester, 'Option a');
     final disposed = Completer<bool>();
     launcher.response = () => disposed.future;
-    await tester.ensureVisible(find.text('Test museum'));
+    await openSources(tester);
     await tap(tester, 'Test museum');
     await tester.pumpWidget(const SizedBox());
     disposed.complete(false);

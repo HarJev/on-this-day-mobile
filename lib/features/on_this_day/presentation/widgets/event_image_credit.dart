@@ -117,10 +117,7 @@ class _CreditDetails extends StatelessWidget {
           children: [
             Semantics(
               header: true,
-              child: Text(
-                'Image credit',
-                style: textTheme.titleLarge,
-              ),
+              child: Text('Image credit', style: textTheme.titleLarge),
             ),
             const SizedBox(height: 12),
             if (attribution != null) _DetailText(attribution),
@@ -163,10 +160,7 @@ class _DetailText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
+      child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 }

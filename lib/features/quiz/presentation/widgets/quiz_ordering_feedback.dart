@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_colors.dart';
+import '../../../../core/config/app_theme.dart';
 import '../../../../core/navigation/source_launcher.dart';
 import '../../domain/question_outcome.dart';
 import '../../domain/quiz_answer.dart';
 import '../../domain/quiz_question.dart';
-import 'quiz_answer_feedback.dart';
-import 'quiz_source_row.dart';
+import 'quiz_design.dart';
+import 'quiz_ordering_question.dart';
 
 class QuizOrderingFeedback extends StatelessWidget {
   const QuizOrderingFeedback({
@@ -37,27 +38,19 @@ class QuizOrderingFeedback extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Divider(),
-        Text(
-          QuizAnswerFeedback.label(outcome, expired),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        if (submitted != null) ...[
-          const SizedBox(height: 12),
-          _OrderList(
+        const SizedBox(height: 14),
+        if (submitted != null)
+          _MarkedTimeline(
             label: 'Your submitted order',
             ids: submitted,
             question: question,
           ),
-        ],
-        if (draft != null) ...[
-          const SizedBox(height: 12),
+        if (draft != null)
           _OrderList(
             label: 'Your draft - not submitted',
             ids: draft,
             question: question,
           ),
-        ],
         const SizedBox(height: 12),
         _OrderList(
           label: 'Correct order',
@@ -66,16 +59,111 @@ class QuizOrderingFeedback extends StatelessWidget {
         ),
         if (!daily) ...[
           const SizedBox(height: 16),
-          Text(question.explanation),
-          const SizedBox(height: 8),
-          for (final source in question.sources)
-            QuizSourceRow(
-              key: ValueKey('${question.id}:${source.url}'),
-              source: source,
-              launcher: launcher,
-            ),
+          Text(
+            question.explanation,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          QuizSourcesDisclosure(sources: question.sources, launcher: launcher),
         ],
       ],
+    );
+  }
+}
+
+/// The submitted order on the timeline, each row marked in place or with
+/// the position it belongs in.
+class _MarkedTimeline extends StatelessWidget {
+  const _MarkedTimeline({
+    required this.label,
+    required this.ids,
+    required this.question,
+  });
+
+  final String label;
+  final List<String> ids;
+  final ChronologicalOrderingQuestion question;
+
+  static String ordinal(int n) => switch (n) {
+    1 => '1st',
+    2 => '2nd',
+    3 => '3rd',
+    _ => '${n}th',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      container: true,
+      label: label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            label,
+            style: AppText.tag.copyWith(
+              fontSize: 13,
+              color: AppColors.mutedGray,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < ids.length; i++)
+            Builder(
+              builder: (context) {
+                final item = question.items.firstWhere((x) => x.id == ids[i]);
+                final belongs = question.correctOrderItemIds.indexOf(ids[i]);
+                final inPlace = belongs == i;
+                final status = inPlace
+                    ? 'In place'
+                    : 'Belongs ${ordinal(belongs + 1)}';
+                return QuizTimelineRow(
+                  index: i,
+                  count: ids.length,
+                  node: QuizTimelineNode(inPlace: inPlace),
+                  child: Semantics(
+                    label: '${i + 1}. ${item.text}, $status',
+                    excludeSemantics: true,
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 56),
+                      padding: const EdgeInsets.all(13.5),
+                      decoration: BoxDecoration(
+                        color: inPlace
+                            ? AppColors.cobaltTint
+                            : AppColors.softIvory,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: inPlace
+                              ? AppColors.archivalCobalt
+                              : AppColors.mutedCopper,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            status,
+                            style: AppText.tag.copyWith(
+                              color: inPlace
+                                  ? AppColors.archivalCobalt
+                                  : AppColors.copperDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.text,
+                            style: textTheme.bodyMedium?.copyWith(height: 1.35),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }
@@ -100,17 +188,15 @@ class _OrderList extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.mutedGray,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppText.tag.copyWith(fontSize: 13, color: AppColors.mutedGray),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         for (var i = 0; i < ids.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
               '${i + 1}. ${question.items.firstWhere((item) => item.id == ids[i]).text}',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
       ],

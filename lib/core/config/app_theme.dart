@@ -168,23 +168,24 @@ abstract final class AppTheme {
         space: 1,
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          shape: buttonShape,
-          textStyle: textTheme.titleMedium,
-          disabledBackgroundColor: AppColors.softWarmGray,
-          disabledForegroundColor: AppColors.mutedGray,
-        ).copyWith(
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.disabled)) {
-              return AppColors.softWarmGray;
-            }
-            if (states.contains(WidgetState.pressed)) {
-              return AppColors.cobaltPressed;
-            }
-            return AppColors.archivalCobalt;
-          }),
-        ),
+        style:
+            FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              shape: buttonShape,
+              textStyle: textTheme.titleMedium,
+              disabledBackgroundColor: AppColors.softWarmGray,
+              disabledForegroundColor: AppColors.mutedGray,
+            ).copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.disabled)) {
+                  return AppColors.softWarmGray;
+                }
+                if (states.contains(WidgetState.pressed)) {
+                  return AppColors.cobaltPressed;
+                }
+                return AppColors.archivalCobalt;
+              }),
+            ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
