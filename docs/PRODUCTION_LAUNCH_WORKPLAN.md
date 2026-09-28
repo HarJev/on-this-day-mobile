@@ -436,6 +436,29 @@ opens Event Detail. Add restrained event/result share cards; include an image
 only when its reviewed rights permit redistribution in generated media. Neither
 feature may introduce an account requirement or block the core app.
 
+### A9. Visual Refresh From Claude Design (Mobile, P1 Before Beta)
+
+Implement DESIGN.md section 16 as one design and typography pass, following
+`design/claude-design/phase-1/` and `phase-2/` and the corrections in
+`design/claude-design/REVIEW.md`. There are no behaviour, API, or scoring
+changes. In order:
+
+1. Tokens and theme. Add the new colours to `AppColors`. Bundle Source Serif 4
+   and Public Sans. Build one `TextTheme` from the section 16 scale with zero
+   letter spacing. Set the button, switch, tab bar, and bottom sheet themes.
+   Replace the per-widget `Georgia` overrides.
+2. Quiz: the header, type identity, AnswerRow, True/False tiles, OrderRow
+   timeline, sticky FeedbackPanel, Sources row and sheet, Results strip and
+   stats, "Worth revisiting", and Full review cards.
+3. Today and Event detail: the featured card, list rows, Recent days rows,
+   image caption credit, collapsed Sources, quiz link row, skeleton loading,
+   error cards, and the notification explainer sheet.
+4. Motion per section 16, with reduced-motion fallbacks.
+
+Verify with widget tests for each state. Capture normal-phone
+screenshots of each handoff screen and compare them. Check large text and
+reduced motion. The empty-day card stays parked with the empty-day fallback.
+
 ## Suggested Execution Order
 
 Completed L1-L5 foundations remain in place; L6/L7 content work continues in
