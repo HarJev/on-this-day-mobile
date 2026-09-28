@@ -1,5 +1,15 @@
 # Claude Design Prompt: Refresh the Quiz, Then the Rest of the App
 
+## How to run it
+
+Claude Design is separate from the Claude project threads: open it on
+claude.ai, start a new design, paste the prompt below, and attach the
+screenshots listed under "Attach these". It only sees what you paste and
+attach. Ask for Phase 1 first, give feedback in the same design until you are
+happy, then ask it to continue with Phase 2. Export the screens as PNGs and
+drop them into `design/claude-design/phase-1/` and `phase-2/`; a Claude thread
+then writes the review and does the single implementation pass.
+
 Copy everything in the box below into Claude Design. Attach the screenshots
 listed under "Attach these" first. The prompt is self-contained; Claude Design
 does not need access to this repository.
@@ -34,6 +44,19 @@ KEEP (non-negotiable)
 - Accessibility: 48pt touch targets, state never shown by colour alone (use
   icon + text too), readable at large text sizes, reduced-motion respected,
   question text and answers always wrap fully (never truncate).
+
+FIX THESE KNOWN TYPE AND POLISH ISSUES EVERYWHERE
+- Body text currently uses Material's default letter spacing and reads as
+  typewritten; use normal (zero) tracking.
+- Three different serif treatments are in use (bold titles, regular quiz
+  prompts, bold review prompts). Define one hierarchy: bold serif for screen
+  and event titles, semibold serif for question prompts, same in review.
+- Back buttons mix an arrow and an iOS chevron; use one.
+- Switches render bright system green; use archival cobalt.
+- Short source rows are centred while wrapped ones are left-aligned; always
+  left-align.
+- Several screens leave the bottom half empty on tall phones; tighten the
+  vertical rhythm.
 
 PHASE 1 - THE QUIZ (the priority)
 The owner's feedback: going through the quiz feels boring. Screens are correct
@@ -91,18 +114,22 @@ panel, sources disclosure, results summary), and notes on motion. Then stop.
 PHASE 2 - THE REST OF THE APP (after Phase 1 is approved)
 Apply the same refined system to:
 1. Today: masthead with app name and date; featured event (year, title,
-   summary, optional image) as the clear editorial pick; "Also on this day"
-   list of 3-4 events; optional "Recent days" section (today plus previous six
-   dates) in the same list style.
+   summary, optional image with a quiet credit line: creator and licence, full
+   source behind a tap) as the clear editorial pick; "Also on this day" list of
+   3-4 events; a "Recent days" section showing the featured event from each of
+   the previous six dates (date, year, title), tappable into Event detail. It
+   should invite a quick look back without becoming an archive or calendar.
 2. Event detail: back, year/date, title, optional image with credit, 2-3
-   sentence description, sources (same quiet disclosure), and an optional
-   compact "Test what you learned" link into the quiz.
+   sentence description, sources (same quiet disclosure), and a compact
+   "Test what you learned" link into the quiz.
 3. Empty, loading and error states for both, and the in-app notification
    explainer ("Enable daily history reminder" / "Not now").
 Keep the featured event the strongest element on Today. Improve typography,
-spacing, image framing and the list rows; don't add new features.
+spacing, image framing and the list rows; don't add features beyond the ones
+listed here.
 
-Deliver for Phase 2: mockups for Today (with and without a featured image),
+Deliver for Phase 2: mockups for Today (with and without a featured image,
+with the Recent days section),
 Event detail (with and without image), and the empty/error/notification
 states, plus any component changes.
 ```
