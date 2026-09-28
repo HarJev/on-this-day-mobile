@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="flex:none;background:#FFFDF7;border-top:1px solid #D8D1C6;border-radius:20px 20px 0 0;box-shadow:0 -8px 24px rgba(23,26,31,.06);padding:18px 20px 30px;display:flex;flex-direction:column;gap:12px;font-family:'Public Sans',sans-serif;color:#171A1F;animation:fbIn 220ms cubic-bezier(.2,.7,.2,1)">
+<div style="display:flex;align-items:center;gap:12px">
+<sc-if value="{{ isCorrect }}" hint-placeholder-val="{{ true }}"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:#2F5F8F;color:#FFFDF7;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">check</span></span></sc-if>
+<sc-if value="{{ isIncorrect }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:36px;height:36px;border-radius:50%;border:2px solid #A66A3F;box-sizing:border-box;color:#7E4E2C;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:22px;font-weight:600">close</span></span></sc-if>
+<sc-if value="{{ isTimeup }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:36px;height:36px;border-radius:50%;border:2px solid #171A1F;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:20px">hourglass_bottom</span></span></sc-if>
+<sc-if value="{{ isSkipped }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:#EBE3D6;display:flex;align-items:center;justify-content:center;color:#171A1F"><span class="material-symbols-outlined" style="font-size:22px">redo</span></span></sc-if>
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font:600 22px/1.2 'Source Serif 4',serif">{{ title }}</span><sc-if value="{{ hasExtra }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:#62656A">{{ extra }}</span></sc-if></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:600;color:#62656A">{{ answerLabel }}</span><span style="font-size:16px;line-height:1.4;font-weight:600;text-wrap:pretty">{{ answer }}<sc-if value="{{ hasContext }}" hint-placeholder-val="{{ false }}"><span style="font-weight:400;color:#62656A"> · {{ context }}</span></sc-if></span></div>
+<sc-if value="{{ hasExplanation }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">{{ explanation }}</p></sc-if>
+<sc-if value="{{ hasSources }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openSources }}" style="height:48px;display:flex;align-items:center;gap:10px;border:0;border-top:1px solid #EBE3D6;border-bottom:1px solid #EBE3D6;background:none;padding:0;color:#171A1F;font:500 15px 'Public Sans',sans-serif;cursor:pointer;text-align:left"><span class="material-symbols-outlined" style="font-size:19px;color:#62656A">menu_book</span><span style="flex:1">Sources ({{ sources }})</span><span class="material-symbols-outlined" style="font-size:20px;color:#62656A">chevron_right</span></button></sc-if>
+<button onClick="{{ go }}" style="height:52px;border:0;border-radius:12px;background:#2F5F8F;color:#FFFDF7;font:600 16px 'Public Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer" style-hover="background:#284F78">{{ ctaLabel }}<span class="material-symbols-outlined" style="font-size:20px">arrow_forward</span></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:320},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;correct&quot;,&quot;incorrect&quot;,&quot;timeup&quot;,&quot;skipped&quot;],&quot;default&quot;:&quot;correct&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;extra&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;answerLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Answer&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;answer&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Bosworth Field&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;context&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;August 22, 1485&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;explanation&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sources&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;cta&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Continue&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onContinue&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;},&quot;onSources&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, k = p.kind || 'correct';
+    const titles = { correct: 'Correct', incorrect: 'Incorrect', timeup: "Time's up", skipped: 'Skipped' };
+    return {
+      isCorrect: k === 'correct', isIncorrect: k === 'incorrect', isTimeup: k === 'timeup', isSkipped: k === 'skipped',
+      title: p.title || titles[k],
+      hasExtra: !!p.extra, hasContext: !!p.context, hasExplanation: !!p.explanation, hasSources: !!p.sources,
+      answerLabel: p.answerLabel || 'Answer',
+      ctaLabel: p.cta || 'Continue',
+      go: () => p.onContinue && p.onContinue(),
+      openSources: () => p.onSources && p.onSources()
+    };
+  }
+}
+</script>
+</body>
+</html>
