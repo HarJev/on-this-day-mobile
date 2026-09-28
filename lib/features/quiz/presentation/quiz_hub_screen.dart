@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../application/daily_challenge_status.dart';
 import '../application/quiz_completion_coordinator.dart';
 import '../application/quiz_session_launch_request.dart';
@@ -9,6 +10,7 @@ import '../domain/quiz_result.dart';
 import '../domain/quiz_repository.dart';
 import 'daily_challenge_setup_controller.dart';
 import 'quiz_hub_controller.dart';
+import 'widgets/quiz_design.dart';
 import 'widgets/quiz_question_count_selector.dart';
 
 /// Quiz's root content inside the shared Today/Quiz shell.
@@ -183,13 +185,11 @@ class _QuizHubScreenState extends State<QuizHubScreen> {
 
 AppBar _masthead() => AppBar(
   automaticallyImplyLeading: false,
-  title: const Text(
-    'On This Day',
-    style: TextStyle(
-      fontFamily: 'Georgia',
-      fontFamilyFallback: ['Times New Roman', 'serif'],
-      fontSize: 21,
-    ),
+  toolbarHeight: 56,
+  title: const Text('On This Day', style: AppText.masthead),
+  bottom: const PreferredSize(
+    preferredSize: Size.fromHeight(1),
+    child: Divider(height: 1, color: AppColors.paleStone),
   ),
 );
 
@@ -249,23 +249,24 @@ class _HubContent extends StatelessWidget {
     DailyChallengeStatus? dailyStatus,
     Widget? dailyAction,
   ) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
     children: [
-      Text(
-        'Quiz',
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: const ['Times New Roman', 'serif'],
-        ),
+      Semantics(
+        header: true,
+        child: Text('Quiz', style: Theme.of(context).textTheme.displaySmall),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 6),
       Text(
         'Choose today\'s challenge or build a quick round.',
-        style: Theme.of(context).textTheme.bodyLarge,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: AppColors.bodySoft),
       ),
       const SizedBox(height: 20),
       _ModeSurface(
-        eyebrow: 'DAILY CHALLENGE',
+        eyebrow: 'Daily Challenge',
+        eyebrowIcon: Icons.calendar_today_outlined,
+        badge: _dailyBadge(context, dailyStatus),
         title: dailyStatus?.displayDate ?? 'Today\'s challenge',
         description: _dailyDescription(dailyStatus),
         status: _DailyStatusLine(
@@ -277,11 +278,13 @@ class _HubContent extends StatelessWidget {
             : 'Set up today\'s challenge',
         actionIcon: Icons.arrow_forward,
         onPressed: () => onOpenDaily(catalog),
+        outlinedAction: dailyStatus?.hasConfirmedOfficial == true,
         action: dailyAction,
       ),
-      const SizedBox(height: 26),
+      const SizedBox(height: 14),
       _ModeSurface(
-        eyebrow: 'QUICK PLAY',
+        eyebrow: 'Quick Play',
+        eyebrowIcon: Icons.tune,
         title: 'Practice any time',
         description: _quickDescription(catalog),
         actionLabel: 'Set up a quick round',
@@ -291,6 +294,31 @@ class _HubContent extends StatelessWidget {
       ),
     ],
   );
+
+  Widget? _dailyBadge(BuildContext context, DailyChallengeStatus? status) {
+    if (status == null) return null;
+    final done = status.hasConfirmedOfficial;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (done) ...[
+          const Icon(
+            Icons.check_circle,
+            size: 18,
+            color: AppColors.archivalCobalt,
+          ),
+          const SizedBox(width: 6),
+        ],
+        Text(
+          done ? 'Done' : 'Not played yet',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: done ? AppColors.deepInk : AppColors.mutedGray,
+            fontWeight: done ? FontWeight.w600 : null,
+          ),
+        ),
+      ],
+    );
+  }
 
   String _dailyDescription(DailyChallengeStatus? status) {
     if (status?.hasConfirmedOfficial == true) {
@@ -323,17 +351,35 @@ class _DailyStatusLine extends StatelessWidget {
             'Today\'s score: ${official.result.correct} / ${official.result.total}',
             style: Theme.of(
               context,
-            ).textTheme.titleSmall?.copyWith(color: AppColors.archivalCobalt),
+            ).textTheme.titleMedium?.copyWith(color: AppColors.archivalCobalt),
           ),
-          if (onReview != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => onReview!(official.result),
-                icon: const Icon(Icons.fact_check_outlined, size: 18),
-                label: const Text('Review answers'),
+          const SizedBox(height: 10),
+          QuizResultStrip(outcomes: official.result.outcomes),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(
+                Icons.event_repeat_outlined,
+                size: 18,
+                color: AppColors.mutedGray,
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Next challenge tomorrow.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          if (onReview != null) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => onReview!(official.result),
+              icon: const Icon(Icons.fact_check_outlined, size: 18),
+              label: const Text('Review answers'),
             ),
+          ],
         ],
       );
     }
@@ -357,17 +403,21 @@ class _DailyStatusLine extends StatelessWidget {
 class _ModeSurface extends StatelessWidget {
   const _ModeSurface({
     required this.eyebrow,
+    required this.eyebrowIcon,
     required this.title,
     required this.description,
     required this.actionLabel,
     required this.actionIcon,
     required this.onPressed,
+    this.badge,
     this.status,
     this.action,
     this.outlinedAction = false,
   });
 
   final String eyebrow;
+  final IconData eyebrowIcon;
+  final Widget? badge;
   final String title;
   final String description;
   final Widget? status;
@@ -380,49 +430,70 @@ class _ModeSurface extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Text(
-        eyebrow,
-        style: Theme.of(
-          context,
-        ).textTheme.labelLarge?.copyWith(color: AppColors.archivalCobalt),
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.softIvory,
+        border: Border.all(color: AppColors.paleStone),
+        borderRadius: BorderRadius.circular(16),
       ),
-      const SizedBox(height: 8),
-      Text(
-        title,
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: const ['Times New Roman', 'serif'],
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(description, style: Theme.of(context).textTheme.bodyLarge),
-      if (status != null) ...[const SizedBox(height: 10), status!],
-      const SizedBox(height: 14),
-      if (action != null)
-        action!
-      else if (outlinedAction)
-        OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(actionIcon),
-          label: Text(actionLabel),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(eyebrowIcon, size: 18, color: AppColors.archivalCobalt),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  eyebrow,
+                  style: AppText.eyebrow.copyWith(
+                    fontSize: 14,
+                    color: AppColors.archivalCobalt,
+                  ),
+                ),
+              ),
+              if (badge != null) ...[const SizedBox(width: 8), badge!],
+            ],
           ),
-        )
-      else
-        FilledButton.icon(
-          onPressed: onPressed,
-          icon: Icon(actionIcon),
-          label: Text(actionLabel),
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-        ),
-      const SizedBox(height: 16),
-      const Divider(color: AppColors.mutedCopper),
-    ],
-  );
+          const SizedBox(height: 10),
+          Text(title, style: textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: textTheme.bodyLarge?.copyWith(color: AppColors.bodySoft),
+          ),
+          if (status != null) ...[const SizedBox(height: 12), status!],
+          const SizedBox(height: 16),
+          if (action != null) ...[
+            const FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: 1,
+              child: Divider(color: AppColors.hairline),
+            ),
+            const SizedBox(height: 14),
+            action!,
+          ] else if (outlinedAction)
+            OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              child: Text(actionLabel),
+            )
+          else
+            FilledButton.icon(
+              onPressed: onPressed,
+              icon: Icon(actionIcon),
+              iconAlignment: IconAlignment.end,
+              label: Text(actionLabel),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 final class _DailyLaunch {
@@ -524,7 +595,6 @@ class _DailyLaunchPanel extends StatelessWidget {
     onPressed: onPressed,
     icon: const Icon(Icons.refresh),
     label: const Text('Retry'),
-    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
   );
 
   Widget _countChoice(
@@ -541,7 +611,7 @@ class _DailyLaunchPanel extends StatelessWidget {
         ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedGray),
       ),
       const SizedBox(height: 14),
-      Text('Question count', style: Theme.of(context).textTheme.titleMedium),
+      Text('Question count', style: Theme.of(context).textTheme.titleSmall),
       const SizedBox(height: 10),
       QuizQuestionCountSelector(
         selected: data.selectedQuestionCount,
@@ -561,7 +631,6 @@ class _DailyLaunchPanel extends StatelessWidget {
               ? 'Getting your challenge ready…'
               : 'Get ready for ${data.selectedQuestionCount} questions',
         ),
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       ),
     ],
   );
@@ -594,13 +663,7 @@ class _HubMessage extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: onRetry,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: const Text('Retry'),
-          ),
+          FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     ),

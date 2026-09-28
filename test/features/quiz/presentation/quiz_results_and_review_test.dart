@@ -45,9 +45,14 @@ void main() {
 
       expect(find.text('Saving result…'), findsOneWidget);
       expect(find.textContaining('Official Daily result'), findsNothing);
-      expect(find.text('1 / 5'), findsOneWidget);
-      expect(find.text('Answered: 2'), findsOneWidget);
-      expect(find.text('Unanswered: 3'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('1 correct out of 5, 20 percent'),
+        findsOneWidget,
+      );
+      expect(find.text('Answered'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('Unanswered'), findsOneWidget);
 
       store.succeed(QuizSavedClassification.official);
       await tester.pump();
@@ -118,6 +123,27 @@ void main() {
       expect(find.text('Skipped'), findsOneWidget);
       expect(find.text('Image unavailable in review.'), findsOneWidget);
       expect(find.textContaining('Alt text:'), findsNothing);
+      // Sources and image credit start collapsed and expand in place.
+      final imageCredit = find.text('Image credit');
+      await tester.ensureVisible(imageCredit);
+      await tester.pumpAndSettle();
+      await tester.tap(imageCredit);
+      await tester.pumpAndSettle();
+      final imageCard = find.ancestor(
+        of: imageCredit,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget.key is ValueKey<String> &&
+              (widget.key as ValueKey<String>).value.startsWith('review-'),
+        ),
+      );
+      final sources = find.descendant(
+        of: imageCard,
+        matching: find.text('Sources (1)'),
+      );
+      await tester.ensureVisible(sources);
+      await tester.tap(sources);
+      await tester.pumpAndSettle();
       expect(find.text('Test museum'), findsWidgets);
       await tester.scrollUntilVisible(find.text('Timed out'), 200);
       expect(find.text('Timed out'), findsOneWidget);

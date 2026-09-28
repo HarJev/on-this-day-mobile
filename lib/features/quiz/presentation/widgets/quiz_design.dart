@@ -283,3 +283,237 @@ class _QuizSourcesDisclosureState extends State<QuizSourcesDisclosure> {
     );
   }
 }
+
+/// "1st", "2nd", "3rd", "4th" for ordering placements.
+String quizOrdinal(int n) => switch (n) {
+  1 => '1st',
+  2 => '2nd',
+  3 => '3rd',
+  _ => '${n}th',
+};
+
+/// Words for a committed outcome, shared by Results and Review.
+String quizOutcomeText(QuestionOutcome outcome) => switch (outcome.kind) {
+  QuestionOutcomeKind.correct => 'Correct',
+  QuestionOutcomeKind.incorrect => 'Incorrect',
+  QuestionOutcomeKind.timedOut => 'Timed out',
+  QuestionOutcomeKind.unanswered
+      when outcome.unansweredReason == UnansweredReason.imageSkipped =>
+    'Skipped',
+  QuestionOutcomeKind.unanswered => 'Not reached',
+};
+
+QuizMark quizMarkFor(QuestionOutcomeKind kind) => switch (kind) {
+  QuestionOutcomeKind.correct => QuizMark.correct,
+  QuestionOutcomeKind.incorrect ||
+  QuestionOutcomeKind.timedOut => QuizMark.wrong,
+  QuestionOutcomeKind.unanswered => QuizMark.dim,
+};
+
+/// The small rounded pill that names an outcome in Review.
+class QuizStatusPill extends StatelessWidget {
+  const QuizStatusPill({super.key, required this.outcome});
+
+  final QuestionOutcome outcome;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, fill, color) = switch (outcome.kind) {
+      QuestionOutcomeKind.correct => (
+        Icons.check,
+        AppColors.cobaltTint,
+        AppColors.archivalCobalt,
+      ),
+      QuestionOutcomeKind.incorrect => (
+        Icons.close,
+        AppColors.copperTint,
+        AppColors.copperDark,
+      ),
+      QuestionOutcomeKind.timedOut => (
+        Icons.hourglass_bottom,
+        AppColors.copperTint,
+        AppColors.copperDark,
+      ),
+      QuestionOutcomeKind.unanswered => (
+        outcome.unansweredReason == UnansweredReason.imageSkipped
+            ? Icons.redo
+            : Icons.remove,
+        AppColors.softWarmGray,
+        AppColors.deepInk,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(child: Icon(icon, size: 15, color: color)),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              quizOutcomeText(outcome),
+              style: AppText.tag.copyWith(fontSize: 13, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One marked cell per question, five to a row, in question order.
+class QuizResultStrip extends StatelessWidget {
+  const QuizResultStrip({
+    super.key,
+    required this.outcomes,
+    this.showTypes = false,
+  });
+
+  final List<QuestionOutcome> outcomes;
+
+  /// Adds each question's type icon under its cell (short rounds only).
+  final bool showTypes;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      const gap = 8.0;
+      final width = (constraints.maxWidth - gap * 4) / 5;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [
+          for (var i = 0; i < outcomes.length; i++)
+            Semantics(
+              label: 'Question ${i + 1}: ${quizOutcomeText(outcomes[i])}',
+              excludeSemantics: true,
+              child: SizedBox(
+                width: width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _cell(outcomes[i]),
+                    if (showTypes) ...[
+                      const SizedBox(height: 6),
+                      Icon(
+                        QuizTypeLabel.of(outcomes[i].question.type).$1,
+                        applyTextScaling: false,
+                        size: 16,
+                        color: AppColors.mutedGray,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  );
+
+  Widget _cell(QuestionOutcome outcome) {
+    final mark = quizMarkFor(outcome.kind);
+    final dim = mark == QuizMark.dim;
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: dim ? AppColors.softWarmGray : mark.fill,
+        borderRadius: BorderRadius.circular(12),
+        border: dim
+            ? null
+            : Border.fromBorderSide(mark.border.copyWith(width: 1.5)),
+      ),
+      child: Icon(
+        switch (mark) {
+          QuizMark.correct => Icons.check,
+          QuizMark.wrong => Icons.close,
+          _ => Icons.remove,
+        },
+        size: 20,
+        color: dim ? AppColors.mutedGray : mark.tagColor,
+      ),
+    );
+  }
+}
+
+/// A quiet row that expands in place, used for Review's image credit.
+class QuizDisclosure extends StatefulWidget {
+  const QuizDisclosure({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  @override
+  State<QuizDisclosure> createState() => _QuizDisclosureState();
+}
+
+class _QuizDisclosureState extends State<QuizDisclosure> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            expanded: _expanded,
+            label: widget.label,
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Row(
+                  children: [
+                    Icon(widget.icon, size: 19, color: AppColors.mutedGray),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      color: AppColors.mutedGray,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
+            alignment: Alignment.topCenter,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 29, bottom: 8),
+                    child: widget.child,
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_theme.dart';
 import '../application/quiz_completion_id_generator.dart';
 import '../application/quiz_session_launch_request.dart';
 import '../domain/quiz_catalog.dart';
@@ -89,14 +90,7 @@ class _QuickPlaySetupScreenState extends State<QuickPlaySetupScreen> {
         onPressed: widget.onBack,
         icon: const Icon(Icons.arrow_back),
       ),
-      title: const Text(
-        'On This Day',
-        style: TextStyle(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: ['Times New Roman', 'serif'],
-          fontSize: 21,
-        ),
-      ),
+      title: const Text('Quick Play'),
     ),
     body: ListenableBuilder(
       listenable: _controller,
@@ -147,86 +141,156 @@ class _QuickSetupBody extends StatelessWidget {
   final VoidCallback onStart;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-    children: [
-      Text(
-        'Quick Play',
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-          fontFamily: 'Georgia',
-          fontFamilyFallback: const ['Times New Roman', 'serif'],
-        ),
-      ),
-      const SizedBox(height: 6),
-      Text(
-        'Build a short history round.',
-        style: Theme.of(context).textTheme.bodyLarge,
-      ),
-      const SizedBox(height: 20),
-      Text('Collection', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
-      OutlinedButton.icon(
-        onPressed: starting ? null : onChooseCollection,
-        style: OutlinedButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          minimumSize: const Size.fromHeight(52),
-        ),
-        icon: const Icon(Icons.collections_bookmark_outlined),
-        label: Text(data.selectedCollection?.name ?? 'Mixed'),
-      ),
-      const SizedBox(height: 20),
-      Text('Question count', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 10),
-      QuizQuestionCountSelector(
-        selected: data.selectedQuestionCount,
-        supported: data.availability.supportedQuestionCounts.toSet(),
-        onSelected: starting ? null : onCountSelected,
-      ),
-      if (!data.selectedCountIsSupported) ...[
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final label = AppText.eyebrow.copyWith(color: AppColors.mutedGray);
+    final collection = data.selectedCollection;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        Text('Build a round', style: textTheme.displaySmall),
         const SizedBox(height: 8),
         Text(
-          'Choose a supported question count for this collection.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.error,
+          'Practice at your own pace. Results here don\'t affect your Daily.',
+          style: textTheme.bodyLarge?.copyWith(color: AppColors.bodySoft),
+        ),
+        const SizedBox(height: 24),
+        Text('Collection', style: label),
+        const SizedBox(height: 8),
+        _SetupCard(
+          onTap: starting ? null : onChooseCollection,
+          semanticsLabel:
+              'Collection: ${collection?.name ?? 'Mixed'}. Change collection',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.collections_bookmark_outlined,
+                color: AppColors.mutedCopper,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      collection?.name ?? 'Mixed',
+                      style: textTheme.titleMedium,
+                    ),
+                    Text(
+                      collection == null
+                          ? 'Questions from every collection'
+                          : '${collection.availability.publishedQuestionCount} questions available',
+                      style: textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Change',
+                style: textTheme.titleSmall?.copyWith(
+                  color: AppColors.archivalCobalt,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.mutedGray),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text('Question count', style: label),
+        const SizedBox(height: 8),
+        QuizQuestionCountSelector(
+          selected: data.selectedQuestionCount,
+          supported: data.availability.supportedQuestionCounts.toSet(),
+          onSelected: starting ? null : onCountSelected,
+        ),
+        if (!data.selectedCountIsSupported) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Choose a supported question count for this collection.',
+            style: textTheme.bodySmall?.copyWith(color: AppColors.copperDark),
+          ),
+        ],
+        const SizedBox(height: 24),
+        Text('Timer', style: label),
+        const SizedBox(height: 8),
+        _SetupCard(
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(
+              Icons.timer_outlined,
+              color: AppColors.mutedCopper,
+            ),
+            title: Text('Timed questions', style: textTheme.titleMedium),
+            subtitle: Text(
+              data.timingEnabled
+                  ? 'Each question has its own countdown.'
+                  : 'Questions have no countdown.',
+              style: textTheme.bodySmall,
+            ),
+            value: data.timingEnabled,
+            onChanged: starting || data.preferenceSaving
+                ? null
+                : onTimingChanged,
+          ),
+        ),
+        if (data.preferenceError case final message?)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              message,
+              style: textTheme.bodySmall?.copyWith(color: AppColors.copperDark),
+            ),
+          ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed:
+              starting ||
+                  data.preferenceSaving ||
+                  !data.selectedCountIsSupported
+              ? null
+              : onStart,
+          child: Text(
+            starting
+                ? 'Getting your quiz ready…'
+                : 'Continue with ${data.selectedQuestionCount} questions',
           ),
         ),
       ],
-      const SizedBox(height: 16),
-      SwitchListTile.adaptive(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('Timed questions'),
-        subtitle: Text(
-          data.timingEnabled
-              ? 'Each question has its own countdown.'
-              : 'Questions have no countdown.',
-        ),
-        value: data.timingEnabled,
-        onChanged: starting || data.preferenceSaving ? null : onTimingChanged,
+    );
+  }
+}
+
+/// An ivory settings card; tappable when [onTap] is given.
+class _SetupCard extends StatelessWidget {
+  const _SetupCard({required this.child, this.onTap, this.semanticsLabel});
+  final Widget child;
+  final VoidCallback? onTap;
+  final String? semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: child,
+    );
+    return Material(
+      color: AppColors.softIvory,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.paleStone),
       ),
-      if (data.preferenceError case final message?)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            message,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.error,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null && semanticsLabel == null
+          ? content
+          : Semantics(
+              button: true,
+              label: semanticsLabel,
+              excludeSemantics: semanticsLabel != null,
+              child: InkWell(onTap: onTap, child: content),
             ),
-          ),
-        ),
-      const SizedBox(height: 20),
-      FilledButton(
-        onPressed:
-            starting || data.preferenceSaving || !data.selectedCountIsSupported
-            ? null
-            : onStart,
-        child: Text(
-          starting
-              ? 'Getting your quiz ready…'
-              : 'Continue with ${data.selectedQuestionCount} questions',
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }
 
 class _CollectionSheet extends StatelessWidget {
@@ -314,23 +378,15 @@ class _QuickMessage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(message, textAlign: TextAlign.center),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: onRetry,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: const Text('Retry'),
-          ),
+          FilledButton(onPressed: onRetry, child: const Text('Retry')),
           const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: onBack,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: const Text('Back'),
-          ),
+          OutlinedButton(onPressed: onBack, child: const Text('Back')),
         ],
       ),
     ),

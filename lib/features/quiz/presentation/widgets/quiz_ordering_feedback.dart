@@ -84,13 +84,6 @@ class _MarkedTimeline extends StatelessWidget {
   final List<String> ids;
   final ChronologicalOrderingQuestion question;
 
-  static String ordinal(int n) => switch (n) {
-    1 => '1st',
-    2 => '2nd',
-    3 => '3rd',
-    _ => '${n}th',
-  };
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -116,7 +109,7 @@ class _MarkedTimeline extends StatelessWidget {
                 final inPlace = belongs == i;
                 final status = inPlace
                     ? 'In place'
-                    : 'Belongs ${ordinal(belongs + 1)}';
+                    : 'Belongs ${quizOrdinal(belongs + 1)}';
                 return QuizTimelineRow(
                   index: i,
                   count: ids.length,
