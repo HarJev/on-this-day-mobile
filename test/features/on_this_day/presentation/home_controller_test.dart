@@ -3,8 +3,10 @@ import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event_summary.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/home_controller.dart';
 
 void main() {
@@ -34,6 +36,37 @@ void main() {
       expect(state, isA<HomeLoaded>());
       expect((state as HomeLoaded).content, same(_dailyContent));
       expect(repository.lastTimezone, 'America/Jamaica');
+    });
+
+    test('adds recent days after today loads', () async {
+      final repository = _RecentDaysRepository(recentDays: _recentDays);
+      final controller = HomeController(
+        repository: repository,
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
+      );
+
+      await controller.loadToday();
+
+      final state = controller.state as HomeLoaded;
+      expect(state.content, same(_dailyContent));
+      expect(state.recentDays, same(_recentDays));
+      expect(repository.recentTimezone, 'America/Jamaica');
+    });
+
+    test('keeps today when recent days fail to load', () async {
+      final repository = _RecentDaysRepository(
+        recentError: Exception('offline'),
+      );
+      final controller = HomeController(
+        repository: repository,
+        timezoneProvider: const _FixedTimezoneProvider('America/Jamaica'),
+      );
+
+      await controller.loadToday();
+
+      final state = controller.state as HomeLoaded;
+      expect(state.content, same(_dailyContent));
+      expect(state.recentDays, isEmpty);
     });
 
     test('notifies listeners through loading and loaded states', () async {
@@ -160,6 +193,9 @@ class _RecordingRepository implements OnThisDayRepository {
   }
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) {
     throw UnimplementedError();
   }
@@ -183,6 +219,9 @@ class _SequenceRepository implements OnThisDayRepository {
 
     return result as DailyContent;
   }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) {
@@ -209,5 +248,42 @@ class _ThrowingTimezoneProvider implements TimezoneProvider {
   @override
   Future<String> currentTimezone() async {
     throw exception;
+  }
+}
+
+const _recentDays = [
+  RecentDay(
+    daysAgo: 1,
+    displayDate: 'Aug 21',
+    featuredEvent: HistoricalEventSummary(
+      id: 'hawaii-becomes-50th-state-1959',
+      title: 'Hawaii becomes the 50th US state',
+      year: '1959',
+      historicalDate: 'August 21, 1959',
+    ),
+  ),
+];
+
+class _RecentDaysRepository implements OnThisDayRepository {
+  _RecentDaysRepository({this.recentDays = const [], this.recentError});
+
+  final List<RecentDay> recentDays;
+  final Object? recentError;
+  String? recentTimezone;
+
+  @override
+  Future<DailyContent> getTodayContent(String timezone) async => _dailyContent;
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async {
+    recentTimezone = timezone;
+    final error = recentError;
+    if (error != null) throw error;
+    return recentDays;
+  }
+
+  @override
+  Future<HistoricalEvent> getEvent(String eventId) {
+    throw UnimplementedError();
   }
 }

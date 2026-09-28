@@ -21,6 +21,7 @@ class EventDetailScreen extends StatefulWidget {
     required this.sourceLauncher,
     this.imageLoader,
     this.notificationPrompt,
+    this.onTestWhatYouLearned,
   }) : assert(eventId != '');
 
   final OnThisDayRepository repository;
@@ -31,6 +32,9 @@ class EventDetailScreen extends StatefulWidget {
   /// When provided, a notification pre-prompt may appear after the sources of
   /// a successfully loaded event.
   final NotificationPromptCoordinator? notificationPrompt;
+
+  /// When provided, the article ends with a compact link into the quiz.
+  final VoidCallback? onTestWhatYouLearned;
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -75,6 +79,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               imageLoader: widget.imageLoader,
               sourceLauncher: widget.sourceLauncher,
               notificationPrompt: widget.notificationPrompt,
+              onTestWhatYouLearned: widget.onTestWhatYouLearned,
             ),
           ),
           EventDetailUnavailable(:final message) => _DetailScaffold(
@@ -158,6 +163,7 @@ class _LoadedState extends StatefulWidget {
     required this.sourceLauncher,
     this.imageLoader,
     this.notificationPrompt,
+    this.onTestWhatYouLearned,
   });
 
   final HistoricalEvent event;
@@ -165,6 +171,7 @@ class _LoadedState extends StatefulWidget {
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
   final NotificationPromptCoordinator? notificationPrompt;
+  final VoidCallback? onTestWhatYouLearned;
 
   @override
   State<_LoadedState> createState() => _LoadedStateState();
@@ -241,9 +248,43 @@ class _LoadedStateState extends State<_LoadedState> {
             source: source,
             onTap: () => widget.onSourceSelected(source),
           ),
+        if (widget.onTestWhatYouLearned case final onTest?)
+          _TestWhatYouLearnedLink(onTap: onTest),
         if (_reachedArticleEnd && notificationPrompt != null)
           NotificationPrePrompt(coordinator: notificationPrompt),
       ],
+    );
+  }
+}
+
+class _TestWhatYouLearnedLink extends StatelessWidget {
+  const _TestWhatYouLearnedLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.archivalCobalt,
+            minimumSize: const Size(48, 48),
+            padding: EdgeInsets.zero,
+          ),
+          icon: const Icon(Icons.quiz_outlined, size: 20),
+          label: Text(
+            'Test what you learned',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.archivalCobalt,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

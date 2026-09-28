@@ -13,11 +13,14 @@ import 'package:on_this_day_mobile/core/navigation/app_router.dart';
 import 'package:on_this_day_mobile/core/navigation/app_routes.dart';
 import 'package:on_this_day_mobile/core/navigation/quiz_route_arguments.dart';
 import 'package:on_this_day_mobile/core/navigation/quiz_route_dependencies.dart';
+import 'package:on_this_day_mobile/core/navigation/root_tab_controller.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/event_source.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/quiz/application/daily_challenge_status.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_coordinator.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_id_generator.dart';
@@ -80,6 +83,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(factoryCalls, 1);
     expect(quizRepository.catalogCalls, 1);
+  });
+
+  testWidgets('Test what you learned returns to the Quiz tab', (tester) async {
+    final quizRepository = _QuizRepository();
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final router = AppRouter(
+      repository: _TodayRepository(),
+      timezoneProvider: const _Timezone(),
+      quizDependencies: () => _dependencies(quizRepository, _Store()),
+      navigatorKey: navigatorKey,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        navigatorKey: navigatorKey,
+        onGenerateRoute: router.onGenerateRoute,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Test event'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Test what you learned'), 200);
+    await tester.tap(find.text('Test what you learned'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test what you learned'), findsNothing);
+    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(bar.selectedIndex, 1);
+    expect(quizRepository.catalogCalls, 1);
+
+    await tester.tap(find.byType(NavigationDestination).at(0));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      0,
+    );
+    expect(router.rootTabs.value, RootTab.today);
   });
 
   testWidgets('representative retained-shell screenshots', (tester) async {
@@ -427,8 +468,20 @@ final class _TodayRepository implements OnThisDayRepository {
   );
 
   @override
-  Future<HistoricalEvent> getEvent(String eventId) =>
-      throw UnimplementedError();
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
+  Future<HistoricalEvent> getEvent(String eventId) async => HistoricalEvent(
+    id: eventId,
+    title: 'Test event',
+    year: '1900',
+    historicalDate: 'September 14, 1900',
+    summary: 'A short test summary.',
+    description: 'A short test description.',
+    sources: [
+      EventSource(name: 'Test source', url: Uri.parse('https://example.com')),
+    ],
+  );
 }
 
 final class _Store implements QuizResultStore {

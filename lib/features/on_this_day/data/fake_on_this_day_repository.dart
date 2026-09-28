@@ -6,6 +6,7 @@ import '../domain/historical_event.dart';
 import '../domain/historical_event_summary.dart';
 import '../domain/on_this_day_exceptions.dart';
 import '../domain/on_this_day_repository.dart';
+import '../domain/recent_day.dart';
 
 class FakeOnThisDayRepository implements OnThisDayRepository {
   FakeOnThisDayRepository();
@@ -83,7 +84,76 @@ class FakeOnThisDayRepository implements OnThisDayRepository {
     ],
   );
 
+  static const List<RecentDay> _recentDays = [
+    RecentDay(
+      daysAgo: 1,
+      displayDate: 'Aug 21',
+      featuredEvent: HistoricalEventSummary(
+        id: 'hawaii-becomes-50th-state-1959',
+        title: 'Hawaii becomes the 50th US state',
+        year: '1959',
+        historicalDate: 'August 21, 1959',
+      ),
+    ),
+    RecentDay(
+      daysAgo: 3,
+      displayDate: 'Aug 19',
+      featuredEvent: HistoricalEventSummary(
+        id: 'daguerreotype-announced-1839',
+        title: 'The daguerreotype photographic process is made public',
+        year: '1839',
+        historicalDate: 'August 19, 1839',
+      ),
+    ),
+  ];
+
   static final Map<String, HistoricalEvent> _eventsById = {
+    'hawaii-becomes-50th-state-1959': HistoricalEvent(
+      id: 'hawaii-becomes-50th-state-1959',
+      title: 'Hawaii becomes the 50th US state',
+      year: '1959',
+      historicalDate: 'August 21, 1959',
+      summary:
+          'President Eisenhower proclaimed Hawaii the fiftieth state of the '
+          'United States.',
+      description:
+          'On August 21, 1959, President Dwight D. Eisenhower signed the '
+          'proclamation admitting Hawaii as the fiftieth state. Statehood '
+          'followed a referendum in which Hawaii residents voted '
+          'overwhelmingly in favour of joining the union.',
+      sources: [
+        EventSource(
+          name: 'National Archives',
+          url: Uri.parse(
+            'https://www.archives.gov/legislative/features/hawaii',
+          ),
+        ),
+      ],
+    ),
+    'daguerreotype-announced-1839': HistoricalEvent(
+      id: 'daguerreotype-announced-1839',
+      title: 'The daguerreotype photographic process is made public',
+      year: '1839',
+      historicalDate: 'August 19, 1839',
+      summary:
+          'The French government released the daguerreotype process as a gift '
+          'to the world.',
+      description:
+          'On August 19, 1839, the details of Louis Daguerre\'s photographic '
+          'process were presented publicly in Paris. The French state had '
+          'acquired the invention and released it freely, helping photography '
+          'spread rapidly.',
+      sources: [
+        EventSource(
+          name: 'Library of Congress',
+          url: Uri.parse(
+            'https://www.loc.gov/collections/daguerreotypes/'
+            'articles-and-essays/the-daguerreian-era-and-early-american-'
+            'photography-on-paper-1839-1860/',
+          ),
+        ),
+      ],
+    ),
     'battle-of-bosworth-field-1485': HistoricalEvent(
       id: 'battle-of-bosworth-field-1485',
       title: 'Richard III is defeated at the Battle of Bosworth Field',
@@ -268,5 +338,10 @@ class FakeOnThisDayRepository implements OnThisDayRepository {
     }
 
     return event;
+  }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async {
+    return _recentDays;
   }
 }

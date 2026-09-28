@@ -4,7 +4,9 @@ import '../domain/daily_content.dart';
 import '../domain/historical_event.dart';
 import '../domain/on_this_day_exceptions.dart';
 import '../domain/on_this_day_repository.dart';
+import '../domain/recent_day.dart';
 import 'dto/event_detail_response.dart';
+import 'dto/recent_days_response.dart';
 import 'dto/today_content_response.dart';
 
 class BackendOnThisDayRepository implements OnThisDayRepository {
@@ -43,6 +45,19 @@ class BackendOnThisDayRepository implements OnThisDayRepository {
         throw EventNotFoundException(eventId);
       }
       rethrow;
+    } on FormatException catch (error) {
+      throw ApiException.invalidJson(cause: error);
+    }
+  }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async {
+    try {
+      final json = await _apiClient.getJson(
+        '/v1/days/recent',
+        queryParameters: {'timezone': timezone, 'days': '7'},
+      );
+      return RecentDaysResponse.fromJson(json).toDomain();
     } on FormatException catch (error) {
       throw ApiException.invalidJson(cause: error);
     }

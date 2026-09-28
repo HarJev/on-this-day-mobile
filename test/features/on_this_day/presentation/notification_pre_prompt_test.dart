@@ -11,6 +11,7 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/event_source.dart
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detail_screen.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/notification_pre_prompt.dart';
 
@@ -306,6 +307,9 @@ class _StaticRepository implements OnThisDayRepository {
       throw UnimplementedError();
 
   @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
   Future<HistoricalEvent> getEvent(String eventId) async => event;
 }
 
@@ -315,6 +319,9 @@ class _PendingRepository implements OnThisDayRepository {
   @override
   Future<DailyContent> getTodayContent(String timezone) =>
       throw UnimplementedError();
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) => _completer.future;
@@ -328,6 +335,9 @@ class _ThrowingRepository implements OnThisDayRepository {
   @override
   Future<DailyContent> getTodayContent(String timezone) =>
       throw UnimplementedError();
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
 
   @override
   Future<HistoricalEvent> getEvent(String eventId) async => throw error;

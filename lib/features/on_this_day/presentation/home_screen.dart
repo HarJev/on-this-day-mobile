@@ -4,12 +4,15 @@ import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/timezone_provider.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/navigation/event_detail_route_arguments.dart';
 import '../../../core/navigation/source_launcher.dart';
 import '../domain/daily_content.dart';
 import '../domain/on_this_day_repository.dart';
+import '../domain/recent_day.dart';
 import 'home_controller.dart';
 import 'widgets/additional_event_row.dart';
 import 'widgets/featured_event_card.dart';
+import 'widgets/recent_day_row.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -77,13 +80,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onShowDebugNotification: widget.onShowDebugNotification,
             body: const _LoadingState(),
           ),
-          HomeLoaded(:final content) => _HomeScaffold(
+          HomeLoaded(:final content, :final recentDays) => _HomeScaffold(
             embedded: widget.embedded,
             displayDate: content.displayDate,
             onShowDebugNotification: widget.onShowDebugNotification,
             body: _LoadedState(
               content: content,
-              onEventSelected: _openEvent,
+              recentDays: recentDays,
+              onEventSelected: _openTodayEvent,
+              onRecentEventSelected: _openEvent,
               imageLoader: widget.imageLoader,
               sourceLauncher: widget.sourceLauncher,
             ),
@@ -117,6 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onDisplayDateChanged?.call(displayDate);
     });
+  }
+
+  void _openTodayEvent(String eventId) {
+    Navigator.of(context).pushNamed(
+      AppRoutes.eventDetail(eventId),
+      arguments: const EventDetailRouteArguments(isToday: true),
+    );
   }
 
   void _openEvent(String eventId) {
@@ -216,13 +228,17 @@ class _HomeScaffold extends StatelessWidget {
 class _LoadedState extends StatelessWidget {
   const _LoadedState({
     required this.content,
+    required this.recentDays,
     required this.onEventSelected,
+    required this.onRecentEventSelected,
     required this.sourceLauncher,
     this.imageLoader,
   });
 
   final DailyContent content;
+  final List<RecentDay> recentDays;
   final ValueChanged<String> onEventSelected;
+  final ValueChanged<String> onRecentEventSelected;
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
 
@@ -241,28 +257,59 @@ class _LoadedState extends StatelessWidget {
         ),
         if (additionalEvents.isNotEmpty) ...[
           const SizedBox(height: 34),
-          Text(
-            'Also on this day',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.deepInk,
-              fontFamily: 'Georgia',
-              fontFamilyFallback: const ['Times New Roman', 'serif'],
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 9),
-          const SizedBox(
-            width: 198,
-            child: Divider(color: AppColors.mutedCopper),
-          ),
-          const SizedBox(height: 14),
+          const _SectionHeading('Also on this day'),
+          const _SectionRule(),
           for (final event in additionalEvents)
             AdditionalEventRow(
               event: event,
               onTap: () => onEventSelected(event.id),
             ),
         ],
+        if (recentDays.isNotEmpty) ...[
+          const SizedBox(height: 34),
+          const _SectionHeading('Recent days'),
+          const _SectionRule(),
+          for (final day in recentDays)
+            RecentDayRow(
+              day: day,
+              onTap: () => onRecentEventSelected(day.featuredEvent.id),
+            ),
+        ],
       ],
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      header: true,
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: AppColors.deepInk,
+          fontFamily: 'Georgia',
+          fontFamilyFallback: const ['Times New Roman', 'serif'],
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionRule extends StatelessWidget {
+  const _SectionRule();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 9, bottom: 14),
+      child: SizedBox(width: 198, child: Divider(color: AppColors.mutedCopper)),
     );
   }
 }
