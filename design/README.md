@@ -26,5 +26,19 @@ Quiz first, then Today and Event detail.
    `design/claude-design/phase-1/`.
 2. Review the exports against DESIGN.md and the sources note; record
    corrections in a `REVIEW.md` beside them.
-3. Owner approves; update DESIGN.md; implement on a `codex/` or `claude/` branch.
+3. Owner approves; update DESIGN.md.
 4. Repeat for Phase 2 (Today and Event detail).
+5. Implement both phases as one design and typography pass on a `claude/`
+   branch. That pass also closes the tracker's UX-01, UX-02, UX-03, UX-04 and
+   UX-53, so they are not done separately.
+
+## Planned features the design must cover (owner-approved 2026-09-28)
+
+- Image credits under Today and Event detail images (tracker P1-07), with the
+  full source behind one tap.
+- A "Recent days" section on Today: the featured event from each of the
+  previous six dates (tracker PR-03). Needs a new backend endpoint.
+- A "Test what you learned" link from Event detail into the quiz (PR-02).
+
+These may ship in the current style before the design pass and get restyled
+in it.
