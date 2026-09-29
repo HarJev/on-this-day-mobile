@@ -1,14 +1,14 @@
 # Quiz And Daily Events: Integration Progress
 
-Updated: 2026-09-28. Implementation and automated verification COMPLETED. Independent review/merge and native walkthrough remain NOT_STARTED.
+Updated: 2026-09-28. Implementation, automated verification and owner merge COMPLETED. Native walkthrough remains NOT_STARTED. Active next task: backend C1/C2 October 2-8 content slate.
 
 ## Current Checkpoint
 
-- Canonical mobile repository: `../on-this-day-mobile`; inspection at `7a50b00`.
+- Canonical mobile repository: `../on-this-day-mobile`; merged main at `6cd4be8` (checkpoint `f6f5d7d`).
   The Phase 1 Quiz refresh is merged, including bundled typography, Review
   cards, and collapsed Sources/Image credit disclosures.
 - Canonical backend repository: `../on-this-day-backend`; inspection at
-  `ba2f9eb`. V4 stores explicit event-question relations. Daily selection
+  `dc329ad` (checkpoint `f0ace9f`). V4 stores explicit event-question relations. Daily selection
   uses approved links for new assignments and preserves existing assignments.
 - The owner reported a successful canonical/database comparison: `inSync:
   true`, 118 events, 24 day entries, 196 question records (195 published and
@@ -51,7 +51,7 @@ Read `AGENTS.md`, `CLAUDE.md`, and the shared `../CLAUDE.md` first.
 | Mobile: Review and Results story navigation | COMPLETED | Show quiet, wrapping story links after completion using the refreshed design; push existing Event Detail and return to the same Review/Results. |
 | Mobile: Event Detail action eligibility | COMPLETED | Offer the current-day Quiz action only with explicit linked-question availability; describe the destination honestly without promising that an arbitrary story is selected in a given Daily size. |
 | Automated verification and visual inspection | COMPLETED | 503 Flutter tests, clean analyzer, 198 Java unit tests, 3 PostgreSQL integration tests; normal-phone and 200% Review captures inspected. |
-| Independent cross-review and merge | NOT_STARTED | Read both scoped branch diffs before merging; this task did not execute the Claude/Codex runner. |
+| Owner merge | COMPLETED | Both checkpoints present in canonical main; backend PR #17 and mobile PR #8. No independent runner review evidence was recorded by this task. |
 | Native connected-flow walkthrough | NOT_STARTED | Run matching backend/mobile branches and check live Daily, completed Review, Results, and back navigation. |
 
 ## Additive Contract
@@ -102,8 +102,9 @@ names in the backend contract before writing the mobile parser.
 The owner approved implementation and small backend changes. This task was
 implemented directly on dedicated `codex/quiz-event-metadata` (backend) and
 `codex/quiz-event-integration-plan` (mobile) branches; no `.ai-workflow` runner
-or independent Claude review has been executed for it. Request cross-review
-before merge. Preserve the owner-supplied untracked design exports.
+or independent Claude review was executed by this task. The owner has now
+merged both checkpoints. Do not infer independent review from merge alone.
+Preserve the owner-supplied design exports.
 
 Backend support stayed additive: no migration, content approval/import,
 selection rewrite, or deployment was needed. The larger content follow-up
@@ -118,8 +119,7 @@ entry point (L6/L7/A2). No content was approved or imported by this task.
 ## Evidence And Checkpoints
 
 - Backend checkpoint: `f0ace9f` on `codex/quiz-event-metadata`.
-- Mobile checkpoint: `codex/quiz-event-integration-plan` (see branch log for
-  commit SHA). Scope includes this note and the L7 content-plan cross-reference.
+- Mobile checkpoint: `f6f5d7d` on `codex/quiz-event-integration-plan`. Scope includes this note and the L7 content-plan cross-reference.
 - `mvn -B test`: **198 passed**. Log:
   `../on-this-day-backend/build/quiz-event-integration/maven-test.log`.
 - `mvn -B -Dtest=QuizResponseMapperTest,EventDetailHandlerTest -Dit.test=DateLinkedDailyIT verify -Pintegration`:
@@ -149,12 +149,12 @@ entry point (L6/L7/A2). No content was approved or imported by this task.
 
 ## Next Worker
 
-1. Cross-review these two implementation branches, then merge through the
-   approved workflow. Do not silently mark broad PR-01 content coverage done.
+1. Both implementation branches are merged. Retain this note as integration
+   evidence; do not silently mark broad PR-01 content coverage done.
 2. Run the native connected journey with the same updated API. An older API is
    compatible but intentionally shows no related-story affordances.
-3. Start backend `docs/CONNECTED_QUIZ_CONTENT_PLAN.md` **C1**, then propose **C2**
-   for the earliest upcoming incomplete window. Reuse suitable published
+3. Backend **C1** is complete for October 2-8; **C2** is awaiting owner slate
+   review. Active handoff: `../on-this-day-backend/docs/CONNECTED_QUIZ_CONTENT_PROGRESS.md`. Reuse suitable published
    questions before new ones; no forced hooks or automatic editorial approval.
 4. Continue C3/C4 only after slate and content review. Event promotion precedes
    question import when linked events are new. Existing Daily assignments do
