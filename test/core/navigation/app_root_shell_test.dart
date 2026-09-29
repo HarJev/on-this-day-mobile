@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:on_this_day_mobile/features/quiz/data/local/quiz_result_snapshot_codec.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -43,6 +45,95 @@ import '../../features/quiz/support/session_fakes.dart';
 import '../../support/capture_fonts.dart';
 
 void main() {
+  testWidgets(
+    'pending Results can open a related story without changing its frozen result',
+    (tester) async {
+      final dependencies = _dependencies(_QuizRepository(), _ControlledStore());
+      final navigator = await _pumpRoutedShell(tester, dependencies);
+      const codec = QuizResultSnapshotCodec();
+      final snapshot =
+          jsonDecode(codec.encode(_dailyClaim('related-results').result))
+              as Map<String, dynamic>;
+      snapshot['definition']['questions'][0]['relatedEvents'] = [
+        {'id': 'linked-story', 'title': 'Test event', 'year': '1900'},
+      ];
+      snapshot['outcomes'][0]['kind'] = 'incorrect';
+      snapshot['outcomes'][0]['answer']['optionId'] = 'b';
+      final result = codec.decode(jsonEncode(snapshot));
+      await _finishDailyAndOpenResults(
+        tester,
+        navigator,
+        dependencies,
+        QuizCompletion(result, QuizSaveIntent.claimDailyIfAbsent),
+      );
+      final disclosure = find.text('Related history');
+      await tester.ensureVisible(disclosure);
+      await tester.pumpAndSettle();
+      await tester.tap(disclosure);
+      await tester.pumpAndSettle();
+      final link = find.byKey(const ValueKey('related-event-linked-story'));
+      await tester.ensureVisible(link);
+      await tester.pumpAndSettle();
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(find.text('Test event'), findsOneWidget);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(link, findsOneWidget);
+      expect(
+        identical(
+          dependencies.completionCoordinator
+              .stateFor(result.completionId)!
+              .completion
+              .result,
+          result,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  testWidgets(
+    'production Review opens Event Detail and back retains the expanded story',
+    (tester) async {
+      final dependencies = _dependencies(_QuizRepository(), _Store());
+      final navigator = await _pumpRoutedShell(tester, dependencies);
+      const codec = QuizResultSnapshotCodec();
+      final snapshot =
+          jsonDecode(codec.encode(_dailyClaim('related-review').result))
+              as Map<String, dynamic>;
+      snapshot['definition']['questions'][0]['relatedEvents'] = [
+        {'id': 'linked-story', 'title': 'Test event', 'year': '1900'},
+      ];
+      final result = codec.decode(jsonEncode(snapshot));
+      unawaited(
+        navigator.currentState!.pushNamed(
+          AppRoutes.review,
+          arguments: ReviewRouteArguments(result),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final disclosure = find.byKey(const ValueKey('q-0:related-history'));
+      await tester.ensureVisible(disclosure);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(of: disclosure, matching: find.text('Related history')),
+      );
+      await tester.pumpAndSettle();
+      final link = find.byKey(const ValueKey('related-event-linked-story'));
+      await tester.ensureVisible(link);
+      await tester.pumpAndSettle();
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(find.text('Test event'), findsOneWidget);
+      expect(find.text("Explore today's quiz"), findsNothing);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(link, findsOneWidget);
+      expect(find.text('Full review'), findsOneWidget);
+    },
+  );
+
   testWidgets('creates and loads Quiz only after first root selection', (
     tester,
   ) async {
@@ -85,7 +176,7 @@ void main() {
     expect(quizRepository.catalogCalls, 1);
   });
 
-  testWidgets('Test what you learned returns to the Quiz tab', (tester) async {
+  testWidgets('Explore the daily quiz returns to the Quiz tab', (tester) async {
     final quizRepository = _QuizRepository();
     final navigatorKey = GlobalKey<NavigatorState>();
     final router = AppRouter(
@@ -105,11 +196,11 @@ void main() {
 
     await tester.tap(find.text('Test event'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Test what you learned'), 200);
-    await tester.tap(find.text('Test what you learned'));
+    await tester.scrollUntilVisible(find.text("Explore today's quiz"), 200);
+    await tester.tap(find.text("Explore today's quiz"));
     await tester.pumpAndSettle();
 
-    expect(find.text('Test what you learned'), findsNothing);
+    expect(find.text("Explore today's quiz"), findsNothing);
     final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(bar.selectedIndex, 1);
     expect(quizRepository.catalogCalls, 1);
@@ -459,6 +550,7 @@ final class _TodayRepository implements OnThisDayRepository {
   @override
   Future<HistoricalEvent> getEvent(String eventId) async => HistoricalEvent(
     id: eventId,
+    hasRelatedQuizQuestions: true,
     title: 'Test event',
     year: '1900',
     historicalDate: 'September 14, 1900',

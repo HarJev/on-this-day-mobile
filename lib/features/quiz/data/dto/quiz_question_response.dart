@@ -1,4 +1,5 @@
 import '../../domain/quiz_question.dart';
+import '../../domain/quiz_related_event.dart';
 import '../../domain/quiz_rules.dart';
 import 'quiz_image_response.dart';
 import 'quiz_json.dart';
@@ -22,6 +23,19 @@ final class QuizQuestionResponse {
       }),
       sources = List.unmodifiable(
         json.objects('sources').map(QuizSourceResponse.fromJson),
+      ),
+      relatedEvents = List.unmodifiable(
+        json.value.containsKey('relatedEvents')
+            ? json
+                  .objects('relatedEvents')
+                  .map(
+                    (e) => QuizRelatedEvent(
+                      id: e.string('id'),
+                      title: e.string('title'),
+                      year: e.string('year'),
+                    ),
+                  )
+            : <QuizRelatedEvent>[],
       ),
       timeLimit = quickPlay ? json.duration('timeLimitSeconds') : null {
     if (!quickPlay) json.prohibit('timeLimitSeconds');
@@ -62,6 +76,7 @@ final class QuizQuestionResponse {
   final QuizQuestionType type;
   final QuizDifficulty difficulty;
   final List<QuizSourceResponse> sources;
+  final List<QuizRelatedEvent> relatedEvents;
   final Duration? timeLimit;
   late final List<QuizOption>? options;
   late final String? correctOptionId;
@@ -78,6 +93,7 @@ final class QuizQuestionResponse {
         prompt: prompt,
         explanation: explanation,
         sources: domainSources,
+        relatedEvents: relatedEvents,
         options: options!,
         correctOptionId: correctOptionId!,
       ),
@@ -87,6 +103,7 @@ final class QuizQuestionResponse {
         prompt: prompt,
         explanation: explanation,
         sources: domainSources,
+        relatedEvents: relatedEvents,
         options: options!,
         correctOptionId: correctOptionId!,
       ),
@@ -96,6 +113,7 @@ final class QuizQuestionResponse {
         prompt: prompt,
         explanation: explanation,
         sources: domainSources,
+        relatedEvents: relatedEvents,
         options: options!,
         correctOptionId: correctOptionId!,
         image: image!.toDomain(),
@@ -106,6 +124,7 @@ final class QuizQuestionResponse {
         prompt: prompt,
         explanation: explanation,
         sources: domainSources,
+        relatedEvents: relatedEvents,
         items: items!,
         correctOrderItemIds: correctOrderItemIds!,
       ),

@@ -8,6 +8,7 @@ import '../../domain/quiz_definition.dart';
 import '../../domain/quiz_exceptions.dart';
 import '../../domain/quiz_image.dart';
 import '../../domain/quiz_question.dart';
+import '../../domain/quiz_related_event.dart';
 import '../../domain/quiz_result.dart';
 import '../../domain/quiz_rules.dart';
 import '../../domain/quiz_source.dart';
@@ -95,6 +96,10 @@ final class QuizResultSnapshotCodec {
 
   Map<String, Object?> _questionMap(QuizQuestion question) => {
     'id': question.id,
+    if (question.relatedEvents.isNotEmpty)
+      'relatedEvents': question.relatedEvents
+          .map((e) => {'id': e.id, 'title': e.title, 'year': e.year})
+          .toList(growable: false),
     'type': question.type.name,
     'difficulty': question.difficulty.name,
     'prompt': question.prompt,
@@ -273,6 +278,18 @@ final class QuizResultSnapshotCodec {
 
   QuizQuestion _questionFromMap(Map<String, Object?> map) {
     final type = _enumByName(QuizQuestionType.values, _string(map, 'type'));
+    final relatedEvents = map.containsKey('relatedEvents')
+        ? _list(map, 'relatedEvents')
+              .map((value) {
+                final e = _objectValue(value);
+                return QuizRelatedEvent(
+                  id: _string(e, 'id'),
+                  title: _string(e, 'title'),
+                  year: _string(e, 'year'),
+                );
+              })
+              .toList(growable: false)
+        : <QuizRelatedEvent>[];
     final common = (
       id: _string(map, 'id'),
       difficulty: _enumByName(
@@ -298,6 +315,7 @@ final class QuizResultSnapshotCodec {
         prompt: common.prompt,
         explanation: common.explanation,
         sources: common.sources,
+        relatedEvents: relatedEvents,
         items: _list(map, 'items')
             .map((value) {
               final item = _objectValue(value);
@@ -325,6 +343,7 @@ final class QuizResultSnapshotCodec {
           prompt: common.prompt,
           explanation: common.explanation,
           sources: common.sources,
+          relatedEvents: relatedEvents,
           options: options,
           correctOptionId: correct,
         );
@@ -335,6 +354,7 @@ final class QuizResultSnapshotCodec {
           prompt: common.prompt,
           explanation: common.explanation,
           sources: common.sources,
+          relatedEvents: relatedEvents,
           options: options,
           correctOptionId: correct,
         );
@@ -346,6 +366,7 @@ final class QuizResultSnapshotCodec {
           prompt: common.prompt,
           explanation: common.explanation,
           sources: common.sources,
+          relatedEvents: relatedEvents,
           options: options,
           correctOptionId: correct,
           image: QuizImage(

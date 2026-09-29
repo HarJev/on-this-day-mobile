@@ -266,7 +266,7 @@ a rule or code changed.
 
 ### L7. Expand The Quiz Bank And Measure Daily Variety (Backend Content/Code)
 
-Grow the reviewed bank from 96 to the documented 240, in 20-30-question packs.
+Grow the reviewed bank toward and beyond the 240-question checkpoint in reviewable 20-30-question packs; audit current totals before each batch.
 The existing target at 240 is 144 multiple choice, 36 true/false, 36 image
 identification, and 24 chronological; current counts must be rechecked before
 allocating packs. Curated events are a useful **research lead**, not an
@@ -274,9 +274,7 @@ automatic question generator. Turn only clear, interesting facts into questions
 with a directly supporting source, plausible unambiguous distractors, a short
 explanation, balanced global/era coverage, and no near-duplicate prompt.
 Chronological order needs independently verified dates; new image questions
-must go through L3's rights/asset pipeline before publication. A question may
-reference its inspiring event in an editorial ledger; add an event-question DB
-relation only if a user-facing feature actually needs it.
+must go through L3's rights/asset pipeline before publication. Use the existing curated relatedEventIds relation for reviewed links. Prioritize natural hooks from upcoming featured/additional events, reusing suitable published questions before creating new ones. Skip obscure or forced hooks; Daily should feel like discovery, not homework. Follow ../on-this-day-backend/docs/CONNECTED_QUIZ_CONTENT_PLAN.md (C1-C4). The 240 target is not a ceiling, and event coverage and linked-question coverage are separate gates.
 
 Keep the present date-seeded, globally stable Daily assignment. Add regression
 and reporting for distinct dates, fixed-date repeatability, 5/10/20 prefixes,

@@ -13,6 +13,7 @@ class HistoricalEvent {
     this.primaryImage,
     this.images = const [],
     this.dateNote,
+    this.hasRelatedQuizQuestions = false,
   }) : assert(id != ''),
        assert(title != ''),
        assert(year != ''),
@@ -31,4 +32,5 @@ class HistoricalEvent {
   final EventImage? primaryImage;
   final List<EventImage> images;
   final String? dateNote;
+  final bool hasRelatedQuizQuestions;
 }

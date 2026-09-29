@@ -10,6 +10,7 @@ import '../domain/quiz_image.dart';
 import '../domain/quiz_question.dart';
 import '../domain/quiz_result.dart';
 import 'widgets/quiz_design.dart';
+import 'widgets/quiz_related_history.dart';
 import 'widgets/quiz_review_external_link.dart';
 
 /// Pure presentation of a frozen result. It has no persistence, coordinator,
@@ -19,11 +20,13 @@ final class QuizFullReviewScreen extends StatelessWidget {
     super.key,
     required this.result,
     required this.sourceLauncher,
+    this.onOpenEvent,
     required this.onDone,
   });
 
   final QuizResult result;
   final SourceLauncher sourceLauncher;
+  final ValueChanged<String>? onOpenEvent;
   final VoidCallback onDone;
 
   @override
@@ -71,6 +74,7 @@ final class QuizFullReviewScreen extends StatelessWidget {
             number: index,
             outcome: outcome,
             sourceLauncher: sourceLauncher,
+            onOpenEvent: onOpenEvent,
           );
         },
         separatorBuilder: (_, _) => const SizedBox(height: 14),
@@ -85,11 +89,13 @@ class _ReviewQuestion extends StatelessWidget {
     required this.number,
     required this.outcome,
     required this.sourceLauncher,
+    this.onOpenEvent,
   });
 
   final int number;
   final QuestionOutcome outcome;
   final SourceLauncher sourceLauncher;
+  final ValueChanged<String>? onOpenEvent;
 
   QuizQuestion get question => outcome.question;
 
@@ -141,6 +147,12 @@ class _ReviewQuestion extends StatelessWidget {
             _AnswerReview(outcome: outcome),
             const SizedBox(height: 12),
             Text(question.explanation, style: textTheme.bodyMedium),
+            if (question.relatedEvents.isNotEmpty && onOpenEvent != null)
+              QuizRelatedHistory(
+                key: ValueKey('${question.id}:related-history'),
+                events: question.relatedEvents,
+                onOpenEvent: onOpenEvent!,
+              ),
             const SizedBox(height: 12),
             if (question case ImageIdentificationQuestion(:final image)) ...[
               Semantics(

@@ -174,6 +174,7 @@ class AppRouter {
         QuizResultsScreen(
           coordinator: quiz.completionCoordinator,
           completionId: args.completionId,
+          onOpenEvent: (id) => _navigator!.pushNamed(AppRoutes.eventDetail(id)),
           onReview: (result) => _navigator!.pushNamed(
             AppRoutes.review,
             arguments: ReviewRouteArguments(result),
@@ -190,6 +191,7 @@ class AppRouter {
       return _page(
         QuizFullReviewScreen(
           result: args.result,
+          onOpenEvent: (id) => _navigator!.pushNamed(AppRoutes.eventDetail(id)),
           sourceLauncher: quiz.sourceLauncher,
           onDone: () => _navigator?.pop(),
         ),
