@@ -296,6 +296,51 @@ void main() {
     },
   );
 
+  for (final (scale, stacked) in [(1.0, false), (2.0, true)]) {
+    testWidgets('Results stats keep whole-word labels at ${scale}x text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(402, 874);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      // Real bundled faces: the default test font is far wider than the app's.
+      await loadCaptureFonts(tester);
+      final coordinator = QuizCompletionCoordinator(_ControlledStore());
+      final completion = _dailyCompletion();
+      unawaited(_ignoreFailure(coordinator.complete(completion)));
+
+      await tester.pumpWidget(
+        _captureApp(
+          GlobalKey(),
+          QuizResultsScreen(
+            coordinator: coordinator,
+            completionId: completion.result.completionId,
+            onReview: (_) {},
+            onDone: () {},
+          ),
+          textScale: scale,
+        ),
+      );
+
+      final labels = ['Answered', 'Correct', 'Unanswered'];
+      for (final label in labels) {
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        expect(
+          paragraph.getMaxIntrinsicWidth(double.infinity),
+          lessThanOrEqualTo(paragraph.size.width + 0.5),
+          reason: '$label wraps at ${scale}x',
+        );
+      }
+      final answered = tester.getTopLeft(find.text('Answered'));
+      final unanswered = tester.getTopLeft(find.text('Unanswered'));
+      expect(unanswered.dy > answered.dy, stacked);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('representative Results and Review screenshots', (tester) async {
     const destination = String.fromEnvironment('QUIZ_RESULTS_SCREENSHOT_DIR');
     if (destination.isEmpty) return;

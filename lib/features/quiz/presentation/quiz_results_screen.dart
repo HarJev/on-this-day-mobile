@@ -271,41 +271,66 @@ class _Stats extends StatelessWidget {
   final QuizResult result;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 12),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _Count(label: 'Answered', value: result.answered),
-        ),
-        Expanded(
-          child: _Count(label: 'Correct', value: result.correct),
-        ),
-        Expanded(
-          child: _Count(label: 'Unanswered', value: result.unanswered),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final counts = [
+      _Count(label: 'Answered', value: result.answered),
+      _Count(label: 'Correct', value: result.correct),
+      _Count(label: 'Unanswered', value: result.unanswered),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            _labelsFit(context, constraints.maxWidth / counts.length)
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [for (final c in counts) Expanded(child: c)],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final c in counts)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: c,
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  /// Three columns only while every label stays on one line; large text
+  /// otherwise breaks words such as "Unanswered" mid-word.
+  bool _labelsFit(BuildContext context, double columnWidth) {
+    final painter = TextPainter(
+      text: TextSpan(text: 'Unanswered', style: _Count.labelStyle(context)),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final fits = painter.width <= columnWidth;
+    painter.dispose();
+    return fits;
+  }
 }
 
 class _Count extends StatelessWidget {
   const _Count({required this.label, required this.value});
   final String label;
   final int value;
+
+  static TextStyle? labelStyle(BuildContext context) => Theme.of(
+    context,
+  ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedGray);
+
   @override
   Widget build(BuildContext context) => MergeSemantics(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$value', style: Theme.of(context).textTheme.titleLarge),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedGray),
-        ),
+        Text(label, style: labelStyle(context)),
       ],
     ),
   );
