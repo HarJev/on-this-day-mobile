@@ -1,4 +1,5 @@
 import 'quiz_image.dart';
+import 'quiz_related_event.dart';
 import 'quiz_rules.dart';
 import 'quiz_source.dart';
 import 'quiz_validation.dart';
@@ -26,8 +27,15 @@ sealed class QuizQuestion {
     required this.prompt,
     required this.explanation,
     required List<QuizSource> sources,
-  }) : sources = List.unmodifiable(sources) {
+    List<QuizRelatedEvent> relatedEvents = const [],
+  }) : relatedEvents = List.unmodifiable(relatedEvents),
+       sources = List.unmodifiable(sources) {
     requireId(id);
+    requireQuiz(
+      this.relatedEvents.map((e) => e.id).toSet().length ==
+          this.relatedEvents.length,
+      'Duplicate related event IDs',
+    );
     requireText(prompt);
     requireText(explanation);
     requireQuiz(
@@ -39,6 +47,7 @@ sealed class QuizQuestion {
   final String id, prompt, explanation;
   final QuizDifficulty difficulty;
   final List<QuizSource> sources;
+  final List<QuizRelatedEvent> relatedEvents;
   QuizQuestionType get type;
 }
 
@@ -49,6 +58,7 @@ sealed class ChoiceQuestion extends QuizQuestion {
     required super.prompt,
     required super.explanation,
     required super.sources,
+    super.relatedEvents,
     required List<QuizOption> options,
     required this.correctOptionId,
     required int optionCount,
@@ -74,6 +84,7 @@ final class MultipleChoiceQuestion extends ChoiceQuestion {
     required super.prompt,
     required super.explanation,
     required super.sources,
+    super.relatedEvents,
     required super.options,
     required super.correctOptionId,
   }) : super(optionCount: 4);
@@ -88,6 +99,7 @@ final class TrueFalseQuestion extends ChoiceQuestion {
     required super.prompt,
     required super.explanation,
     required super.sources,
+    super.relatedEvents,
     required super.options,
     required super.correctOptionId,
   }) : super(optionCount: 2) {
@@ -110,6 +122,7 @@ final class ImageIdentificationQuestion extends ChoiceQuestion {
     required super.prompt,
     required super.explanation,
     required super.sources,
+    super.relatedEvents,
     required super.options,
     required super.correctOptionId,
     required this.image,
@@ -126,6 +139,7 @@ final class ChronologicalOrderingQuestion extends QuizQuestion {
     required super.prompt,
     required super.explanation,
     required super.sources,
+    super.relatedEvents,
     required List<QuizOrderingItem> items,
     required List<String> correctOrderItemIds,
   }) : items = List.unmodifiable(items),

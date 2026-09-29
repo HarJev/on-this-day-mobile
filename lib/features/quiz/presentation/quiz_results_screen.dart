@@ -7,6 +7,7 @@ import '../domain/question_outcome.dart';
 import '../domain/quiz_definition.dart';
 import '../domain/quiz_result.dart';
 import 'widgets/quiz_design.dart';
+import 'widgets/quiz_related_history.dart';
 
 /// Observes a completion that was already registered by gameplay. It never
 /// starts a save itself: Results only renders coordinator-owned state or retries
@@ -17,12 +18,14 @@ final class QuizResultsScreen extends StatelessWidget {
     required this.coordinator,
     required this.completionId,
     required this.onReview,
+    this.onOpenEvent,
     required this.onDone,
   });
 
   final QuizCompletionCoordinator coordinator;
   final String completionId;
   final ValueChanged<QuizResult> onReview;
+  final ValueChanged<String>? onOpenEvent;
   final VoidCallback onDone;
 
   @override
@@ -36,6 +39,7 @@ final class QuizResultsScreen extends StatelessWidget {
         coordinator: coordinator,
         state: state,
         onReview: onReview,
+        onOpenEvent: onOpenEvent,
         onDone: onDone,
       );
     },
@@ -83,12 +87,14 @@ final class _ResultContent extends StatefulWidget {
     required this.coordinator,
     required this.state,
     required this.onReview,
+    this.onOpenEvent,
     required this.onDone,
   });
 
   final QuizCompletionCoordinator coordinator;
   final QuizCompletionSaveState state;
   final ValueChanged<QuizResult> onReview;
+  final ValueChanged<String>? onOpenEvent;
   final VoidCallback onDone;
 
   @override
@@ -152,6 +158,7 @@ final class _ResultContentState extends State<_ResultContent> {
               number: revisit + 1,
               outcome: result.outcomes[revisit],
               onOpen: () => widget.onReview(result),
+              onOpenEvent: widget.onOpenEvent,
             ),
           ],
           if (daily) ...[const SizedBox(height: 12), const _TomorrowNote()],
@@ -310,10 +317,12 @@ class _WorthRevisiting extends StatelessWidget {
     required this.number,
     required this.outcome,
     required this.onOpen,
+    this.onOpenEvent,
   });
   final int number;
   final QuestionOutcome outcome;
   final VoidCallback onOpen;
+  final ValueChanged<String>? onOpenEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -367,6 +376,11 @@ class _WorthRevisiting extends StatelessWidget {
               child: const Text('Open in review'),
             ),
           ),
+          if (outcome.question.relatedEvents.isNotEmpty && onOpenEvent != null)
+            QuizRelatedHistory(
+              events: outcome.question.relatedEvents,
+              onOpenEvent: onOpenEvent!,
+            ),
         ],
       ),
     );

@@ -15,10 +15,15 @@ class EventDetailResponse {
     required this.images,
     this.primaryImage,
     this.dateNote,
+    this.hasRelatedQuizQuestions = false,
   });
 
   factory EventDetailResponse.fromJson(Map<String, Object?> json) {
     final primaryImage = json['primaryImage'];
+    if (json.containsKey('hasRelatedQuizQuestions') &&
+        json['hasRelatedQuizQuestions'] is! bool) {
+      throw const FormatException('hasRelatedQuizQuestions must be a boolean');
+    }
 
     return EventDetailResponse(
       id: requiredString(json, 'id'),
@@ -39,6 +44,8 @@ class EventDetailResponse {
         'images',
       ).map(ApiEventImageResponse.fromJson).toList(growable: false),
       dateNote: optionalString(json, 'dateNote'),
+      hasRelatedQuizQuestions:
+          json['hasRelatedQuizQuestions'] as bool? ?? false,
     );
   }
 
@@ -52,6 +59,7 @@ class EventDetailResponse {
   final ApiEventImageResponse? primaryImage;
   final List<ApiEventImageResponse> images;
   final String? dateNote;
+  final bool hasRelatedQuizQuestions;
 
   HistoricalEvent toDomain() {
     return HistoricalEvent(
@@ -67,6 +75,7 @@ class EventDetailResponse {
       primaryImage: primaryImage?.toDomain(),
       images: images.map((image) => image.toDomain()).toList(growable: false),
       dateNote: dateNote,
+      hasRelatedQuizQuestions: hasRelatedQuizQuestions,
     );
   }
 }

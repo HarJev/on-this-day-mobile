@@ -19,6 +19,29 @@ import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detai
 import '../../quiz/support/image_fakes.dart';
 
 void main() {
+  testWidgets(
+    'unlinked event hides the quiz action even with a current-day handler',
+    (tester) async {
+      final unlinked = HistoricalEvent(
+        id: _event.id,
+        title: _event.title,
+        year: _event.year,
+        historicalDate: _event.historicalDate,
+        summary: _event.summary,
+        description: _event.description,
+        sources: _event.sources,
+      );
+      await tester.pumpWidget(
+        _detailApp(
+          repository: _StaticRepository(unlinked),
+          onTestWhatYouLearned: () {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text("Explore today's quiz"), findsNothing);
+    },
+  );
+
   testWidgets('offers the quiz link only when a handler is provided', (
     WidgetTester tester,
   ) async {
@@ -26,7 +49,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Test what you learned'), findsNothing);
+    expect(find.text("Explore today's quiz"), findsNothing);
   });
 
   testWidgets('quiz link invokes its handler', (WidgetTester tester) async {
@@ -35,8 +58,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.scrollUntilVisible(find.text('Test what you learned'), 200);
-    await tester.tap(find.text('Test what you learned'));
+    await tester.scrollUntilVisible(find.text("Explore today's quiz"), 200);
+    await tester.tap(find.text("Explore today's quiz"));
 
     expect(taps, 1);
   });
@@ -237,6 +260,7 @@ Widget _detailApp({
 
 final _event = HistoricalEvent(
   id: 'event-1',
+  hasRelatedQuizQuestions: true,
   title: 'A detailed historical event',
   year: '1485',
   historicalDate: 'August 22, 1485',

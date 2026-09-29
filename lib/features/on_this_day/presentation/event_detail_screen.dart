@@ -229,8 +229,9 @@ class _LoadedStateState extends State<_LoadedState> {
             onSourceSelected: widget.onSourceSelected,
           ),
         ],
-        if (widget.onTestWhatYouLearned case final onTest?)
-          _TestWhatYouLearnedLink(onTap: onTest),
+        if (widget.event.hasRelatedQuizQuestions &&
+            widget.onTestWhatYouLearned != null)
+          _TestWhatYouLearnedLink(onTap: widget.onTestWhatYouLearned!),
         if (_reachedArticleEnd && notificationPrompt != null)
           NotificationPrePrompt(coordinator: notificationPrompt),
       ],
@@ -250,7 +251,7 @@ class _TestWhatYouLearnedLink extends StatelessWidget {
       padding: const EdgeInsets.only(top: 24),
       child: Semantics(
         button: true,
-        label: 'Test what you learned. Opens the quiz',
+        label: 'Explore today\'s quiz. Daily Challenge and Quick Play',
         excludeSemantics: true,
         child: Material(
           color: AppColors.softIvory,
@@ -289,10 +290,13 @@ class _TestWhatYouLearnedLink extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Test what you learned',
+                            'Explore today\'s quiz',
                             style: textTheme.titleMedium,
                           ),
-                          Text('Opens the quiz', style: textTheme.bodySmall),
+                          Text(
+                            'Daily Challenge and Quick Play',
+                            style: textTheme.bodySmall,
+                          ),
                         ],
                       ),
                     ),
