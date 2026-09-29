@@ -1,6 +1,9 @@
 # Connected Quiz Journey: Native Review
 
 Status: **COMPLETED with PENDING gates** (2026-09-29). iOS journey passes.
+Defect D1 is fixed in
+[HarJev/on-this-day-mobile#9](https://github.com/HarJev/on-this-day-mobile/pull/9)
+(owner cleared mobile fixes after the review).
 Android native evidence is blocked by the local emulators, and one enlarged-text
 wrapping defect was found on Results. No application code was changed.
 
@@ -190,14 +193,26 @@ is not native evidence.
 I stopped the Pixel 3a emulator. Android gates need a rerun on a quieter host
 or a physical device.
 
-## Findings and proposed fixes (not applied)
+## Findings and fixes
 
 **D1. Results stats labels break mid-word at large text sizes.** On iOS
 accessibility-extra-large, "Answered", "Correct" and "Unanswered" split across
 lines. Proposed scoped fix: in `_Stats`, switch from a three-column `Row` to a
-vertical list (or a `Wrap`) when `MediaQuery.textScalerOf(context)` exceeds
-about 1.3, and add a widget test at 2.0x. No copy or design change. I have not
-made this change and am asking the owner first.
+vertical list when the labels no longer fit, and add a widget test at 2.0x. No
+copy or design change.
+
+**Fixed** in PR #9 (`codex/results-stats-large-text`, from `main` e4d31ea).
+`_Stats` measures "Unanswered" with the current text scaler and stacks the
+counts when it doesn't fit its column. The new 1x/2x test fails at 2x without
+the fix. The full suite passes (505 tests), the analyzer reports no issues,
+and `git diff --check` is clean. On the iPhone 17 simulator the labels are
+whole and stacked at accessibility-extra-large (`ios/60-fix-ax-results.png`),
+and the default size is unchanged (`ios/61-fix-normal-results.png`).
+
+Owner merges after the review (e4d31ea mobile, 2105fc4 backend) change no
+runtime code: the mobile merge is a handoff doc, and the backend merge is
+Oct 2-8 content plus one test tweak. No backend issues were found, so no
+backend fix is proposed.
 
 Untested observation: on that error card, reached from Quiz Results, the
 secondary button reads "Back to Today". I used the header Back arrow, which
@@ -231,7 +246,7 @@ question with the same copper cross as a wrong answer
 - Android gates 1-9 native rerun.
 - VoiceOver/TalkBack pass for Review Related history and the Event Detail quiz
   row.
-- Owner decision on D1.
+- Review and merge PR #9 (D1).
 
 ## Housekeeping
 
