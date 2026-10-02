@@ -10,9 +10,9 @@ class ApiClient {
   static const maxRequestBodyBytes = 16 * 1024;
 
   ApiClient({required Uri baseUrl, required http.Client httpClient})
-    : assert(baseUrl.hasScheme),
-      _baseUrl = baseUrl,
-      _httpClient = httpClient;
+      : assert(baseUrl.hasScheme),
+        _baseUrl = baseUrl,
+        _httpClient = httpClient;
 
   final Uri _baseUrl;
   final http.Client _httpClient;
@@ -108,9 +108,8 @@ class ApiClient {
       'accept': 'application/json',
       if (bodyBytes != null) 'content-type': 'application/json',
       if (method == 'POST' || method == 'DELETE')
-        'x-amz-content-sha256': sha256
-            .convert(bodyBytes ?? const <int>[])
-            .toString(),
+        'x-amz-content-sha256':
+            sha256.convert(bodyBytes ?? const <int>[]).toString(),
     };
 
     return switch (method) {
@@ -144,9 +143,8 @@ class ApiClient {
     if (devices < 0 || devices == segments.length - 1) {
       return uri.toString();
     }
-    return uri
-        .replace(pathSegments: [...segments.take(devices + 1), '<redacted>'])
-        .toString();
+    return uri.replace(
+        pathSegments: [...segments.take(devices + 1), '<redacted>']).toString();
   }
 
   void _debugLog(String message) {

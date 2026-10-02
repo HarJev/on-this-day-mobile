@@ -9,8 +9,8 @@ class DeviceRegistrationRequest {
     required this.platform,
     required this.timezone,
     required this.notificationPermissionStatus,
-  }) : assert(token != ''),
-       assert(timezone != '');
+  })  : assert(token != ''),
+        assert(timezone != '');
 
   final String token;
   final DevicePlatform platform;
@@ -22,8 +22,8 @@ class DeviceRegistrationRequest {
       'token': token,
       'platform': platform.toJsonValue(),
       'timezone': timezone,
-      'notificationPermissionStatus': notificationPermissionStatus
-          .toJsonValue(),
+      'notificationPermissionStatus':
+          notificationPermissionStatus.toJsonValue(),
     };
   }
 }
@@ -32,7 +32,7 @@ class DeviceRegistrationClient {
   static const maxTokenLength = 1024;
 
   const DeviceRegistrationClient({required ApiClient apiClient})
-    : _apiClient = apiClient;
+      : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -79,7 +79,8 @@ extension NotificationPermissionStatusJson on NotificationPermissionStatus {
       NotificationPermissionStatus.authorized => 'authorized',
       // The backend contract has no permanent-denial value; both mean denied.
       NotificationPermissionStatus.denied ||
-      NotificationPermissionStatus.permanentlyDenied => 'denied',
+      NotificationPermissionStatus.permanentlyDenied =>
+        'denied',
       NotificationPermissionStatus.notDetermined => 'not_determined',
       NotificationPermissionStatus.provisional => 'provisional',
     };
