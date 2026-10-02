@@ -29,6 +29,7 @@ that never answers, and every non-API (image) host unreachable.
 | API refused | PASS. Today and Quiz show retry states; both recover after retry. |
 | API hangs (no response) | FIXED. Quiz failed after 20 s, but Today and Event Detail waited forever on the loading skeleton. They now time out after 20 s and offer Try again. |
 | Images unreachable | PASS with a decision for the owner (below). Today and Event Detail render without the picture; the Daily stops at "A picture couldn't load" with Retry and nothing scored. |
+| Picture questions in Review | FIXED after owner request. Review only ever showed "Image unavailable in review." It now loads the image through the shared cache, also after a restart, and keeps that message only when the image cannot load. |
 | App resumed on a later day | FIXED. Today and the Quiz Hub kept the previous day's content until the app was killed. They now reload when the app resumes on a new calendar day. |
 
 Screenshots are in the project folder `screenshots/beta-pass-2026-10-02/`.
@@ -40,8 +41,6 @@ Screenshots are in the project folder `screenshots/beta-pass-2026-10-02/`.
   should stop the same way (inferred, not run). Alternatives are skipping or swapping
   picture questions when their image cannot load; that changes official Daily
   scoring, so it was left as designed.
-- Full Review shows "Image unavailable in review." for picture questions even
-  when the image is cached. This is the documented existing behavior.
 - The Quiz load-failure state is a plain message and button, while Today uses
   a card with an icon. Cosmetic only.
 

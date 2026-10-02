@@ -200,6 +200,7 @@ class AppRouter {
           result: args.result,
           onOpenEvent: (id) => _navigator!.pushNamed(AppRoutes.eventDetail(id)),
           sourceLauncher: quiz.sourceLauncher,
+          imageLoader: _optionalImageLoader,
           onDone: () => _navigator?.pop(),
         ),
         settings,

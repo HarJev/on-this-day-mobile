@@ -19,6 +19,10 @@ import 'package:on_this_day_mobile/features/quiz/presentation/quiz_results_scree
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_controller.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/widgets/quiz_review_external_link.dart';
 
+import 'package:on_this_day_mobile/core/images/cached_optional_image_loader.dart';
+import 'package:on_this_day_mobile/core/images/image_request_cancellation.dart';
+import 'package:on_this_day_mobile/features/quiz/domain/quiz_question.dart';
+import '../support/image_fakes.dart';
 import '../support/quiz_completion_flow_host.dart';
 import '../support/session_fakes.dart';
 import '../../../support/capture_fonts.dart';
@@ -102,6 +106,61 @@ void main() {
       );
     },
   );
+
+  testWidgets('Review shows the picture question image from the loader', (
+    tester,
+  ) async {
+    final result = _dailyCompletion().result;
+    final image = result.definition.questions
+        .whereType<ImageIdentificationQuestion>()
+        .single
+        .image;
+    final picture = (await tester.runAsync(() => testImage()))!;
+    final loader = _ReviewImageLoader(picture);
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _app(
+        QuizFullReviewScreen(
+          result: result,
+          sourceLauncher: _Launcher(result: true),
+          imageLoader: loader,
+          onDone: () {},
+        ),
+      ),
+    );
+    await tester.scrollUntilVisible(find.text('Image credit'), 200);
+    await tester.pump();
+
+    expect(loader.requested, [image.url]);
+    expect(find.byType(RawImage), findsOneWidget);
+    expect(find.text('Image unavailable in review.'), findsNothing);
+    expect(
+      find.bySemanticsLabel(RegExp(RegExp.escape(image.altText))),
+      findsOneWidget,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('Review keeps the unavailable message when the image fails', (
+    tester,
+  ) async {
+    final result = _dailyCompletion().result;
+    await tester.pumpWidget(
+      _app(
+        QuizFullReviewScreen(
+          result: result,
+          sourceLauncher: _Launcher(result: true),
+          imageLoader: _ReviewImageLoader(null),
+          onDone: () {},
+        ),
+      ),
+    );
+    await tester.scrollUntilVisible(find.text('Image credit'), 200);
+    await tester.pump();
+
+    expect(find.byType(RawImage), findsNothing);
+    expect(find.text('Image unavailable in review.'), findsOneWidget);
+  });
 
   testWidgets(
     'Review renders every frozen outcome, source and image provenance',
@@ -513,5 +572,20 @@ final class _Launcher implements SourceLauncher {
   Future<bool> open(Uri url) async {
     urls.add(url);
     return result;
+  }
+}
+
+final class _ReviewImageLoader implements OptionalImageLoader {
+  _ReviewImageLoader(this.picture);
+
+  final ui.Image? picture;
+  final requested = <Uri>[];
+
+  @override
+  Future<ui.Image> load(Uri url, ImageRequestCancellation cancellation) async {
+    requested.add(url);
+    final picture = this.picture;
+    if (picture == null) throw StateError('offline');
+    return picture.clone();
   }
 }

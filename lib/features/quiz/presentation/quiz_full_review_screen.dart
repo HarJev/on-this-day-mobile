@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_theme.dart';
+import '../../../core/images/cached_optional_image_loader.dart';
 import '../../../core/navigation/source_launcher.dart';
 import '../domain/question_outcome.dart';
 import '../domain/quiz_answer.dart';
@@ -12,6 +13,7 @@ import '../domain/quiz_result.dart';
 import 'widgets/quiz_design.dart';
 import 'widgets/quiz_related_history.dart';
 import 'widgets/quiz_review_external_link.dart';
+import 'widgets/quiz_review_image.dart';
 
 /// Pure presentation of a frozen result. It has no persistence, coordinator,
 /// repository, or grading dependency and also works with decoded snapshots.
@@ -22,12 +24,17 @@ final class QuizFullReviewScreen extends StatelessWidget {
     required this.sourceLauncher,
     this.onOpenEvent,
     required this.onDone,
+    this.imageLoader,
   });
 
   final QuizResult result;
   final SourceLauncher sourceLauncher;
   final ValueChanged<String>? onOpenEvent;
   final VoidCallback onDone;
+
+  /// Loads picture-question images through the shared cache. Without one,
+  /// Review shows the unavailable message.
+  final OptionalImageLoader? imageLoader;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +82,7 @@ final class QuizFullReviewScreen extends StatelessWidget {
             outcome: outcome,
             sourceLauncher: sourceLauncher,
             onOpenEvent: onOpenEvent,
+            imageLoader: imageLoader,
           );
         },
         separatorBuilder: (_, _) =>
@@ -91,12 +99,14 @@ class _ReviewQuestion extends StatelessWidget {
     required this.outcome,
     required this.sourceLauncher,
     this.onOpenEvent,
+    this.imageLoader,
   });
 
   final int number;
   final QuestionOutcome outcome;
   final SourceLauncher sourceLauncher;
   final ValueChanged<String>? onOpenEvent;
+  final OptionalImageLoader? imageLoader;
 
   QuizQuestion get question => outcome.question;
 
@@ -150,17 +160,12 @@ class _ReviewQuestion extends StatelessWidget {
                 onOpenEvent: onOpenEvent!,
               ),
             const SizedBox(height: 12),
-            if (question case ImageIdentificationQuestion(:final image)) ...[
-              Semantics(
-                image: true,
-                label: image.altText,
-                child: Text(
-                  'Image unavailable in review.',
-                  style: textTheme.bodySmall,
-                ),
+            if (question case ImageIdentificationQuestion(:final image))
+              QuizReviewImage(
+                key: ValueKey('${question.id}:review-image'),
+                image: image,
+                loader: imageLoader,
               ),
-              const SizedBox(height: 8),
-            ],
             if (question is ImageIdentificationQuestion)
               QuizDisclosure(
                 key: ValueKey('${question.id}:image-credit'),
