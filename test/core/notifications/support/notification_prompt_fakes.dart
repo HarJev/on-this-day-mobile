@@ -102,6 +102,7 @@ NotificationPromptCoordinator promptCoordinator({
   RecordingRegistration? registration,
   bool deniedMayBeUnasked = false,
   DateTime Function()? now,
+  void Function(String outcome)? onDecision,
 }) {
   final recorder = registration ?? RecordingRegistration();
   return NotificationPromptCoordinator(
@@ -110,6 +111,7 @@ NotificationPromptCoordinator promptCoordinator({
     onAuthorized: recorder.call,
     deniedMayBeUnasked: deniedMayBeUnasked,
     now: now,
+    onDecision: onDecision,
   );
 }
 

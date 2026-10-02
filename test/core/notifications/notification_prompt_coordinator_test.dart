@@ -293,4 +293,18 @@ void main() {
 
     await coordinator.decline();
   });
+
+  test('reports only fixed notification decisions', () async {
+    final decisions = <String>[];
+    final coordinator = promptCoordinator(
+      onDecision: decisions.add,
+      permissions: FakePermissionGateway(
+        requestResult: NotificationPermissionStatus.authorized,
+      ),
+    );
+
+    await coordinator.decline();
+    expect(await coordinator.enable(), NotificationPromptOutcome.enabled);
+    expect(decisions, ['not_now', 'enabled']);
+  });
 }

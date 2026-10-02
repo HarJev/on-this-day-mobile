@@ -11,6 +11,7 @@ import '../images/cached_optional_image_loader.dart';
 import '../config/app_colors.dart';
 import '../config/app_theme.dart';
 import '../config/timezone_provider.dart';
+import '../telemetry/app_telemetry.dart';
 import 'app_routes.dart';
 import 'quiz_route_arguments.dart';
 import 'quiz_route_dependencies.dart';
@@ -28,6 +29,7 @@ final class AppRootShell extends StatefulWidget {
     this.optionalImageLoader,
     this.sourceLauncher = const PlatformSourceLauncher(),
     this.rootTabs,
+    this.telemetry = const NoopAppTelemetry(),
   });
 
   final OnThisDayRepository onThisDayRepository;
@@ -36,6 +38,7 @@ final class AppRootShell extends StatefulWidget {
   final VoidCallback? onShowDebugNotification;
   final OptionalImageLoader? optionalImageLoader;
   final SourceLauncher sourceLauncher;
+  final AppTelemetry telemetry;
 
   /// When provided, routes above the shell can switch the visible tab.
   final RootTabController? rootTabs;
@@ -130,6 +133,7 @@ class _AppRootShellState extends State<AppRootShell> {
             timezoneProvider: widget.timezoneProvider,
             imageLoader: widget.optionalImageLoader,
             sourceLauncher: widget.sourceLauncher,
+            telemetry: widget.telemetry,
             embedded: true,
             onDisplayDateChanged: (date) {
               if (mounted && date != _todayDate) {
