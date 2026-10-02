@@ -143,28 +143,47 @@ registration.
 
 ## Production API URL
 
-The deployed API will be reached through its CloudFront distribution, not the
-raw Lambda function URL. Until `infra/prod` is deployed, the release config uses
-the deliberately unusable
-`https://REPLACE_WITH_API_BASE_URL.cloudfront.net` placeholder. Release
-startup rejects that placeholder, HTTP, and local/emulator hosts. Debug builds
-still default to local SAM.
+Release builds default to the deployed CloudFront API at
+`https://d1v4ivrcr6v8za.cloudfront.net` (the backend `infra/prod`
+`api_base_url` Terraform output). Do not use the raw Lambda function URL:
+it requires IAM-signed origin requests. Debug builds still default to local SAM
+at `http://127.0.0.1:3000`.
 
-After deployment, get the actual URL from the backend Terraform output
-`api_base_url` in `infra/prod` and supply it at build time:
+Build or run with the release default:
 
 ```sh
-# Example only; replace this placeholder with the Terraform api_base_url output.
-API_BASE_URL="https://REPLACE_WITH_API_BASE_URL.cloudfront.net"
-flutter build appbundle --release \
-  --dart-define="ON_THIS_DAY_API_BASE_URL=$API_BASE_URL"
+flutter build appbundle --release
+flutter run --release -d <release-capable-device-id>
 ```
 
-Do not distribute a build made with the placeholder. The URL is public app
-configuration, not a secret. The shared API client sends the exact-body SHA-256
-header on POST and DELETE; local SAM accepts it too. Content GET responses may
-remain cached at the CloudFront edge for up to 60 seconds, including briefly
-after a content update. Do not assume immediate read-after-write freshness.
+`ON_THIS_DAY_API_BASE_URL` still overrides the default in any build mode.
+For example, to point a debug build at the deployed API:
+
+```sh
+flutter run -d <device-id> \
+  --dart-define=ON_THIS_DAY_API_BASE_URL=https://d1v4ivrcr6v8za.cloudfront.net
+```
+
+For a release build against another approved HTTPS endpoint, pass the same
+`--dart-define=ON_THIS_DAY_API_BASE_URL=https://<approved-api-host>` argument.
+The release guard rejects HTTP and local/emulator hosts. The URL is public app
+configuration, not a secret.
+
+The shared API client sends the SHA-256 of the exact request body bytes on
+POST and DELETE; local SAM accepts that header too. The deployed API currently
+uses CloudFront `CachingDisabled`, so every GET reaches Lambda. Do not add
+client behavior that assumes an edge-cached response.
+
+The opt-in live smoke test renders Today and Quiz Hub using the real API,
+then creates one five-question Quick Play round. It does not initialize
+Firebase or register a device token:
+
+```sh
+flutter test integration_test/live_api_read_smoke_test.dart \
+  -d <ios-simulator-id> \
+  --dart-define=LIVE_API_READ_SMOKE=true \
+  --dart-define=ON_THIS_DAY_API_BASE_URL=https://d1v4ivrcr6v8za.cloudfront.net
+```
 
 ## Notifications
 
