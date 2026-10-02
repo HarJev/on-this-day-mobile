@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
-import '../../../core/config/app_theme.dart';
 import '../application/quiz_completion_coordinator.dart';
-import '../domain/question_outcome.dart';
 import '../domain/quiz_definition.dart';
 import '../domain/quiz_result.dart';
 import 'widgets/quiz_design.dart';
-import 'widgets/quiz_related_history.dart';
 
 /// Observes a completion that was already registered by gameplay. It never
 /// starts a save itself: Results only renders coordinator-owned state or retries
@@ -39,7 +36,6 @@ final class QuizResultsScreen extends StatelessWidget {
         coordinator: coordinator,
         state: state,
         onReview: onReview,
-        onOpenEvent: onOpenEvent,
         onDone: onDone,
       );
     },
@@ -87,14 +83,12 @@ final class _ResultContent extends StatefulWidget {
     required this.coordinator,
     required this.state,
     required this.onReview,
-    this.onOpenEvent,
     required this.onDone,
   });
 
   final QuizCompletionCoordinator coordinator;
   final QuizCompletionSaveState state;
   final ValueChanged<QuizResult> onReview;
-  final ValueChanged<String>? onOpenEvent;
   final VoidCallback onDone;
 
   @override
@@ -125,11 +119,6 @@ final class _ResultContentState extends State<_ResultContent> {
   Widget build(BuildContext context) {
     final result = widget.state.completion.result;
     final daily = result.definition is DailyQuizDefinition;
-    final revisit = result.outcomes.indexWhere(
-      (o) =>
-          o.kind == QuestionOutcomeKind.incorrect ||
-          o.kind == QuestionOutcomeKind.timedOut,
-    );
     return Scaffold(
       appBar: _appBar(result),
       body: ListView(
@@ -152,15 +141,6 @@ final class _ResultContentState extends State<_ResultContent> {
             retryStarting: retryStarting,
             onRetry: retry,
           ),
-          if (revisit >= 0) ...[
-            const SizedBox(height: 12),
-            _WorthRevisiting(
-              number: revisit + 1,
-              outcome: result.outcomes[revisit],
-              onOpen: () => widget.onReview(result),
-              onOpenEvent: widget.onOpenEvent,
-            ),
-          ],
           if (daily) ...[const SizedBox(height: 12), const _TomorrowNote()],
         ],
       ),
@@ -334,82 +314,6 @@ class _Count extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// The first missed question, with its explanation and a way into Review.
-class _WorthRevisiting extends StatelessWidget {
-  const _WorthRevisiting({
-    required this.number,
-    required this.outcome,
-    required this.onOpen,
-    this.onOpenEvent,
-  });
-  final int number;
-  final QuestionOutcome outcome;
-  final VoidCallback onOpen;
-  final ValueChanged<String>? onOpenEvent;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-      decoration: BoxDecoration(
-        color: AppColors.softIvory,
-        border: Border.all(color: AppColors.paleStone),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.bookmark_border,
-                size: 18,
-                color: AppColors.mutedCopper,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Worth revisiting · Question $number',
-                  style: AppText.eyebrow.copyWith(color: AppColors.copperDark),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            outcome.question.prompt,
-            style: textTheme.titleLarge?.copyWith(fontSize: 19),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            outcome.question.explanation,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.bodySoft),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: onOpen,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                alignment: Alignment.centerLeft,
-              ),
-              child: const Text('Open in review'),
-            ),
-          ),
-          if (outcome.question.relatedEvents.isNotEmpty && onOpenEvent != null)
-            QuizRelatedHistory(
-              events: outcome.question.relatedEvents,
-              onOpenEvent: onOpenEvent!,
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 class _TomorrowNote extends StatelessWidget {

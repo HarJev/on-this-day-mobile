@@ -111,10 +111,10 @@ class QuizChoiceQuestion extends StatelessWidget {
 
   String _tagFor(QuizOption option) {
     final correct = outcome != null && option.id == question.correctOptionId;
-    return [
-      if (_selected(option)) 'Your choice',
-      if (correct) 'Correct answer',
-    ].join(' · ');
+    if (correct && _selected(option)) return 'Your answer';
+    if (correct) return 'Correct answer';
+    if (_selected(option)) return 'Your answer';
+    return '';
   }
 
   Widget _row(BuildContext context, QuizOption option, int index) {

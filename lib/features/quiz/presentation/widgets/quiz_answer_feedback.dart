@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/config/app_colors.dart';
-import '../../../../core/config/app_theme.dart';
 import '../../../../core/navigation/source_launcher.dart';
 import '../../domain/question_outcome.dart';
-import '../../domain/quiz_answer.dart';
-import '../../domain/quiz_question.dart';
 import 'quiz_design.dart';
 
 /// Quick Play's explanation and sources under an answered question. Daily
@@ -54,8 +50,8 @@ class QuizAnswerFeedback extends StatelessWidget {
   }
 }
 
-/// The outcome at the top of the sticky footer: a marked circle, the result
-/// in words, and the correct answer or placement in one quiet line.
+/// Compact outcome at the side of the sticky Continue action.
+/// The answer is already marked on the question, so it is not repeated here.
 class QuizFeedbackSummary extends StatelessWidget {
   const QuizFeedbackSummary({
     super.key,
@@ -66,62 +62,20 @@ class QuizFeedbackSummary extends StatelessWidget {
   final QuestionOutcome outcome;
   final bool expired;
 
-  static String? detailFor(QuestionOutcome outcome, bool expired) {
-    final question = outcome.question;
-    if (expired || outcome.kind == QuestionOutcomeKind.timedOut) {
-      return 'No answer recorded';
-    }
-    if (question is ChronologicalOrderingQuestion) {
-      final answer = outcome.answer;
-      if (answer is! OrderingAnswer) return null;
-      var inPlace = 0;
-      for (var i = 0; i < answer.orderedItemIds.length; i++) {
-        if (answer.orderedItemIds[i] == question.correctOrderItemIds[i]) {
-          inPlace++;
-        }
-      }
-      return '$inPlace of ${question.items.length} in place';
-    }
-    if (question is ChoiceQuestion &&
-        outcome.kind != QuestionOutcomeKind.correct) {
-      final correct = question.options.firstWhere(
-        (option) => option.id == question.correctOptionId,
-      );
-      return 'Answer: ${correct.text}';
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final kind = expired ? QuestionOutcomeKind.timedOut : outcome.kind;
-    final detail = detailFor(outcome, expired);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          QuizOutcomeBadge(kind: kind),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  QuizAnswerFeedback.label(outcome, expired),
-                  style: AppText.sectionHeader,
-                ),
-                if (detail != null)
-                  Text(
-                    detail,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppColors.mutedGray),
-                  ),
-              ],
-            ),
+    return Row(
+      children: [
+        QuizOutcomeBadge(kind: kind, size: 30),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            QuizAnswerFeedback.label(outcome, expired),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -155,7 +155,8 @@ void main() {
       await mount(tester);
       expect(find.text('Submit answer'), findsNothing);
       await tap(tester, 'Option b');
-      expect(find.text('Your choice'), findsOneWidget);
+      expect(find.text('Your answer'), findsOneWidget);
+      expect(find.textContaining('Answer:'), findsNothing);
       expect(find.text('Correct answer'), findsOneWidget);
       expect(find.text('Incorrect'), findsOneWidget);
       await tap(tester, 'Option a');
@@ -166,6 +167,18 @@ void main() {
       expect((controller.state as QuizAnswering).index, 1);
     },
   );
+  testWidgets('correct true or false answer shows one choice label', (
+    tester,
+  ) async {
+    await mount(tester, type: QuizQuestionType.trueFalse);
+    await tap(tester, 'True');
+
+    expect(find.text('Your answer'), findsOneWidget);
+    expect(find.text('Correct answer'), findsNothing);
+    expect(find.text('Correct'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+  });
+
   testWidgets('true false timeout selects nothing, stops and waits', (
     tester,
   ) async {
@@ -174,7 +187,7 @@ void main() {
     scheduler.fire();
     await tester.pump();
     expect(find.text("Time's up"), findsOneWidget);
-    expect(find.text('Your choice'), findsNothing);
+    expect(find.text('Your answer'), findsNothing);
     expect(find.text('Correct answer'), findsOneWidget);
     expect(find.byKey(const Key('quiz-timer')), findsNothing);
     clock.advance(const Duration(hours: 1));
@@ -401,7 +414,7 @@ void main() {
       scheduler.fire();
       await tester.pump();
       expect(tester.widget<Semantics>(live).properties.label, 'Incorrect');
-      expect(find.text('Your choice'), findsOneWidget);
+      expect(find.text('Your answer'), findsOneWidget);
       expect(find.text('Correct answer'), findsOneWidget);
       semantics.dispose();
     },

@@ -65,6 +65,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('featured portrait is contained without clipping its subject', (
+    tester,
+  ) async {
+    final image = await tester.runAsync(
+      () => testImage(width: 200, height: 410),
+    );
+    await _pumpCard(tester, loader: _FakeOptionalImageLoader.image(image!));
+
+    expect(tester.widget<RawImage>(find.byType(RawImage)).fit, BoxFit.contain);
+    expect(
+      tester.widget<AspectRatio>(find.byType(AspectRatio)).aspectRatio,
+      1.2,
+    );
+    expect(find.text('A featured event'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('no credit line when the image fails to load', (tester) async {
     await _pumpCard(tester, loader: _FakeOptionalImageLoader.failure());
 

@@ -15,6 +15,7 @@ class OptionalEventImage extends StatefulWidget {
     this.padding = EdgeInsets.zero,
     this.caption,
     this.aspectRatio = 2.05,
+    this.portraitAspectRatio,
     this.frame,
   });
 
@@ -28,6 +29,9 @@ class OptionalEventImage extends StatefulWidget {
 
   /// Fixed cover crop, or null to show the whole image at its natural aspect.
   final double? aspectRatio;
+
+  /// Optional portrait frame. Portraits are contained rather than cropped.
+  final double? portraitAspectRatio;
 
   /// Wraps the loaded picture, for example with a border and radius.
   final Widget Function(Widget picture)? frame;
@@ -84,12 +88,19 @@ class _OptionalEventImageState extends State<OptionalEventImage> {
   Widget build(BuildContext context) {
     final image = _image;
     if (image == null) return const SizedBox.shrink();
-    final aspectRatio = widget.aspectRatio;
+    final portrait = image.height > image.width;
+    final aspectRatio = portrait && widget.portraitAspectRatio != null
+        ? widget.portraitAspectRatio
+        : widget.aspectRatio;
     final raw = AspectRatio(
       aspectRatio: aspectRatio ?? image.width / image.height,
       child: RawImage(
         image: image,
-        fit: aspectRatio == null ? BoxFit.contain : BoxFit.cover,
+        fit:
+            aspectRatio == null ||
+                (portrait && widget.portraitAspectRatio != null)
+            ? BoxFit.contain
+            : BoxFit.cover,
       ),
     );
     final picture = Semantics(

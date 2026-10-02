@@ -117,6 +117,7 @@ class FeaturedEventCard extends StatelessWidget {
       altText: image.altText,
       loader: loader,
       aspectRatio: 16 / 9.5,
+      portraitAspectRatio: 1.2,
       caption: hasCredit
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),

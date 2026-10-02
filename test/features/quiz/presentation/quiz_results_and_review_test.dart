@@ -53,6 +53,8 @@ void main() {
       expect(find.text('2'), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
       expect(find.text('Unanswered'), findsOneWidget);
+      expect(find.textContaining('Worth revisiting'), findsNothing);
+      expect(find.text('Review answers'), findsOneWidget);
 
       store.succeed(QuizSavedClassification.official);
       await tester.pump();
@@ -389,6 +391,18 @@ void main() {
     store.succeed(QuizSavedClassification.official);
     await tester.pump();
     await capture('results-saved');
+
+    await tester.pumpWidget(
+      _captureApp(
+        captureKey,
+        QuizFullReviewScreen(
+          result: completion.result,
+          sourceLauncher: _Launcher(result: true),
+          onDone: () {},
+        ),
+      ),
+    );
+    await capture('review-normal');
 
     await tester.pumpWidget(
       _captureApp(

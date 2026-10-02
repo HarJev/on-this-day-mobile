@@ -46,7 +46,7 @@ import '../../support/capture_fonts.dart';
 
 void main() {
   testWidgets(
-    'pending Results can open a related story without changing its frozen result',
+    'pending Results can review a related story without changing its frozen result',
     (tester) async {
       final dependencies = _dependencies(_QuizRepository(), _ControlledStore());
       final navigator = await _pumpRoutedShell(tester, dependencies);
@@ -66,10 +66,14 @@ void main() {
         dependencies,
         QuizCompletion(result, QuizSaveIntent.claimDailyIfAbsent),
       );
-      final disclosure = find.text('Related history');
+      await tester.tap(find.text('Review answers'));
+      await tester.pumpAndSettle();
+      final disclosure = find.byKey(const ValueKey('q-0:related-history'));
       await tester.ensureVisible(disclosure);
       await tester.pumpAndSettle();
-      await tester.tap(disclosure);
+      await tester.tap(
+        find.descendant(of: disclosure, matching: find.text('Related history')),
+      );
       await tester.pumpAndSettle();
       final link = find.byKey(const ValueKey('related-event-linked-story'));
       await tester.ensureVisible(link);

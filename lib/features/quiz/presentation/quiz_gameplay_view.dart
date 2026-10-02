@@ -224,6 +224,37 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
         }
       });
     }
+    final footerAction = switch (state) {
+      QuizFeedback(:final outcome) => FilledButton(
+        onPressed: () => advance(outcome.question.id),
+        child: const Text('Continue'),
+      ),
+      QuizCompleted(:final result) => FilledButton(
+        onPressed: resultsOpened
+            ? null
+            : () {
+                if (resultsOpened) return;
+                setState(() => resultsOpened = true);
+                controller.releaseCompletedImages();
+                widget.onViewResults(result);
+              },
+        child: const Text('View results'),
+      ),
+      QuizAnswering(:final question)
+          when question is ImageIdentificationQuestion && !missingImage =>
+        TextButton(
+          onPressed: () => controller.skipImage(question.id),
+          child: const Text('Skip question'),
+        ),
+      QuizAnswering(:final question)
+          when question is ChronologicalOrderingQuestion =>
+        FilledButton(
+          key: const Key('submit-order'),
+          onPressed: () => controller.submitOrder(question.id),
+          child: const Text('Submit order'),
+        ),
+      _ => const SizedBox.shrink(),
+    };
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -353,52 +384,42 @@ class _QuizGameplayViewState extends State<QuizGameplayView> {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (current?.$3 case final outcome?)
-                          QuizFeedbackSummary(
-                            outcome: outcome,
-                            expired: expired,
-                          ),
-                        switch (state) {
-                          QuizFeedback(:final outcome) => FilledButton(
-                            onPressed: () => advance(outcome.question.id),
-                            child: const Text('Continue'),
-                          ),
-                          QuizCompleted(:final result) => FilledButton(
-                            onPressed: resultsOpened
-                                ? null
-                                : () {
-                                    if (resultsOpened) return;
-                                    setState(() {
-                                      resultsOpened = true;
-                                    });
-                                    controller.releaseCompletedImages();
-                                    widget.onViewResults(result);
-                                  },
-                            child: const Text('View results'),
-                          ),
-                          QuizAnswering(:final question)
-                              when question is ImageIdentificationQuestion &&
-                                  !missingImage =>
-                            TextButton(
-                              onPressed: () =>
-                                  controller.skipImage(question.id),
-                              child: const Text('Skip question'),
-                            ),
-                          QuizAnswering(:final question)
-                              when question is ChronologicalOrderingQuestion =>
-                            FilledButton(
-                              key: const Key('submit-order'),
-                              onPressed: () =>
-                                  controller.submitOrder(question.id),
-                              child: const Text('Submit order'),
-                            ),
-                          _ => const SizedBox.shrink(),
-                        },
-                      ],
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final outcome = current?.$3;
+                        final compact =
+                            outcome != null &&
+                            constraints.maxWidth >= 320 &&
+                            MediaQuery.textScalerOf(context).scale(16) <= 21;
+                        if (compact) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: QuizFeedbackSummary(
+                                  outcome: outcome,
+                                  expired: expired,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(width: 150, child: footerAction),
+                            ],
+                          );
+                        }
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (outcome != null) ...[
+                              QuizFeedbackSummary(
+                                outcome: outcome,
+                                expired: expired,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            footerAction,
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

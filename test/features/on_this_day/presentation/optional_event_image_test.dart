@@ -66,6 +66,35 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+  testWidgets('featured portrait shows its full frame instead of cropping', (
+    tester,
+  ) async {
+    final image = await tester.runAsync(
+      () => testImage(width: 200, height: 410),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OptionalEventImage(
+          url: Uri.parse('https://example.org/portrait.jpg'),
+          altText: 'Portrait of a historical figure',
+          loader: _FakeOptionalImageLoader.image(image!),
+          aspectRatio: 16 / 9.5,
+          portraitAspectRatio: 1.2,
+        ),
+      ),
+    );
+    await tester.runAsync(
+      () async => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<AspectRatio>(find.byType(AspectRatio)).aspectRatio,
+      1.2,
+    );
+    expect(tester.widget<RawImage>(find.byType(RawImage)).fit, BoxFit.contain);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 final class _FakeOptionalImageLoader implements OptionalImageLoader {

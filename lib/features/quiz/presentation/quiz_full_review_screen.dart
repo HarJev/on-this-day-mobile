@@ -77,7 +77,8 @@ final class QuizFullReviewScreen extends StatelessWidget {
             onOpenEvent: onOpenEvent,
           );
         },
-        separatorBuilder: (_, _) => const SizedBox(height: 14),
+        separatorBuilder: (_, _) =>
+            const Divider(height: 24, color: AppColors.hairline),
       ),
     );
   }
@@ -106,13 +107,8 @@ class _ReviewQuestion extends StatelessWidget {
     return Semantics(
       container: true,
       label: 'Question $number: ${quizOutcomeText(outcome)}',
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-        decoration: BoxDecoration(
-          color: AppColors.softIvory,
-          border: Border.all(color: AppColors.paleStone),
-          borderRadius: BorderRadius.circular(16),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -132,7 +128,7 @@ class _ReviewQuestion extends StatelessWidget {
                     ),
                   ],
                 ),
-                QuizStatusPill(outcome: outcome),
+                _ReviewStatus(outcome: outcome),
               ],
             ),
             const SizedBox(height: 10),
@@ -186,6 +182,35 @@ class _ReviewQuestion extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ReviewStatus extends StatelessWidget {
+  const _ReviewStatus({required this.outcome});
+
+  final QuestionOutcome outcome;
+
+  @override
+  Widget build(BuildContext context) {
+    final correct = outcome.kind == QuestionOutcomeKind.correct;
+    final color = correct ? AppColors.archivalCobalt : AppColors.copperDark;
+    final icon = switch (outcome.kind) {
+      QuestionOutcomeKind.correct => Icons.check,
+      QuestionOutcomeKind.incorrect => Icons.close,
+      QuestionOutcomeKind.timedOut => Icons.hourglass_bottom,
+      QuestionOutcomeKind.unanswered => Icons.remove,
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ExcludeSemantics(child: Icon(icon, size: 16, color: color)),
+        const SizedBox(width: 4),
+        Text(
+          quizOutcomeText(outcome),
+          style: AppText.tag.copyWith(color: color),
+        ),
+      ],
     );
   }
 }
@@ -275,7 +300,7 @@ class _OrderingReview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            placed == null ? 'Correct order' : 'Correct order · your placement',
+            'Correct order',
             style: AppText.tag.copyWith(color: AppColors.mutedGray),
           ),
           const SizedBox(height: 4),

@@ -695,20 +695,22 @@ and 500 for question prompts, the same in Review.
 - **OrderRow:** a timeline rail with numbered nodes, a drag handle, and 40x48
   up/down buttons. After submit, the year shows on each row with "In place" or
   "Belongs nth", and the buttons disappear.
-- **FeedbackPanel:** a sticky footer. Daily shows the result, the answer with
-  its year or date, and Continue. Quick Play adds the explanation and a
-  "Sources (n)" row that opens the Sources sheet.
-- **Results:** a per-question strip (each cell opens that question in Review),
-  an Answered/Correct/Unanswered row, and an official or practice line. A
-  "Worth revisiting" card shows the first missed question with an explanation.
-  Daily adds a "new Daily Challenge tomorrow" note.
-- **Full review:** one card per question with a status pill, a per-type answer
-  block, the explanation, and collapsed "Image credit" and "Sources (n)" rows.
+- **FeedbackPanel:** a compact sticky verdict beside Continue on normal
+  phones, stacked when space is limited. The selected/correct options carry
+  answer labels, so the footer does not repeat the answer. Quick Play keeps
+  the explanation and a "Sources (n)" disclosure in the scrolling content.
+- **Results:** a per-question strip, an Answered/Correct/Unanswered row,
+  confirmed save status, and Review answers/Done actions. Do not spotlight
+  one arbitrary missed question. Daily adds a tomorrow note.
+- **Full review:** an unframed, divider-separated reading list with outcome,
+  answer, explanation, and collapsed "Image credit" and "Sources (n)" rows.
 
 ### Today and Event detail
 
-- The featured card is ivory with a full-bleed 16:9.5 image. It shows the year
-  with the place in copper dark, a copper hairline, the title, the summary, and
+- The featured card is ivory with a 16:9.5 frame for landscape images.
+  Portrait images use a taller contained frame so faces and context are not
+  cropped away. The card shows the year with the place in copper dark, a
+  copper hairline, the title, the summary, and
   "Read the full story". The whole card is tappable.
 - List rows use a fixed year column (52) or date column (64) with a wrapping
   title and a chevron. Recent days prefix the title with its year in muted text
