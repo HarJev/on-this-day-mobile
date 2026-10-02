@@ -236,6 +236,51 @@ void main() {
     expect(find.text('Sep 14'), findsNothing);
   });
 
+  testWidgets('day changes while Today is still loading', (tester) async {
+    final today = _GatedTodayRepository();
+    var clock = DateTime(2026, 9, 14, 23, 59);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AppRootShell(
+          onThisDayRepository: today,
+          timezoneProvider: const _Timezone(),
+          quizDependencies: () => _dependencies(_QuizRepository(), _Store()),
+          onShowDebugNotification: null,
+          now: () => clock,
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(today.pending, hasLength(1));
+
+    clock = DateTime(2026, 9, 15, 0, 1);
+    for (final state in const [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pump();
+    await tester.pump();
+    expect(today.pending, hasLength(2));
+
+    // The disposed first load settles late, as a timeout would.
+    today.pending.first.completeError(StateError('timed out'));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    today.pending.last.complete(await _TodayRepository().getTodayContent(''));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Sep 14'), findsOneWidget);
+    expect(find.text("Could not load today's history."), findsNothing);
+  });
+
   testWidgets('Explore the daily quiz returns to the Quiz tab', (tester) async {
     final quizRepository = _QuizRepository();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -635,6 +680,17 @@ final class _CountingTodayRepository extends _TodayRepository {
       featuredEvent: content.featuredEvent,
       additionalEvents: content.additionalEvents,
     );
+  }
+}
+
+final class _GatedTodayRepository extends _TodayRepository {
+  final pending = <Completer<DailyContent>>[];
+
+  @override
+  Future<DailyContent> getTodayContent(String timezone) {
+    final completer = Completer<DailyContent>();
+    pending.add(completer);
+    return completer.future;
   }
 }
 

@@ -43,6 +43,7 @@ class EventDetailController extends ChangeNotifier {
 
   EventDetailState _state = const EventDetailLoading();
   EventDetailState get state => _state;
+  bool _disposed = false;
 
   Future<void> loadEvent() async {
     _setState(const EventDetailLoading());
@@ -63,8 +64,16 @@ class EventDetailController extends ChangeNotifier {
     return loadEvent();
   }
 
+  /// A late result or timeout can arrive after the screen has gone.
   void _setState(EventDetailState state) {
+    if (_disposed) return;
     _state = state;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
