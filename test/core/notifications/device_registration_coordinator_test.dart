@@ -345,6 +345,8 @@ class _FakeMessaging implements NotificationMessaging {
       StreamController<String>.broadcast();
   final StreamController<Map<String, Object?>> _opened =
       StreamController<Map<String, Object?>>.broadcast();
+  final StreamController<ForegroundNotification> _foreground =
+      StreamController<ForegroundNotification>.broadcast();
 
   @override
   Future<NotificationPermissionStatus> requestPermission() async {
@@ -374,6 +376,9 @@ class _FakeMessaging implements NotificationMessaging {
   @override
   Stream<Map<String, Object?>> get onMessageOpenedAppData => _opened.stream;
 
+  @override
+  Stream<ForegroundNotification> get onForegroundMessage => _foreground.stream;
+
   void emitTokenRefresh(String value) {
     token = value;
     _refresh.add(value);
@@ -382,5 +387,6 @@ class _FakeMessaging implements NotificationMessaging {
   Future<void> dispose() async {
     await _refresh.close();
     await _opened.close();
+    await _foreground.close();
   }
 }

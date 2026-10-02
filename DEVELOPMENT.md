@@ -251,9 +251,14 @@ For iPhone notification testing:
 After Firebase configuration or native plugin changes, fully stop the app and
 rebuild it. Hot restart does not reload native Firebase/plugin registration.
 
-The app registers captured FCM tokens with the backend. Scheduled delivery,
-notification preferences, and disable-notification UI are intentionally
-deferred.
+The app registers captured FCM tokens with the backend. The backend now has a
+scheduled sender that sends notification title/body and an `eventId` data
+field. Deploying and testing that sender remains a separate release step.
+When a remote message arrives while the app is open, the mobile app shows a
+local system notification only if permission is allowed and the payload is
+complete. Tapping it uses the same Event Detail route as a background or cold
+FCM tap. A missing APNs token or unavailable initial push message does not
+stop the iOS app from opening.
 
 ## Verification
 
@@ -314,13 +319,47 @@ Treat notification checks as separate claims:
 | Physical iOS FCM/APNs | Real production-style Apple delivery | Apple Developer/APNs credentials configured in Firebase |
 
 The current debug local-notification path is the supported simulator fallback.
+The bell in the Today header is present in debug builds and can be exercised
+without an Apple Developer account after notification permission is granted.
 Adding a checked-in `simctl push` payload/command and moving the permission ask
 behind an in-app explanation are pending launch-workplan tasks. Do not add a
 production branch that silently substitutes local notifications when remote
 delivery is unavailable. The app must remain fully readable when permission is
 denied or credentials are absent.
 
-Before claiming production daily notifications, verify the scheduled backend
-job, timezone isolation, FCM response handling, and a real Android delivery.
+Before claiming production daily notifications, verify the deployed scheduled
+backend job, timezone isolation, FCM response handling, and a real Android delivery.
 Physical iOS delivery remains a separate manual gate until APNs ownership is
 available.
+
+## Android Release Preparation
+
+Debug runs use the local API default above. Release startup requires an
+explicit deployed HTTPS API URL. The repository does not contain an upload
+keystore or a production API URL.
+
+Create and back up an Android upload keystore under your own control. Follow
+the [Flutter Android signing guide](https://docs.flutter.dev/deployment/android)
+to put its details in the ignored file `android/key.properties`:
+
+```properties
+storePassword=<your-store-password>
+keyPassword=<your-key-password>
+keyAlias=<your-upload-key-alias>
+storeFile=/absolute/path/to/your-upload-keystore.jks
+```
+
+After the production HTTPS API endpoint exists, build the store bundle with:
+
+```sh
+ON_THIS_DAY_API_BASE_URL="https://api.your-domain.example" bash scripts/build_android_release.sh
+```
+
+The command requires the private signing file and API URL. Keep the keystore,
+passwords, and signing properties out of Git. A direct local release APK build
+without signing properties is only a packaging check; do not distribute it.
+
+Flutter 3.41.2 generates an Android registration entry for the dev-only
+`integration_test` plugin while excluding its class from release compilation.
+The Gradle release compile filters that entry and restores the generated
+source afterward. Keep `integration_test` as a dev dependency.

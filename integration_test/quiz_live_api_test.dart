@@ -99,7 +99,7 @@ void main() {
       await _tap(tester, find.byType(SwitchListTile));
       await tester.pumpAndSettle();
       await _tap(tester, find.text('Continue with 20 questions'));
-      await _wait(tester, () => _play(tester)?.controller.state is QuizReady);
+      await _wait(tester, () => find.text('Start quiz').evaluate().isNotEmpty);
       await _tap(tester, find.text('Start quiz'));
       final types = <Type>{};
       await _complete(tester, types);
@@ -132,7 +132,10 @@ void main() {
         () => find.text('Get ready for 5 questions').evaluate().isNotEmpty,
       );
       await _tap(tester, find.text('Get ready for 5 questions'));
-      await _wait(tester, () => _play(tester)?.controller.state is QuizReady);
+      await _wait(
+        tester,
+        () => find.text('Start challenge').evaluate().isNotEmpty,
+      );
       final definition =
           _play(tester)!.controller.definition as DailyQuizDefinition;
       await _tap(tester, find.text('Start challenge'));
@@ -197,7 +200,8 @@ Future<void> _wait(WidgetTester tester, bool Function() ready) async {
   expect(
     ready(),
     isTrue,
-    reason: 'Live app did not reach the expected state. '
+    reason:
+        'Live app did not reach the expected state. '
         'Visible text: ${tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).join(" | ")}',
   );
   expect(tester.takeException(), isNull);
@@ -222,9 +226,11 @@ Future<void> _complete(WidgetTester tester, Set<Type> types) async {
         );
       } else if (question is ChronologicalOrderingQuestion) {
         // Exercise the same accessible movement buttons available to users.
-        for (var position = 0;
-            position < question.correctOrderItemIds.length;
-            position++) {
+        for (
+          var position = 0;
+          position < question.correctOrderItemIds.length;
+          position++
+        ) {
           final id = question.correctOrderItemIds[position];
           while ((_play(tester)!.controller.state as QuizAnswering)
                   .orderingDraft

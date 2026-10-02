@@ -22,8 +22,8 @@ class PlatformLocalNotificationGateway implements LocalNotificationGateway {
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static const _notificationId = 1001;
-  static const _channelId = 'on_this_day_debug';
-  static const _channelName = 'On This Day debug notifications';
+  static const _channelId = 'on_this_day_daily';
+  static const _channelName = 'Daily history';
 
   final FlutterLocalNotificationsPlugin _plugin;
   final StreamController<String> _tapController =
@@ -87,7 +87,7 @@ class PlatformLocalNotificationGateway implements LocalNotificationGateway {
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
-          channelDescription: 'Local notification deep-link testing.',
+          channelDescription: 'Daily history notifications.',
           importance: Importance.high,
           priority: Priority.high,
         ),

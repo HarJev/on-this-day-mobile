@@ -131,6 +131,80 @@ void main() {
       await messaging.dispose();
     });
 
+    test(
+      'unavailable initial push message does not block app startup',
+      () async {
+        final messaging = _FakeNotificationMessaging(
+          initialMessageException: Exception('APNs unavailable'),
+        );
+        final service = NotificationService(messaging: messaging);
+
+        final state = await service.start();
+
+        expect(state.initialEventId, isNull);
+        expect(messaging.permissionRequestCount, 0);
+
+        await service.dispose();
+        await messaging.dispose();
+      },
+    );
+
+    test('foreground push shows a tappable local notification', () async {
+      final messaging = _FakeNotificationMessaging();
+      final localNotifications = _FakeLocalNotificationGateway();
+      final service = NotificationService(
+        messaging: messaging,
+        localNotifications: localNotifications,
+      );
+      await service.start();
+
+      messaging.emitForegroundMessage(
+        const ForegroundNotification(
+          data: {'eventId': 'vesuvius-erupts-79'},
+          title: 'History today',
+          body: 'Open the story',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(localNotifications.lastTitle, 'History today');
+      expect(
+        localNotifications.lastPayload,
+        '{"eventId":"vesuvius-erupts-79"}',
+      );
+
+      await service.dispose();
+      await messaging.dispose();
+    });
+
+    test(
+      'foreground push stays quiet without permission or a valid event',
+      () async {
+        final messaging = _FakeNotificationMessaging(
+          permissionStatus: NotificationPermissionStatus.denied,
+        );
+        final localNotifications = _FakeLocalNotificationGateway();
+        final service = NotificationService(
+          messaging: messaging,
+          localNotifications: localNotifications,
+        );
+        await service.start();
+
+        messaging.emitForegroundMessage(
+          const ForegroundNotification(
+            data: {'eventId': 'vesuvius-erupts-79'},
+            title: 'History today',
+            body: 'Open the story',
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(localNotifications.lastTitle, isNull);
+
+        await service.dispose();
+        await messaging.dispose();
+      },
+    );
+
     test('emits notification taps from opened app messages', () async {
       final messaging = _FakeNotificationMessaging();
       final service = NotificationService(messaging: messaging);
@@ -262,6 +336,7 @@ class _FakeNotificationMessaging implements NotificationMessaging {
     this.statusException,
     this.permissionStatus = NotificationPermissionStatus.authorized,
     this.initialMessageData,
+    this.initialMessageException,
   });
 
   final String? token;
@@ -269,11 +344,14 @@ class _FakeNotificationMessaging implements NotificationMessaging {
   final Object? statusException;
   final NotificationPermissionStatus permissionStatus;
   final Map<String, Object?>? initialMessageData;
+  final Object? initialMessageException;
 
   final StreamController<String> _tokenRefreshController =
       StreamController<String>.broadcast();
   final StreamController<Map<String, Object?>> _openedMessageController =
       StreamController<Map<String, Object?>>.broadcast();
+  final StreamController<ForegroundNotification> _foregroundMessageController =
+      StreamController<ForegroundNotification>.broadcast();
 
   int permissionRequestCount = 0;
   int tokenRequestCount = 0;
@@ -309,6 +387,7 @@ class _FakeNotificationMessaging implements NotificationMessaging {
 
   @override
   Future<Map<String, Object?>?> getInitialMessageData() async {
+    if (initialMessageException case final error?) throw error;
     return initialMessageData;
   }
 
@@ -316,6 +395,10 @@ class _FakeNotificationMessaging implements NotificationMessaging {
   Stream<Map<String, Object?>> get onMessageOpenedAppData {
     return _openedMessageController.stream;
   }
+
+  @override
+  Stream<ForegroundNotification> get onForegroundMessage =>
+      _foregroundMessageController.stream;
 
   void emitTokenRefresh(String token) {
     _tokenRefreshController.add(token);
@@ -325,8 +408,13 @@ class _FakeNotificationMessaging implements NotificationMessaging {
     _openedMessageController.add(data);
   }
 
+  void emitForegroundMessage(ForegroundNotification message) {
+    _foregroundMessageController.add(message);
+  }
+
   Future<void> dispose() async {
     await _tokenRefreshController.close();
     await _openedMessageController.close();
+    await _foregroundMessageController.close();
   }
 }

@@ -5,6 +5,9 @@ It records checks that automation cannot establish. Mark each item only after
 the stated evidence has been reviewed; an unchecked item is not a release
 claim.
 
+The latest bounded native evidence and Android distribution inputs are in
+`CLOSED_BETA_NATIVE_QA_2026-09-30.md`.
+
 ## L1-L2: Image Reliability And Cache
 
 - [ ] On iOS, verify a first Quiz image fetch and a warm cache hit on a real
@@ -86,6 +89,11 @@ claim.
 - [ ] Verify notification permission is never shown over a blank launch view.
 - [ ] Separately record debug local, iOS simulator-injected, Android FCM, and
   physical iOS APNs results without treating one as proof of another.
+- [ ] After Apple Developer enrollment, enable Push Notifications for the
+  production App ID, provision the iOS app, upload the APNs authentication key
+  to Firebase, and verify physical-device foreground/background/cold delivery.
+- [ ] Verify the deployed backend scheduler sends its `eventId` payload to an
+  opted-in Android device and respects each device's local date and time.
 - [ ] Review the widget's current/stale/empty states and Event Detail deep link.
 - [ ] Review event/result share cards for attribution and image reuse rights.
 - [ ] Approve the privacy disclosure and minimal analytics/crash event set before

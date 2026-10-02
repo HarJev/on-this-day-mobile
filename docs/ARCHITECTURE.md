@@ -293,6 +293,12 @@ notification action for simulator testing; it must be absent from release UI.
 That path verifies the system banner, payload, route, and event-detail loading,
 but it does not prove APNs/FCM remote delivery.
 
+While the app is foregrounded, a complete FCM notification with a valid
+`eventId` is presented through the local notification gateway only when system
+permission allows delivery. Its tap follows the same Event Detail route.
+Startup tolerates unavailable FCM initial-message and token-refresh setup on
+an iOS Simulator, so APNs setup is not required to read or quiz.
+
 For v0.0.1, do not build:
 
 - user-selectable notification schedules,

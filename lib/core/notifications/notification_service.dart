@@ -53,6 +53,18 @@ class NotificationTap {
   final String eventId;
 }
 
+class ForegroundNotification {
+  const ForegroundNotification({
+    required this.data,
+    required this.title,
+    required this.body,
+  });
+
+  final Map<String, Object?> data;
+  final String? title;
+  final String? body;
+}
+
 abstract interface class NotificationMessaging {
   Future<NotificationPermissionStatus> requestPermission();
 
@@ -65,6 +77,8 @@ abstract interface class NotificationMessaging {
   Future<Map<String, Object?>?> getInitialMessageData();
 
   Stream<Map<String, Object?>> get onMessageOpenedAppData;
+
+  Stream<ForegroundNotification> get onForegroundMessage;
 }
 
 class FirebaseNotificationMessaging implements NotificationMessaging {
@@ -112,6 +126,16 @@ class FirebaseNotificationMessaging implements NotificationMessaging {
       (message) => Map<String, Object?>.from(message.data),
     );
   }
+
+  @override
+  Stream<ForegroundNotification> get onForegroundMessage =>
+      FirebaseMessaging.onMessage.map(
+        (message) => ForegroundNotification(
+          data: Map<String, Object?>.from(message.data),
+          title: message.notification?.title,
+          body: message.notification?.body,
+        ),
+      );
 }
 
 class NotificationService implements NotificationPermissionGateway {
@@ -133,6 +157,7 @@ class NotificationService implements NotificationPermissionGateway {
 
   StreamSubscription<String>? _tokenRefreshSubscription;
   StreamSubscription<Map<String, Object?>>? _messageOpenedSubscription;
+  StreamSubscription<ForegroundNotification>? _foregroundSubscription;
   StreamSubscription<String>? _localNotificationTapSubscription;
 
   Stream<String> get tokenRefreshes => _tokenRefreshController.stream;
@@ -163,9 +188,18 @@ class NotificationService implements NotificationPermissionGateway {
   Future<NotificationStartupState> start() async {
     final localInitialPayload = await _startLocalNotifications();
     final permissionStatus = await _readPermissionStatus();
-    await _listenForTokenRefresh();
+    try {
+      await _listenForTokenRefresh();
+    } catch (error) {
+      _debugLog('token_refresh_setup_failure causeType=${error.runtimeType}');
+    }
 
-    final initialMessageData = await _messaging.getInitialMessageData();
+    Map<String, Object?>? initialMessageData;
+    try {
+      initialMessageData = await _messaging.getInitialMessageData();
+    } catch (error) {
+      _debugLog('initial_message_failure causeType=${error.runtimeType}');
+    }
     final initialEventId =
         _payloadParser.eventIdFromJson(localInitialPayload) ??
         _payloadParser.eventIdFromData(initialMessageData);
@@ -180,6 +214,7 @@ class NotificationService implements NotificationPermissionGateway {
   Future<void> dispose() async {
     await _tokenRefreshSubscription?.cancel();
     await _messageOpenedSubscription?.cancel();
+    await _foregroundSubscription?.cancel();
     await _localNotificationTapSubscription?.cancel();
     await _localNotifications?.dispose();
     await _tokenRefreshController.close();
@@ -227,7 +262,7 @@ class NotificationService implements NotificationPermissionGateway {
     } catch (error) {
       _debugLog(
         'local_notification_start_failure '
-        'causeType=${error.runtimeType} cause=$error',
+        'causeType=${error.runtimeType}',
       );
       return null;
     }
@@ -240,7 +275,7 @@ class NotificationService implements NotificationPermissionGateway {
       return status;
     } catch (error) {
       _debugLog(
-        'permission_status_failure causeType=${error.runtimeType} cause=$error',
+        'permission_status_failure causeType=${error.runtimeType}',
       );
       return NotificationPermissionStatus.notDetermined;
     }
@@ -254,7 +289,7 @@ class NotificationService implements NotificationPermissionGateway {
       return token;
     } catch (error) {
       _debugLog(
-        'token_get_failure causeType=${error.runtimeType} cause=$error',
+        'token_get_failure causeType=${error.runtimeType}',
       );
       return null;
     }
@@ -270,18 +305,59 @@ class NotificationService implements NotificationPermissionGateway {
 
   void _listenForNotificationTaps() {
     _messageOpenedSubscription?.cancel();
-    _messageOpenedSubscription = _messaging.onMessageOpenedAppData.listen((
-      data,
-    ) {
-      final eventId = _payloadParser.eventIdFromData(data);
-      if (eventId == null) {
-        _debugLog('notification_tap_missing_event_id');
-        return;
-      }
+    try {
+      _messageOpenedSubscription = _messaging.onMessageOpenedAppData.listen((
+        data,
+      ) {
+        final eventId = _payloadParser.eventIdFromData(data);
+        if (eventId == null) {
+          _debugLog('notification_tap_missing_event_id');
+          return;
+        }
 
-      _debugLog('notification_tap eventId=$eventId');
-      _tapController.add(NotificationTap(eventId: eventId));
-    });
+        _debugLog('notification_tap eventId=$eventId');
+        _tapController.add(NotificationTap(eventId: eventId));
+      });
+    } catch (error) {
+      _debugLog(
+        'notification_tap_setup_failure causeType=${error.runtimeType}',
+      );
+    }
+    _foregroundSubscription?.cancel();
+    try {
+      _foregroundSubscription = _messaging.onForegroundMessage.listen(
+        (message) => unawaited(_showForegroundNotification(message)),
+      );
+    } catch (error) {
+      _debugLog('foreground_setup_failure causeType=${error.runtimeType}');
+    }
+  }
+
+  Future<void> _showForegroundNotification(
+    ForegroundNotification message,
+  ) async {
+    final localNotifications = _localNotifications;
+    final eventId = _payloadParser.eventIdFromData(message.data);
+    final title = message.title?.trim();
+    final body = message.body?.trim();
+    if (localNotifications == null ||
+        eventId == null ||
+        title == null ||
+        title.isEmpty ||
+        body == null ||
+        body.isEmpty) {
+      return;
+    }
+    if (!(await _readPermissionStatus()).allowsDelivery) return;
+    try {
+      await localNotifications.show(
+        title: title,
+        body: body,
+        payload: _payloadParser.toJson(eventId),
+      );
+    } catch (error) {
+      _debugLog('foreground_show_failure causeType=${error.runtimeType}');
+    }
   }
 
   void _handleLocalNotificationTap(String payload) {
