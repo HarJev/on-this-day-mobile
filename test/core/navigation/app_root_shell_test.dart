@@ -180,6 +180,62 @@ void main() {
     expect(quizRepository.catalogCalls, 1);
   });
 
+  testWidgets('resuming on a new calendar day reloads Today and Quiz', (
+    tester,
+  ) async {
+    final today = _CountingTodayRepository();
+    final quizRepository = _QuizRepository();
+    final dependencies = _dependencies(quizRepository, _Store());
+    var clock = DateTime(2026, 9, 14, 23, 50);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AppRootShell(
+          onThisDayRepository: today,
+          timezoneProvider: const _Timezone(),
+          quizDependencies: () => dependencies,
+          onShowDebugNotification: null,
+          now: () => clock,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(NavigationDestination).at(1));
+    await tester.pumpAndSettle();
+    expect(today.todayCalls, 1);
+    expect(quizRepository.catalogCalls, 1);
+
+    Future<void> backgroundAndResume() async {
+      for (final state in const [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pumpAndSettle();
+    }
+
+    clock = DateTime(2026, 9, 14, 23, 59);
+    await backgroundAndResume();
+    expect(today.todayCalls, 1, reason: 'same day keeps loaded content');
+    expect(quizRepository.catalogCalls, 1);
+
+    clock = DateTime(2026, 9, 15, 7);
+    today.displayDate = 'Sep 15';
+    await backgroundAndResume();
+    expect(today.todayCalls, 2);
+    expect(quizRepository.catalogCalls, 2);
+
+    await tester.tap(find.byType(NavigationDestination).at(0));
+    await tester.pumpAndSettle();
+    expect(find.text('Sep 15'), findsOneWidget);
+    expect(find.text('Sep 14'), findsNothing);
+  });
+
   testWidgets('Explore the daily quiz returns to the Quiz tab', (tester) async {
     final quizRepository = _QuizRepository();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -564,6 +620,22 @@ final class _TodayRepository implements OnThisDayRepository {
       EventSource(name: 'Test source', url: Uri.parse('https://example.com')),
     ],
   );
+}
+
+final class _CountingTodayRepository extends _TodayRepository {
+  int todayCalls = 0;
+  String displayDate = 'Sep 14';
+
+  @override
+  Future<DailyContent> getTodayContent(String timezone) async {
+    todayCalls++;
+    final content = await super.getTodayContent(timezone);
+    return DailyContent(
+      displayDate: displayDate,
+      featuredEvent: content.featuredEvent,
+      additionalEvents: content.additionalEvents,
+    );
+  }
 }
 
 final class _Store implements QuizResultStore {

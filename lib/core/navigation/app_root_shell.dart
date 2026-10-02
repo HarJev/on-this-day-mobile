@@ -30,6 +30,7 @@ final class AppRootShell extends StatefulWidget {
     this.sourceLauncher = const PlatformSourceLauncher(),
     this.rootTabs,
     this.telemetry = const NoopAppTelemetry(),
+    this.now = DateTime.now,
   });
 
   final OnThisDayRepository onThisDayRepository;
@@ -39,6 +40,9 @@ final class AppRootShell extends StatefulWidget {
   final OptionalImageLoader? optionalImageLoader;
   final SourceLauncher sourceLauncher;
   final AppTelemetry telemetry;
+
+  /// Device clock, used to notice a new calendar day when the app resumes.
+  final DateTime Function() now;
 
   /// When provided, routes above the shell can switch the visible tab.
   final RootTabController? rootTabs;
@@ -52,11 +56,35 @@ class _AppRootShellState extends State<AppRootShell> {
   var _quizCreated = false;
   String? _todayDate;
   QuizRouteDependencies? _quiz;
+  late DateTime _shownDay;
+  var _dayGeneration = 0;
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     widget.rootTabs?.addListener(_followRootTabs);
+    _shownDay = _calendarDay(widget.now());
+    _lifecycle = AppLifecycleListener(onResume: _refreshIfNewDay);
+  }
+
+  static DateTime _calendarDay(DateTime time) =>
+      DateTime(time.year, time.month, time.day);
+
+  /// An installed app can sit suspended overnight. When it resumes on a later
+  /// calendar day, rebuild Today and the Quiz Hub so they request the new
+  /// day's content instead of showing yesterday's.
+  void _refreshIfNewDay() {
+    final day = _calendarDay(widget.now());
+    if (!mounted || day == _shownDay) return;
+    setState(() {
+      _shownDay = day;
+      _dayGeneration++;
+      _todayDate = null;
+    });
+    // The retained status belongs to the previous Daily; the new Hub
+    // publishes the current one once the backend confirms it.
+    _quiz?.rootStatus.value = null;
   }
 
   @override
@@ -70,6 +98,7 @@ class _AppRootShellState extends State<AppRootShell> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     widget.rootTabs?.removeListener(_followRootTabs);
     super.dispose();
   }
@@ -129,6 +158,7 @@ class _AppRootShellState extends State<AppRootShell> {
         index: _index,
         children: [
           HomeScreen(
+            key: ValueKey('today-$_dayGeneration'),
             repository: widget.onThisDayRepository,
             timezoneProvider: widget.timezoneProvider,
             imageLoader: widget.optionalImageLoader,
@@ -147,6 +177,7 @@ class _AppRootShellState extends State<AppRootShell> {
             ValueListenableBuilder(
               valueListenable: quiz.rootStatus,
               builder: (context, status, _) => QuizHubScreen(
+                key: ValueKey('quiz-$_dayGeneration'),
                 repository: quiz.repository,
                 embedded: true,
                 dailyStatus: status,
