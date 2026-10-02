@@ -13,6 +13,15 @@ plugins {
 }
 
 val releaseSigningFile = rootProject.file("key.properties")
+val releaseRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.substringAfterLast(':').contains("Release", ignoreCase = true)
+}
+if (releaseRequested && !releaseSigningFile.isFile) {
+    error(
+        "Android release signing requires android/key.properties with an owner-controlled upload keystore. " +
+            "Debug builds do not require this file."
+    )
+}
 val releaseSigning = Properties()
 if (releaseSigningFile.isFile) {
     releaseSigningFile.inputStream().use { releaseSigning.load(it) }
