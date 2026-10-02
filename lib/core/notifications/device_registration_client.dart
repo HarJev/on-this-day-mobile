@@ -9,8 +9,8 @@ class DeviceRegistrationRequest {
     required this.platform,
     required this.timezone,
     required this.notificationPermissionStatus,
-  }) : assert(token != ''),
-       assert(timezone != '');
+  })  : assert(token != ''),
+        assert(timezone != '');
 
   final String token;
   final DevicePlatform platform;
@@ -22,19 +22,22 @@ class DeviceRegistrationRequest {
       'token': token,
       'platform': platform.toJsonValue(),
       'timezone': timezone,
-      'notificationPermissionStatus': notificationPermissionStatus
-          .toJsonValue(),
+      'notificationPermissionStatus':
+          notificationPermissionStatus.toJsonValue(),
     };
   }
 }
 
 class DeviceRegistrationClient {
+  static const maxTokenLength = 1024;
+
   const DeviceRegistrationClient({required ApiClient apiClient})
-    : _apiClient = apiClient;
+      : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
   Future<void> register(DeviceRegistrationRequest request) async {
+    _validateToken(request.token);
     final json = await _apiClient.postJson(
       '/v1/devices',
       body: request.toJson(),
@@ -50,6 +53,7 @@ class DeviceRegistrationClient {
   }
 
   Future<void> deleteToken(String token) async {
+    _validateToken(token);
     final encodedToken = Uri.encodeComponent(token);
     final json = await _apiClient.deleteJson('/v1/devices/$encodedToken');
     if (json['deleted'] != true) {
@@ -61,6 +65,12 @@ class DeviceRegistrationClient {
       );
     }
   }
+
+  static void _validateToken(String token) {
+    if (token.isEmpty || token.length > maxTokenLength) {
+      throw const ApiException.invalidRequest('Device token is invalid.');
+    }
+  }
 }
 
 extension NotificationPermissionStatusJson on NotificationPermissionStatus {
@@ -69,7 +79,8 @@ extension NotificationPermissionStatusJson on NotificationPermissionStatus {
       NotificationPermissionStatus.authorized => 'authorized',
       // The backend contract has no permanent-denial value; both mean denied.
       NotificationPermissionStatus.denied ||
-      NotificationPermissionStatus.permanentlyDenied => 'denied',
+      NotificationPermissionStatus.permanentlyDenied =>
+        'denied',
       NotificationPermissionStatus.notDetermined => 'not_determined',
       NotificationPermissionStatus.provisional => 'provisional',
     };

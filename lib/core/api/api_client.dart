@@ -1,15 +1,18 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'api_exception.dart';
 
 class ApiClient {
+  static const maxRequestBodyBytes = 16 * 1024;
+
   ApiClient({required Uri baseUrl, required http.Client httpClient})
-    : assert(baseUrl.hasScheme),
-      _baseUrl = baseUrl,
-      _httpClient = httpClient;
+      : assert(baseUrl.hasScheme),
+        _baseUrl = baseUrl,
+        _httpClient = httpClient;
 
   final Uri _baseUrl;
   final http.Client _httpClient;
@@ -62,6 +65,8 @@ class ApiClient {
     try {
       _debugLog('api_request_start method=$method uri=${_loggable(uri)}');
       response = await _send(method: method, uri: uri, body: requestBody);
+    } on ApiException {
+      rethrow;
     } catch (error) {
       _debugLog(
         'api_request_failure method=$method uri=${_loggable(uri)} '
@@ -93,14 +98,23 @@ class ApiClient {
     required Uri uri,
     Map<String, Object?>? body,
   }) {
+    final bodyBytes = body == null ? null : utf8.encode(jsonEncode(body));
+    if (bodyBytes != null && bodyBytes.length > maxRequestBodyBytes) {
+      throw const ApiException.invalidRequest(
+        'Request body exceeds the 16 KB limit.',
+      );
+    }
     final headers = {
       'accept': 'application/json',
-      if (body != null) 'content-type': 'application/json',
+      if (bodyBytes != null) 'content-type': 'application/json',
+      if (method == 'POST' || method == 'DELETE')
+        'x-amz-content-sha256':
+            sha256.convert(bodyBytes ?? const <int>[]).toString(),
     };
 
     return switch (method) {
       'GET' => _httpClient.get(uri, headers: headers),
-      'POST' => _httpClient.post(uri, headers: headers, body: jsonEncode(body)),
+      'POST' => _httpClient.post(uri, headers: headers, body: bodyBytes),
       'DELETE' => _httpClient.delete(uri, headers: headers),
       _ => throw ArgumentError.value(method, 'method', 'Unsupported method.'),
     };
@@ -129,9 +143,8 @@ class ApiClient {
     if (devices < 0 || devices == segments.length - 1) {
       return uri.toString();
     }
-    return uri
-        .replace(pathSegments: [...segments.take(devices + 1), '<redacted>'])
-        .toString();
+    return uri.replace(
+        pathSegments: [...segments.take(devices + 1), '<redacted>']).toString();
   }
 
   void _debugLog(String message) {
