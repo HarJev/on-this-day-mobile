@@ -93,6 +93,44 @@ void main() {
       );
     });
 
+    test('rejects an overlong token before register or delete', () async {
+      var sent = false;
+      final client = DeviceRegistrationClient(
+        apiClient: ApiClient(
+          baseUrl: Uri.parse('https://d123example.cloudfront.net'),
+          httpClient: MockClient((_) async {
+            sent = true;
+            return http.Response('{}', 200);
+          }),
+        ),
+      );
+      final token = 'x' * (DeviceRegistrationClient.maxTokenLength + 1);
+
+      await expectLater(
+        client.register(
+          DeviceRegistrationRequest(
+            token: token,
+            platform: DevicePlatform.android,
+            timezone: 'America/Jamaica',
+            notificationPermissionStatus:
+                NotificationPermissionStatus.authorized,
+          ),
+        ),
+        throwsA(
+          isA<ApiException>().having(
+            (error) => error.kind,
+            'kind',
+            ApiExceptionKind.invalidRequest,
+          ),
+        ),
+      );
+      await expectLater(
+        client.deleteToken(token),
+        throwsA(isA<ApiException>()),
+      );
+      expect(sent, isFalse);
+    });
+
     test('treats unexpected response JSON as invalid API response', () async {
       final client = DeviceRegistrationClient(
         apiClient: ApiClient(

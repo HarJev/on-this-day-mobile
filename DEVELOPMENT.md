@@ -141,6 +141,31 @@ After adding native plugins such as `flutter_timezone`, iOS needs a full app
 stop and rebuild. A hot restart may keep running an older native plugin
 registration.
 
+## Production API URL
+
+The deployed API will be reached through its CloudFront distribution, not the
+raw Lambda function URL. Until `infra/prod` is deployed, the release config uses
+the deliberately unusable
+`https://REPLACE_WITH_API_BASE_URL.cloudfront.net` placeholder. Release
+startup rejects that placeholder, HTTP, and local/emulator hosts. Debug builds
+still default to local SAM.
+
+After deployment, get the actual URL from the backend Terraform output
+`api_base_url` in `infra/prod` and supply it at build time:
+
+```sh
+# Example only; replace this placeholder with the Terraform api_base_url output.
+API_BASE_URL="https://REPLACE_WITH_API_BASE_URL.cloudfront.net"
+flutter build appbundle --release \
+  --dart-define="ON_THIS_DAY_API_BASE_URL=$API_BASE_URL"
+```
+
+Do not distribute a build made with the placeholder. The URL is public app
+configuration, not a secret. The shared API client sends the exact-body SHA-256
+header on POST and DELETE; local SAM accepts it too. Content GET responses may
+remain cached at the CloudFront edge for up to 60 seconds, including briefly
+after a content update. Do not assume immediate read-after-write freshness.
+
 ## Notifications
 
 Firebase configuration is generated in `lib/firebase_options.dart`, with native

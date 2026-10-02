@@ -29,12 +29,15 @@ class DeviceRegistrationRequest {
 }
 
 class DeviceRegistrationClient {
+  static const maxTokenLength = 1024;
+
   const DeviceRegistrationClient({required ApiClient apiClient})
     : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
   Future<void> register(DeviceRegistrationRequest request) async {
+    _validateToken(request.token);
     final json = await _apiClient.postJson(
       '/v1/devices',
       body: request.toJson(),
@@ -50,6 +53,7 @@ class DeviceRegistrationClient {
   }
 
   Future<void> deleteToken(String token) async {
+    _validateToken(token);
     final encodedToken = Uri.encodeComponent(token);
     final json = await _apiClient.deleteJson('/v1/devices/$encodedToken');
     if (json['deleted'] != true) {
@@ -59,6 +63,12 @@ class DeviceRegistrationClient {
           json,
         ),
       );
+    }
+  }
+
+  static void _validateToken(String token) {
+    if (token.isEmpty || token.length > maxTokenLength) {
+      throw const ApiException.invalidRequest('Device token is invalid.');
     }
   }
 }

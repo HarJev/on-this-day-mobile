@@ -1,4 +1,4 @@
-enum ApiExceptionKind { http, invalidJson, network }
+enum ApiExceptionKind { http, invalidJson, invalidRequest, network }
 
 class ApiException implements Exception {
   const ApiException({
@@ -26,6 +26,9 @@ class ApiException implements Exception {
         message: 'Invalid API response.',
         cause: cause,
       );
+
+  const ApiException.invalidRequest(String message)
+    : this(kind: ApiExceptionKind.invalidRequest, message: message);
 
   const ApiException.network({Object? cause})
     : this(
