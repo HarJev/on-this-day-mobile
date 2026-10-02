@@ -4,8 +4,7 @@ class AppConfig {
   const AppConfig({required this.apiBaseUrl});
 
   static const localApiBaseUrl = 'http://127.0.0.1:3000';
-  static const releaseApiBaseUrlPlaceholder =
-      'https://REPLACE_WITH_API_BASE_URL.cloudfront.net';
+  static const releaseApiBaseUrl = 'https://d1v4ivrcr6v8za.cloudfront.net';
 
   factory AppConfig.fromEnvironment() {
     const configuredBaseUrl = String.fromEnvironment(
@@ -18,15 +17,14 @@ class AppConfig {
 
   factory AppConfig.fromBaseUrl(String value, {required bool isRelease}) {
     final selected = value.isEmpty
-        ? (isRelease ? releaseApiBaseUrlPlaceholder : localApiBaseUrl)
+        ? (isRelease ? releaseApiBaseUrl : localApiBaseUrl)
         : value;
     final uri = Uri.tryParse(selected);
     if (uri == null || !uri.hasAuthority || uri.host.isEmpty) {
       throw StateError('Set ON_THIS_DAY_API_BASE_URL to a valid API URL.');
     }
     if (isRelease &&
-        (selected == releaseApiBaseUrlPlaceholder ||
-            uri.scheme != 'https' ||
+        (uri.scheme != 'https' ||
             uri.userInfo.isNotEmpty ||
             uri.hasQuery ||
             uri.hasFragment ||

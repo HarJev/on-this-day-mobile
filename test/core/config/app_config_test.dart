@@ -8,10 +8,10 @@ void main() {
     expect(config.apiBaseUrl, Uri.parse(AppConfig.localApiBaseUrl));
   });
 
-  test('release has no local fallback when the define is absent', () {
+  test('release defaults to the live CloudFront API', () {
     expect(
-      () => AppConfig.fromBaseUrl('', isRelease: true),
-      throwsStateError,
+      AppConfig.fromBaseUrl('', isRelease: true).apiBaseUrl,
+      Uri.parse('https://d1v4ivrcr6v8za.cloudfront.net'),
     );
     expect(
       AppConfig.fromBaseUrl('', isRelease: false).apiBaseUrl,
@@ -19,18 +19,17 @@ void main() {
     );
   });
 
-  test('accepts the deployed CloudFront HTTPS URL in release', () {
+  test('dart-define can override the release default', () {
     final config = AppConfig.fromBaseUrl(
-      'https://d123example.cloudfront.net',
+      'https://api.example.test',
       isRelease: true,
     );
 
-    expect(config.apiBaseUrl, Uri.parse('https://d123example.cloudfront.net'));
+    expect(config.apiBaseUrl, Uri.parse('https://api.example.test'));
   });
 
-  test('release rejects the placeholder and local or insecure URLs', () {
+  test('release rejects local or insecure URLs', () {
     for (final url in [
-      AppConfig.releaseApiBaseUrlPlaceholder,
       AppConfig.localApiBaseUrl,
       'http://d123example.cloudfront.net',
       'https://localhost:3000',

@@ -152,15 +152,16 @@ The app should send the user's timezone when requesting today's content and when
 registering a notification token. Device registration should also include
 notification permission status when available.
 
-Production builds take `ON_THIS_DAY_API_BASE_URL` from the backend
-`infra/prod` Terraform `api_base_url` output. That is the CloudFront URL; the
-raw Lambda function URL requires IAM signing and is not an app endpoint. The
-shared `ApiClient` hashes the exact UTF-8 request body bytes for POST and
+Production builds default to the live CloudFront API URL
+`https://d1v4ivrcr6v8za.cloudfront.net` (the backend `infra/prod` Terraform
+`api_base_url` output). `ON_THIS_DAY_API_BASE_URL` remains a build-time
+override; debug defaults to local SAM. The raw Lambda function URL requires
+IAM signing and is not an app endpoint. The shared `ApiClient` hashes the exact UTF-8 request body bytes for POST and
 DELETE into `x-amz-content-sha256` (empty-body hash for DELETE). It rejects
 bodies over 16 KiB before transport, and device registration rejects tokens
-longer than 1,024 characters. GET requests need no hash header. Successful
-content GETs may be served from the edge for 60 seconds; a recent write does
-not imply immediately fresh content.
+longer than 1,024 characters. GET requests need no hash header. The deployed
+CloudFront behavior currently uses `CachingDisabled`, so each GET reaches
+Lambda; the app does not rely on edge-cached reads.
 
 Do not put API secrets in the mobile app. Values bundled into the app, including
 the API base URL and Firebase client configuration, must not be treated as
