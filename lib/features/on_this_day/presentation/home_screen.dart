@@ -7,6 +7,7 @@ import '../../../core/config/timezone_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/event_detail_route_arguments.dart';
 import '../../../core/navigation/source_launcher.dart';
+import '../../../core/telemetry/app_telemetry.dart';
 import '../domain/daily_content.dart';
 import '../domain/on_this_day_repository.dart';
 import '../domain/recent_day.dart';
@@ -26,6 +27,7 @@ class HomeScreen extends StatefulWidget {
     this.onDisplayDateChanged,
     this.imageLoader,
     this.sourceLauncher = const PlatformSourceLauncher(),
+    this.telemetry = const NoopAppTelemetry(),
   });
 
   final OnThisDayRepository repository;
@@ -35,6 +37,7 @@ class HomeScreen extends StatefulWidget {
   final ValueChanged<String?>? onDisplayDateChanged;
   final OptionalImageLoader? imageLoader;
   final SourceLauncher sourceLauncher;
+  final AppTelemetry telemetry;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -125,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _reportDisplayDate(String? displayDate) {
     if (_reportedDisplayDate == displayDate) return;
     _reportedDisplayDate = displayDate;
+    if (displayDate != null) widget.telemetry.todayLoaded();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onDisplayDateChanged?.call(displayDate);
     });
@@ -138,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openEvent(String eventId) {
+    widget.telemetry.recentOpened();
     Navigator.of(context).pushNamed(AppRoutes.eventDetail(eventId));
   }
 }

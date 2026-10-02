@@ -7,6 +7,9 @@ import '../../features/quiz/presentation/quiz_gameplay_view.dart';
 import '../../features/quiz/presentation/quiz_session_clock.dart';
 import '../../features/quiz/presentation/quiz_session_controller.dart';
 import '../../features/quiz/presentation/quiz_session_scheduler.dart';
+import '../../features/quiz/presentation/quiz_session_state.dart';
+import '../../features/quiz/presentation/images/quiz_image_preparation_exception.dart';
+import '../telemetry/app_telemetry.dart';
 import 'quiz_route_dependencies.dart';
 
 /// Owns one playable session for a pushed route. Persistence stays with the
@@ -16,6 +19,7 @@ final class QuizGameplayRoute extends StatefulWidget {
     super.key,
     required this.launch,
     required this.dependencies,
+    this.telemetry = const NoopAppTelemetry(),
     required this.routeObserver,
     required this.onExit,
     required this.onResults,
@@ -23,6 +27,7 @@ final class QuizGameplayRoute extends StatefulWidget {
 
   final QuizSessionLaunchRequest launch;
   final QuizRouteDependencies dependencies;
+  final AppTelemetry telemetry;
   final RouteObserver<PageRoute<dynamic>> routeObserver;
   final VoidCallback onExit;
   final ValueChanged<String> onResults;
@@ -36,6 +41,9 @@ class _QuizGameplayRouteState extends State<QuizGameplayRoute>
   late final QuizSessionController _controller;
   PageRoute<dynamic>? _route;
   var _disposed = false;
+  var _started = false;
+  var _completed = false;
+  var _preparationFailureRecorded = false;
 
   @override
   void initState() {
@@ -52,7 +60,33 @@ class _QuizGameplayRouteState extends State<QuizGameplayRoute>
         widget.launch.saveIntent,
       ),
     );
+    _controller.addListener(_onSessionChanged);
     unawaited(_controller.prepare());
+  }
+
+  void _onSessionChanged() {
+    final state = _controller.state;
+    if (!_started && state is QuizAnswering) {
+      _started = true;
+      widget.telemetry.quizStarted(
+        daily: widget.launch.isDaily,
+        questionCount: widget.launch.definition.questions.length,
+      );
+    }
+    if (!_completed && state is QuizCompleted) {
+      _completed = true;
+      widget.telemetry.quizCompleted(
+        daily: widget.launch.isDaily,
+        questionCount: widget.launch.definition.questions.length,
+      );
+    }
+    if (!_preparationFailureRecorded && state is QuizPreparationFailed) {
+      _preparationFailureRecorded = true;
+      final cause = state.cause;
+      widget.telemetry.imagePreparationFailed(
+        cause is QuizImagePreparationException ? cause.kind.name : 'other',
+      );
+    }
   }
 
   @override
@@ -83,6 +117,7 @@ class _QuizGameplayRouteState extends State<QuizGameplayRoute>
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
     if (_route != null) widget.routeObserver.unsubscribe(this);
+    _controller.removeListener(_onSessionChanged);
     _controller.dispose();
     super.dispose();
   }

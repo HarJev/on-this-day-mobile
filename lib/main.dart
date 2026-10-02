@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +30,8 @@ import 'core/notifications/notification_prompt_store.dart';
 import 'core/notifications/notification_resume_reconciler.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/notifications/registered_token_store.dart';
+import 'core/telemetry/app_telemetry.dart';
+import 'core/telemetry/telemetry_route_observer.dart';
 import 'features/on_this_day/data/backend_on_this_day_repository.dart';
 import 'features/quiz/application/quiz_completion_coordinator.dart';
 import 'features/quiz/application/quiz_completion_id_generator.dart';
@@ -49,6 +53,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppFonts.registerLicences();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  final telemetry = FirebaseAppTelemetry(
+    analytics: FirebaseAnalytics.instance,
+    crashlytics: FirebaseCrashlytics.instance,
+  );
+  await telemetry.configure();
 
   final config = AppConfig.fromEnvironment();
   final httpClient = http.Client();
@@ -116,6 +126,7 @@ Future<void> main() async {
     ),
     onAuthorized: deviceRegistrationCoordinator.registerAfterAuthorization,
     deniedMayBeUnasked: defaultTargetPlatform == TargetPlatform.android,
+    onDecision: telemetry.notificationPromptDecision,
   );
 
   final notificationNavigationCoordinator = NotificationNavigationCoordinator(
@@ -126,27 +137,33 @@ Future<void> main() async {
       notificationService.notificationTaps,
     ),
   );
+  final router = AppRouter(
+    repository: repository,
+    timezoneProvider: timezoneProvider,
+    onShowDebugNotification: kDebugMode
+        ? () => unawaited(
+            notificationService.showDebugTestNotification(
+              eventId: _debugNotificationEventId,
+            ),
+          )
+        : null,
+    navigatorKey: navigatorKey,
+    routeObserver: routeObserver,
+    quizDependencies: () => quizDependencies,
+    optionalImageLoader: optionalImageLoader,
+    notificationPrompt: notificationPrompt,
+    telemetry: telemetry,
+  );
   runApp(
     OnThisDayApp(
       initialEventId: notificationStartup.initialEventId,
       navigatorKey: navigatorKey,
-      router: AppRouter(
-        repository: repository,
-        timezoneProvider: timezoneProvider,
-        onShowDebugNotification: kDebugMode
-            ? () => unawaited(
-                notificationService.showDebugTestNotification(
-                  eventId: _debugNotificationEventId,
-                ),
-              )
-            : null,
-        navigatorKey: navigatorKey,
-        routeObserver: routeObserver,
-        quizDependencies: () => quizDependencies,
-        optionalImageLoader: optionalImageLoader,
-        notificationPrompt: notificationPrompt,
-      ),
+      router: router,
       routeObserver: routeObserver,
+      telemetryObserver: TelemetryRouteObserver(
+        telemetry: telemetry,
+        rootTabs: router.rootTabs,
+      ),
     ),
   );
 }
@@ -159,6 +176,7 @@ class OnThisDayApp extends StatelessWidget {
     this.initialEventId,
     this.navigatorKey,
     this.routeObserver,
+    this.telemetryObserver,
   }) : _router = router;
 
   final AppRouter _router;
@@ -166,6 +184,7 @@ class OnThisDayApp extends StatelessWidget {
   final String? initialEventId;
   final GlobalKey<NavigatorState>? navigatorKey;
   final RouteObserver<PageRoute<dynamic>>? routeObserver;
+  final NavigatorObserver? telemetryObserver;
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +194,10 @@ class OnThisDayApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       initialRoute: initialRoute,
       onGenerateRoute: _router.onGenerateRoute,
-      navigatorObservers: [routeObserver ?? _router.routeObserver],
+      navigatorObservers: [
+        routeObserver ?? _router.routeObserver,
+        ?telemetryObserver,
+      ],
       onGenerateInitialRoutes: (route) {
         final eventId = initialEventId;
         if (eventId == null) {

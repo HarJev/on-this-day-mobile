@@ -34,11 +34,13 @@ class NotificationPromptCoordinator {
     onAuthorized,
     required bool deniedMayBeUnasked,
     DateTime Function()? now,
+    void Function(String outcome)? onDecision,
   }) : _permissions = permissions,
        _store = store,
        _onAuthorized = onAuthorized,
        _deniedMayBeUnasked = deniedMayBeUnasked,
-       _now = now ?? DateTime.now;
+       _now = now ?? DateTime.now,
+       _onDecision = onDecision;
 
   /// How long the first "Not now" pauses the offer.
   static const reofferAfter = Duration(days: 30);
@@ -51,6 +53,7 @@ class NotificationPromptCoordinator {
   final Future<void> Function(NotificationPermissionStatus status)
   _onAuthorized;
   final DateTime Function() _now;
+  final void Function(String outcome)? _onDecision;
 
   /// Android 13+ reports notifications as denied before the app has ever asked,
   /// so an unrecorded denial may still be askable there. On iOS a denial means
@@ -97,6 +100,7 @@ class NotificationPromptCoordinator {
       status = await _permissions.requestPermission();
     } catch (error) {
       _debugLog('enable_request_failure causeType=${error.runtimeType}');
+      _onDecision?.call(NotificationPromptOutcome.failed.name);
       return NotificationPromptOutcome.failed;
     }
 
@@ -104,17 +108,23 @@ class NotificationPromptCoordinator {
 
     if (status.allowsDelivery) {
       unawaited(_registerSafely(status));
+      _onDecision?.call(NotificationPromptOutcome.enabled.name);
       return NotificationPromptOutcome.enabled;
     }
-    return switch (status) {
+    final outcome = switch (status) {
       NotificationPermissionStatus.notDetermined =>
         NotificationPromptOutcome.undecided,
       _ => NotificationPromptOutcome.blocked,
     };
+    _onDecision?.call(outcome.name);
+    return outcome;
   }
 
   /// Records "Not now". Never requests permission.
-  Future<void> decline() => _update((record) => record.declinedOn(_now()));
+  Future<void> decline() async {
+    await _update((record) => record.declinedOn(_now()));
+    _onDecision?.call('not_now');
+  }
 
   bool _recordAllowsOffer(NotificationPromptRecord record) {
     if (record.requested || record.declineCount >= maxDeclines) {

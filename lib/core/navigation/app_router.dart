@@ -10,6 +10,7 @@ import '../../features/quiz/presentation/quiz_full_review_screen.dart';
 import '../../features/quiz/presentation/quiz_results_screen.dart';
 import '../config/timezone_provider.dart';
 import '../notifications/notification_prompt_coordinator.dart';
+import '../telemetry/app_telemetry.dart';
 import 'app_root_shell.dart';
 import 'app_routes.dart';
 import 'event_detail_route_arguments.dart';
@@ -31,6 +32,7 @@ class AppRouter {
     OptionalImageLoader? optionalImageLoader,
     NotificationPromptCoordinator? notificationPrompt,
     RootTabController? rootTabs,
+    AppTelemetry telemetry = const NoopAppTelemetry(),
   }) : _repository = repository,
        _timezoneProvider = timezoneProvider,
        _sourceLauncher = sourceLauncher,
@@ -39,6 +41,7 @@ class AppRouter {
        _navigatorKey = navigatorKey,
        _optionalImageLoader = optionalImageLoader,
        _notificationPrompt = notificationPrompt,
+       _telemetry = telemetry,
        rootTabs = rootTabs ?? RootTabController(),
        routeObserver = routeObserver ?? RouteObserver<PageRoute<dynamic>>();
 
@@ -50,6 +53,7 @@ class AppRouter {
   final GlobalKey<NavigatorState>? _navigatorKey;
   final OptionalImageLoader? _optionalImageLoader;
   final NotificationPromptCoordinator? _notificationPrompt;
+  final AppTelemetry _telemetry;
   final RouteObserver<PageRoute<dynamic>> routeObserver;
   final RootTabController rootTabs;
 
@@ -67,6 +71,7 @@ class AppRouter {
           optionalImageLoader: _optionalImageLoader,
           sourceLauncher: _sourceLauncher,
           rootTabs: rootTabs,
+          telemetry: _telemetry,
         ),
         settings,
       );
@@ -80,6 +85,7 @@ class AppRouter {
           onShowDebugNotification: _onShowDebugNotification,
           imageLoader: _optionalImageLoader,
           sourceLauncher: _sourceLauncher,
+          telemetry: _telemetry,
         ),
         settings,
       );
@@ -154,6 +160,7 @@ class AppRouter {
         QuizGameplayRoute(
           launch: args.launch,
           dependencies: quiz,
+          telemetry: _telemetry,
           routeObserver: routeObserver,
           onExit: _returnToRoot,
           onResults: (completionId) => _navigator!.pushReplacementNamed(

@@ -89,4 +89,5 @@ claim.
 - [ ] Review the widget's current/stale/empty states and Event Detail deep link.
 - [ ] Review event/result share cards for attribution and image reuse rights.
 - [ ] Approve the privacy disclosure and minimal analytics/crash event set before
-  enabling production telemetry.
+  enabling production telemetry. Review `TELEMETRY.md` and verify native
+  defaults remain off in builds without the explicit release flag.
