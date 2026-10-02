@@ -50,6 +50,7 @@ class HomeController extends ChangeNotifier {
   HomeState _state = const HomeLoading();
   HomeState get state => _state;
   int _loadGeneration = 0;
+  bool _disposed = false;
 
   Future<void> loadToday() async {
     final generation = ++_loadGeneration;
@@ -72,7 +73,7 @@ class HomeController extends ChangeNotifier {
       _debugLog('repository_getTodayContent_start timezone=$timezone');
       final content = await _repository.getTodayContent(timezone);
       _debugLog('repository_getTodayContent_success');
-      if (generation != _loadGeneration) return;
+      if (_disposed || generation != _loadGeneration) return;
       _setState(HomeLoaded(content));
       await _loadRecentDays(timezone, generation);
     } on TodayContentUnavailableException {
@@ -121,9 +122,18 @@ class HomeController extends ChangeNotifier {
     return loadToday();
   }
 
+  /// A late result or timeout can arrive after the screen has gone, for
+  /// example when a new day rebuilds Today mid-load.
   void _setState(HomeState state) {
+    if (_disposed) return;
     _state = state;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   void _debugLog(String message) {

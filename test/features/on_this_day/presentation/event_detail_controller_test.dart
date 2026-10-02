@@ -21,6 +21,22 @@ void main() {
       expect(repository.loadCount, 0);
     });
 
+    test('ignores a late result or error after dispose', () async {
+      for (final repository in [
+        _RecordingRepository(result: _event),
+        _RecordingRepository(exception: StateError('timed out')),
+      ]) {
+        final controller = EventDetailController(
+          repository: repository,
+          eventId: 'event-1',
+        );
+        final load = controller.loadEvent();
+        controller.dispose();
+
+        await expectLater(load, completes);
+      }
+    });
+
     test('loads event successfully', () async {
       final repository = _RecordingRepository(result: _event);
       final controller = EventDetailController(

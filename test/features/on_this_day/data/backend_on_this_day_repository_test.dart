@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -120,6 +122,36 @@ void main() {
       expect(event.images.single.sourceUrl, isNotNull);
     });
 
+    test('turns a stalled request into a retryable network failure', () async {
+      final repository = _repository(
+        (_) => Completer<http.Response>().future,
+        requestTimeout: const Duration(milliseconds: 20),
+      );
+      final stalled = isA<ApiException>()
+          .having((e) => e.kind, 'kind', ApiExceptionKind.network)
+          .having((e) => e.cause, 'cause', isA<TimeoutException>());
+
+      await expectLater(
+        repository.getTodayContent('America/Jamaica'),
+        throwsA(stalled),
+      );
+      await expectLater(repository.getEvent('event-1'), throwsA(stalled));
+      await expectLater(
+        repository.getRecentDays('America/Jamaica'),
+        throwsA(stalled),
+      );
+    });
+
+    test('rejects a non-positive request timeout', () {
+      expect(
+        () => _repository(
+          (_) async => http.Response('{}', 200),
+          requestTimeout: Duration.zero,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('maps event not found to domain exception', () async {
       final repository = _repository(
         (_) async => http.Response(
@@ -171,13 +203,15 @@ const _recentDaysResponse = '''
 ''';
 
 BackendOnThisDayRepository _repository(
-  Future<http.Response> Function(http.Request request) handler,
-) {
+  Future<http.Response> Function(http.Request request) handler, {
+  Duration requestTimeout = const Duration(seconds: 20),
+}) {
   return BackendOnThisDayRepository(
     apiClient: ApiClient(
       baseUrl: Uri.parse('http://127.0.0.1:3000'),
       httpClient: MockClient(handler),
     ),
+    requestTimeout: requestTimeout,
   );
 }
 

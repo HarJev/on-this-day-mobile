@@ -1,8 +1,8 @@
 # Release Signing and APNs Handoff
 
-Date: 2026-10-02. Branch: `claude/release-signing-apns`, based on
-`origin/main` at `41226dd`. The owner approved this beta-readiness task.
-Do not merge the branch or push to main.
+Date: 2026-10-02. Status: merged to main in
+[mobile PR #13](https://github.com/HarJev/on-this-day-mobile/pull/13)
+(`7764cee`). This handoff is complete; the owner-only gates below remain.
 
 ## Scope
 
@@ -34,9 +34,12 @@ Do not merge the branch or push to main.
 
 ## PR
 
-Committed as `5e20cb6` and opened
-[mobile PR #13](https://github.com/HarJev/on-this-day-mobile/pull/13)
-against main. Do not merge until owner review.
+Committed as `5e20cb6`, reviewed, and merged as
+[mobile PR #13](https://github.com/HarJev/on-this-day-mobile/pull/13).
+The unused `scripts/build_android_release.sh`, which still required an API
+URL although release builds now default to CloudFront, was removed in the
+follow-up beta-pass PR; use `flutter build appbundle --release` as described
+in `DEVELOPMENT.md`.
 
 ## Owner-Only Gates
 
