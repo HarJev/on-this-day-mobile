@@ -1,5 +1,42 @@
 # Local Release-Readiness Audit
 
+## Current Beta Signing Gate (2026-10-02)
+
+The September 15 observations below are historical, not current release state.
+Release builds default to `https://d1v4ivrcr6v8za.cloudfront.net`; the
+`ON_THIS_DAY_API_BASE_URL` dart-define can override it with an approved HTTPS
+origin. Telemetry remains disabled pending privacy sign-off.
+
+On the owner's Mac, create an upload keystore outside Git (the command prompts
+for passwords), back it up, then place its actual values in ignored
+`android/key.properties`:
+
+```sh
+mkdir -p "$HOME/.on-this-day"
+keytool -genkeypair -v -keystore "$HOME/.on-this-day/upload-keystore.jks" \
+  -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+```properties
+storeFile=/Users/<your-user>/.on-this-day/upload-keystore.jks
+storePassword=<your-store-password>
+keyAlias=upload
+keyPassword=<your-key-password>
+```
+
+```sh
+chmod 600 android/key.properties
+flutter build appbundle --release
+```
+
+The Android release build fails if the signing file or keystore is missing; it
+never uses the debug key. Debug builds do not need the file. For iOS, open
+`ios/Runner.xcworkspace` in Xcode, select the owner's Apple Developer Team
+and distribution provisioning profile, choose a generic iOS device, then use
+Product > Archive. Debug/Profile target development APNs; Release targets
+production APNs. A real signed archive, TestFlight upload, and physical-device
+push test remain owner gates. See [DEVELOPMENT.md](../DEVELOPMENT.md) for details.
+
 Date: 2026-09-15. Branch: `codex/mobile-visual-polish`.
 This records observed evidence, not a production release approval.
 No physical-device checks, deployment, commits or pushes were performed.

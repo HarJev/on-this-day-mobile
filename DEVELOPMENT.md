@@ -334,30 +334,54 @@ available.
 
 ## Android Release Preparation
 
-Debug runs use the local API default above. Release startup requires an
-explicit deployed HTTPS API URL. The repository does not contain an upload
-keystore or a production API URL.
+Debug runs use the local SAM API default. Release builds default to
+`https://d1v4ivrcr6v8za.cloudfront.net`; an approved HTTPS
+`--dart-define=ON_THIS_DAY_API_BASE_URL=...` can override it.
 
-Create and back up an Android upload keystore under your own control. Follow
-the [Flutter Android signing guide](https://docs.flutter.dev/deployment/android)
-to put its details in the ignored file `android/key.properties`:
+On your Mac, create an upload keystore outside this repository. `keytool`
+prompts for passwords, so they do not appear in shell history:
+
+```sh
+mkdir -p "$HOME/.on-this-day"
+keytool -genkeypair -v -keystore "$HOME/.on-this-day/upload-keystore.jks" \
+  -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Back up the keystore and its passwords securely. Create the ignored
+`android/key.properties` with your actual values (never commit or share it):
 
 ```properties
 storePassword=<your-store-password>
 keyPassword=<your-key-password>
-keyAlias=<your-upload-key-alias>
-storeFile=/absolute/path/to/your-upload-keystore.jks
+keyAlias=upload
+storeFile=/Users/<your-user>/.on-this-day/upload-keystore.jks
 ```
 
-After the production HTTPS API endpoint exists, build the store bundle with:
+Restrict the file and build the Play upload bundle:
 
 ```sh
-ON_THIS_DAY_API_BASE_URL="https://api.your-domain.example" bash scripts/build_android_release.sh
+chmod 600 android/key.properties
+flutter build appbundle --release
 ```
 
-The command requires the private signing file and API URL. Keep the keystore,
-passwords, and signing properties out of Git. A direct local release APK build
-without signing properties is only a packaging check; do not distribute it.
+Release builds fail if `android/key.properties` or its keystore is missing;
+debug builds do not require either. For a different approved endpoint, add
+`--dart-define=ON_THIS_DAY_API_BASE_URL=https://your-approved-host.example`.
+Keep the keystore, passwords, and signing properties out of Git.
+
+For iOS, open `ios/Runner.xcworkspace` in Xcode, select your Apple Developer
+Team and a distribution provisioning profile, choose a generic iOS device, then
+use Product > Archive. With that signing configured, the equivalent CLI command is:
+
+```sh
+xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -archivePath build/ios/archive/Runner.xcarchive archive
+```
+
+Debug/Profile use the development APNs entitlement; Release uses production.
+An unsigned generic-device build checks compilation but cannot prove App Store
+signing or physical-device APNs delivery.
 
 Flutter 3.41.2 generates an Android registration entry for the dev-only
 `integration_test` plugin while excluding its class from release compilation.
