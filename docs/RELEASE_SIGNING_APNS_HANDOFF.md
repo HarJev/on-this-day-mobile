@@ -32,10 +32,11 @@ Do not merge the branch or push to main.
 - No Dart files changed, so Dart formatting is not applicable. No telemetry,
   Firebase app IDs, local API behavior, or tracked credentials changed.
 
-## Remaining
+## PR
 
-Commit and push this branch, open one PR against main, then cancel the scheduled
-continuation. Do not merge or push main.
+Committed as `5e20cb6` and opened
+[mobile PR #13](https://github.com/HarJev/on-this-day-mobile/pull/13)
+against main. Do not merge until owner review.
 
 ## Owner-Only Gates
 
@@ -44,6 +45,4 @@ continuation. Do not merge or push main.
 - Archive/upload through Xcode and verify physical-device remote push.
 - Approve privacy disclosure before enabling telemetry.
 
-A same-thread one-time continuation is scheduled for 06:10 Jamaica time if
-this run cannot finish before usage resets. Update this file with verified
-results; delete the automation if the PR is completed first.
+The one-time continuation was deleted after the PR opened.
