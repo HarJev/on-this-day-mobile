@@ -94,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
               recentDays: recentDays,
               onEventSelected: _openTodayEvent,
               onRecentEventSelected: _openEvent,
+              onRefresh: _controller.refresh,
               imageLoader: widget.imageLoader,
               sourceLauncher: widget.sourceLauncher,
             ),
@@ -227,6 +228,7 @@ class _LoadedState extends StatelessWidget {
     required this.recentDays,
     required this.onEventSelected,
     required this.onRecentEventSelected,
+    required this.onRefresh,
     required this.sourceLauncher,
     this.imageLoader,
   });
@@ -235,6 +237,7 @@ class _LoadedState extends StatelessWidget {
   final List<RecentDay> recentDays;
   final ValueChanged<String> onEventSelected;
   final ValueChanged<String> onRecentEventSelected;
+  final RefreshCallback onRefresh;
   final SourceLauncher sourceLauncher;
   final OptionalImageLoader? imageLoader;
 
@@ -242,41 +245,45 @@ class _LoadedState extends StatelessWidget {
   Widget build(BuildContext context) {
     final additionalEvents = content.additionalEvents;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Text(
-            'Featured',
-            style: AppText.eyebrow.copyWith(color: AppColors.archivalCobalt),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Featured',
+              style: AppText.eyebrow.copyWith(color: AppColors.archivalCobalt),
+            ),
           ),
-        ),
-        FeaturedEventCard(
-          event: content.featuredEvent,
-          onTap: () => onEventSelected(content.featuredEvent.id),
-          imageLoader: imageLoader,
-          sourceLauncher: sourceLauncher,
-        ),
-        if (additionalEvents.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          const TodaySectionHeader('Also on this day'),
-          for (final event in additionalEvents)
-            AdditionalEventRow(
-              event: event,
-              onTap: () => onEventSelected(event.id),
-            ),
+          FeaturedEventCard(
+            event: content.featuredEvent,
+            onTap: () => onEventSelected(content.featuredEvent.id),
+            imageLoader: imageLoader,
+            sourceLauncher: sourceLauncher,
+          ),
+          if (additionalEvents.isNotEmpty) ...[
+            const SizedBox(height: 32),
+            const TodaySectionHeader('Also on this day'),
+            for (final event in additionalEvents)
+              AdditionalEventRow(
+                event: event,
+                onTap: () => onEventSelected(event.id),
+              ),
+          ],
+          if (recentDays.isNotEmpty) ...[
+            const SizedBox(height: 32),
+            const TodaySectionHeader('Recent days'),
+            for (final day in recentDays)
+              RecentDayRow(
+                day: day,
+                onTap: () => onRecentEventSelected(day.featuredEvent.id),
+              ),
+          ],
         ],
-        if (recentDays.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          const TodaySectionHeader('Recent days'),
-          for (final day in recentDays)
-            RecentDayRow(
-              day: day,
-              onTap: () => onRecentEventSelected(day.featuredEvent.id),
-            ),
-        ],
-      ],
+      ),
     );
   }
 }

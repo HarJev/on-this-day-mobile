@@ -41,6 +41,31 @@ void main() {
     expect(find.text('Additional history'), findsOneWidget);
   });
 
+  testWidgets('pulling down refreshes Today without hiding current content', (
+    WidgetTester tester,
+  ) async {
+    final repository = _ControlledRefreshRepository();
+    await tester.pumpWidget(_homeApp(repository));
+    await tester.pump();
+
+    await tester.timedDrag(
+      find.byType(ListView).first,
+      const Offset(0, 500),
+      const Duration(milliseconds: 600),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(repository.loadCount, 2);
+    expect(find.text('Featured history'), findsOneWidget);
+    expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+
+    repository.completeRefresh();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aug 23'), findsOneWidget);
+    expect(find.text('Featured history'), findsOneWidget);
+  });
+
   testWidgets('renders recent days and opens their events', (
     WidgetTester tester,
   ) async {
@@ -274,6 +299,33 @@ const _dailyContentEmpty = DailyContent(
   featuredEvent: _featuredEvent,
   additionalEvents: [],
 );
+
+class _ControlledRefreshRepository implements OnThisDayRepository {
+  final Completer<DailyContent> _refresh = Completer<DailyContent>();
+  int loadCount = 0;
+
+  void completeRefresh() => _refresh.complete(
+    const DailyContent(
+      displayDate: 'Aug 23',
+      featuredEvent: _featuredEvent,
+      additionalEvents: [_additionalEvent],
+    ),
+  );
+
+  @override
+  Future<DailyContent> getTodayContent(String timezone) {
+    loadCount += 1;
+    return loadCount == 1 ? Future.value(_dailyContent) : _refresh.future;
+  }
+
+  @override
+  Future<List<RecentDay>> getRecentDays(String timezone) async => const [];
+
+  @override
+  Future<HistoricalEvent> getEvent(String eventId) {
+    throw UnimplementedError();
+  }
+}
 
 class _PendingRepository implements OnThisDayRepository {
   final Completer<DailyContent> _completer = Completer<DailyContent>();

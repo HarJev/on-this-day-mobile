@@ -52,9 +52,11 @@ class HomeController extends ChangeNotifier {
   int _loadGeneration = 0;
   bool _disposed = false;
 
-  Future<void> loadToday() async {
+  Future<void> refresh() => loadToday(showLoading: false);
+
+  Future<void> loadToday({bool showLoading = true}) async {
     final generation = ++_loadGeneration;
-    _setState(const HomeLoading());
+    if (showLoading) _setState(const HomeLoading());
 
     final String timezone;
     try {
@@ -62,6 +64,7 @@ class HomeController extends ChangeNotifier {
       timezone = await _timezoneProvider.currentTimezone();
       _debugLog('timezone_lookup_success timezone=$timezone');
     } catch (error) {
+      if (_disposed || generation != _loadGeneration) return;
       _debugLog(
         'timezone_lookup_failure causeType=${error.runtimeType} cause=$error',
       );
@@ -77,6 +80,7 @@ class HomeController extends ChangeNotifier {
       _setState(HomeLoaded(content));
       await _loadRecentDays(timezone, generation);
     } on TodayContentUnavailableException {
+      if (_disposed || generation != _loadGeneration) return;
       _debugLog('repository_getTodayContent_unavailable');
       _setState(
         const HomeUnavailable(
@@ -84,6 +88,7 @@ class HomeController extends ChangeNotifier {
         ),
       );
     } on ApiException catch (error) {
+      if (_disposed || generation != _loadGeneration) return;
       _debugLog(
         'api_exception kind=${error.kind} status=${error.statusCode} '
         'code=${error.code} causeType=${error.cause.runtimeType} '
@@ -91,6 +96,7 @@ class HomeController extends ChangeNotifier {
       );
       _setState(const HomeError(message: "Could not load today's history."));
     } catch (error) {
+      if (_disposed || generation != _loadGeneration) return;
       _debugLog(
         'repository_getTodayContent_failure causeType=${error.runtimeType} '
         'cause=$error',
