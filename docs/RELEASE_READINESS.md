@@ -12,7 +12,7 @@ gate from PENDING to PASS.
 | Apple distribution | Owner-controlled signing/provisioning and successful Release archive. An owner-only TestFlight install may be used to verify production APNs before inviting beta testers. |
 | Daily return | One scheduled remote notification for the featured event at the intended local date/time; permission accepted and denied paths; physical iPhone APNs/FCM receipt and warm/cold Event Detail deep links. Simulator/local push and token registration do not satisfy delivery. |
 | Android | Signed release build, install on a physical Android phone, real FCM receipt and warm/cold Event Detail deep links; denial leaves the app usable. |
-| Core phone journey | Today and Recent, featured image and full story, Daily and Quick Play, Results/Review, cold and warm image fetch, network loss, text scaling, and VoiceOver/TalkBack on their respective devices. |
+| Core phone journey | Today and Recent, featured image and full story, Daily and Quick Play, Results/Review, cold and warm image fetch, network loss, text scaling, and basic semantic labels on supported phones. |
 | Privacy | Store disclosures and policy checked against actual SDK collection; existing Analytics/Crashlytics remain disabled until owner sign-off. |
 
 The owner can authorize a narrower private distribution if a gate is pending,
@@ -21,24 +21,46 @@ Public v1 additionally requires the content, rights, operations, and native
 release gates in `docs/PRODUCTION_LAUNCH_WORKPLAN.md`. Share cards come after
 Phase 0 reliability; the native home-screen widget follows sharing. Neither
 substitutes for the daily notification. Journey, reading quotas, and streaks
-are not Phase 0 requirements.
+are not Phase 0 requirements. A dedicated manual VoiceOver/TalkBack journey
+is a Phase 1 accessibility task, not a Phase 0 beta gate. This does not remove
+basic accessibility expectations or claim screen-reader compatibility.
 
 ## Phase 0 Verification Snapshot (2026-10-02)
 
-Evidence from mobile `origin/main` at `fed132c`, checked in an isolated
-worktree. This is not a distribution approval.
+### Remaining Mobile Phase 0 Gates
+
+The simulator walkthrough and automated checks below are complete. These
+owner/device gates remain open before inviting beta testers; none is a new
+mobile feature request.
+
+| Gate | Status | Next evidence |
+| --- | --- | --- |
+| Android distribution | PENDING | Create and back up the upload keystore outside Git, build a signed release AAB, verify its certificate, and install a release build on a physical Android phone. |
+| Apple distribution | PENDING | Enroll the Apple Developer Team, configure signing/provisioning and APNs through Firebase, archive Release, and install an owner-only TestFlight build on a physical iPhone. |
+| Scheduled daily return | PENDING | Confirm the deployed backend scheduler is enabled, then observe a real featured-event notification at the intended local time on opted-in iOS and Android phones. Check denial, foreground/background/cold launch, and Event Detail links. Debug/local notifications are not evidence of remote delivery. |
+| Physical core journey | PENDING | On supported phones, check Today and Recent stories/sources, Daily and Quick Play, all question types, Results/Review and result reopening, cold/warm images, offline recovery, date rollover, background timing, larger text and basic labels/tap targets. |
+| Privacy and beta decision | PENDING | Review store disclosures against Firebase SDK behavior and explicitly approve beta invitation. Analytics and Crashlytics can remain disabled; enabling them requires privacy sign-off. |
+
+The dedicated manual VoiceOver/TalkBack walkthrough is Phase 1. Share cards,
+the home-screen widget, and public-v1 content/operations gates are separate
+work; do not mark them complete based on this mobile audit.
+
+The signing checks below were made at `fed132c`. The live app audit used
+mobile `main` at `aff83da` plus the expanded opt-in integration harness on
+2026-10-02. Details: `docs/PHASE0_LIVE_APP_AUDIT_2026-10-02.md`. This is not
+a distribution approval.
 
 | Check | Result | Evidence or limit |
 | --- | --- | --- |
-| Flutter regression and analyzer | PASS | `flutter test --no-pub`: 529 tests; `flutter analyze --no-pub`: no issues. |
+| Flutter regression and analyzer | PASS | `flutter test --no-pub`: 530 tests; `flutter analyze --no-pub`: no issues after the Today refresh change. |
 | Android debug packaging | PASS | `flutter build apk --debug --no-pub` produced an APK. |
 | Android release guard | PASS | `flutter build appbundle --release --no-pub` failed clearly because owner-controlled `android/key.properties` is absent; no debug-signing fallback. This is not a signed bundle pass. |
 | iOS Release compilation | PASS (unsigned) | `flutter build ios --release --no-codesign --no-pub` produced `Runner.app`. A signed archive and install remain pending. |
 | iOS APNs configuration | PASS (configuration) | Xcode resolves `Runner.entitlements` with `development` for Debug and `RunnerRelease.entitlements` with `production` for Release. Delivery is unverified. |
-| iOS simulator Today | PASS (smoke) | Debug app launched against CloudFront; October 2 Today returned HTTP 200 and the featured image framed correctly. No full native journey was exercised. |
+| iOS simulator live journey | PASS | Live Today image, pull-to-refresh, featured and Recent stories, Quick Play 20 with real images and all four types, Daily 5, Results/Review, and isolated SQLite reopen passed. Actual app Today screenshot inspected. |
 | Production Quick Play API | PASS (API smoke) | A SHA-256-header POST for five questions returned HTTP 200 with all four question types. This is not a native quiz completion. |
-| Android emulator Today | PENDING (environment) | App installed and showed Today behind a repeated Android System UI ANR; a clean emulator reboot reproduced it. Debug APK compilation passed, but interactive QA did not. |
-| Physical phone, push, distribution | PENDING | No signed owner build, real APNs/FCM send, TestFlight install, Android release install, or native screen-reader pass was performed. |
+| Android emulator live journey | PASS | A Pixel 6 API 33 ARM64 emulator with 3072 MiB RAM completed the same live Today-to-Quiz flow and isolated SQLite reopen. Actual app Today screenshot inspected. The earlier 1536 MiB emulator attempt had a System UI ANR. |
+| Physical phone, push, distribution | PENDING | No signed owner build, real APNs/FCM send, TestFlight install, Android release install, or physical-phone core-journey pass was performed. Manual screen-reader walkthrough is deferred to Phase 1. |
 
 Before inviting testers, use the owner's upload keystore and Apple
 provisioning, verify release artifacts, then perform real-device push and

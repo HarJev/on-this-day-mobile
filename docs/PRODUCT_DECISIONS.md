@@ -433,3 +433,12 @@ A narrower distribution without verified delivery requires an explicit owner
 decision. Do not add a reading quota, dwell/scroll proof, or streak as a
 Phase 0 requirement; revisit a quiet Journey treatment only after beta
 observation. Analytics and Crashlytics stay off pending privacy sign-off.
+
+## PD-042 — Manual screen-reader walkthrough follows the Phase 0 beta
+
+Phase 0 retains basic accessibility expectations: semantic labels, usable
+tap targets, and readable text at larger sizes. A full physical-device
+VoiceOver and TalkBack walkthrough moves to Phase 1 instead of blocking the
+small Phase 0 beta. Automated semantics tests do not prove screen-reader
+speech or focus order; document that limit and complete the manual pass before
+claiming those paths are verified.

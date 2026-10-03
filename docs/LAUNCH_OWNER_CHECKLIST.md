@@ -22,11 +22,18 @@ native QA and Android distribution findings remain in
   delivery, and deep links to the featured Event Detail. Do not count a local
   debug notification or token registration as delivery.
 - [ ] Complete the core Today/Recent/Quiz/Results/Review, first-image, outage,
-  large-text, VoiceOver, and TalkBack checks on supported phones.
+  large-text, and basic semantic-label checks on supported phones.
 - [ ] Approve store/privacy disclosures and the existing telemetry inventory
   before enabling Analytics or Crashlytics. Otherwise ship them disabled.
 - [ ] Review `RELEASE_READINESS.md` evidence and explicitly approve the beta
   invitation; owner-only verification builds may precede that decision.
+
+## Phase 1 Accessibility Follow-up
+
+- [ ] Complete manual VoiceOver and TalkBack journeys on physical iOS and
+  Android phones, including the ordering controls, feedback, sources, and
+  notification deep links. Phase 0's automated semantics and text-scaling
+  checks do not establish screen-reader compatibility.
 
 ## L1-L2: Image Reliability And Cache
 
@@ -70,8 +77,8 @@ native QA and Android distribution findings remain in
 
 ## L7: Resilience And Release Readiness
 
-- [ ] Complete native accessibility checks, including large text and screen
-  reader paths, on supported devices.
+- [ ] Complete Phase 0 native larger-text, basic semantic-label, and tap-target
+  checks on supported devices. The manual screen-reader journey is Phase 1.
 - [ ] Confirm notification, backend outage, image outage, and local-cache
   recovery behavior in the release environment.
 

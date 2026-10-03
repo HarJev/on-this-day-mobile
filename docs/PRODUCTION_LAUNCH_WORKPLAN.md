@@ -97,8 +97,11 @@ cannot be proven, mark the beta-rollout gate PENDING; any wider distribution
 without it needs an explicit owner decision.
 
 **Distribution and measurement:** complete Apple and Android signing and
-release checks, physical-phone Today/quiz/image/accessibility passes, and
-privacy/store materials. Decide whether to enable the existing minimal
+release checks, physical-phone Today/quiz/image/text-scaling and basic
+semantic-label passes, and privacy/store materials. The owner deferred the
+full manual VoiceOver/TalkBack walkthrough to Phase 1; this does not remove
+baseline accessible labels or claim screen-reader compatibility. Decide
+whether to enable the existing minimal
 Firebase Analytics and Crashlytics inventory after owner privacy sign-off;
 collection stays off until then. Do not add dwell, score, raw-ID, or broad
 session tracking merely to support a retention theory.

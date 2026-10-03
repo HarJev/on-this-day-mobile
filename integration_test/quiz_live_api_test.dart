@@ -5,11 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
 import 'package:on_this_day_mobile/core/api/api_client.dart';
+import 'package:on_this_day_mobile/core/images/cached_optional_image_loader.dart';
+import 'package:on_this_day_mobile/core/images/encoded_image_cache.dart';
+import 'package:on_this_day_mobile/core/images/image_downloader.dart';
 import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/core/navigation/app_router.dart';
 import 'package:on_this_day_mobile/core/navigation/quiz_route_dependencies.dart';
 import 'package:on_this_day_mobile/core/navigation/source_launcher.dart';
 import 'package:on_this_day_mobile/features/on_this_day/data/backend_on_this_day_repository.dart';
+import 'package:on_this_day_mobile/features/on_this_day/presentation/event_detail_screen.dart';
+import 'package:on_this_day_mobile/features/on_this_day/presentation/home_screen.dart';
+import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/featured_event_card.dart';
+import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/recent_day_row.dart';
+import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/source_row.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_coordinator.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_completion_id_generator.dart';
 import 'package:on_this_day_mobile/features/quiz/application/quiz_root_status.dart';
@@ -23,13 +31,15 @@ import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparer.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/images/quiz_image_preparation_exception.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_full_review_screen.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/quiz_hub_screen.dart';
+import 'package:on_this_day_mobile/features/quiz/presentation/widgets/quiz_question_count_selector.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_gameplay_view.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_results_screen.dart';
 import 'package:on_this_day_mobile/features/quiz/presentation/quiz_session_state.dart';
 import 'package:on_this_day_mobile/main.dart';
 import '../test/features/quiz/support/image_fakes.dart';
 
-// Explicitly opt in: this suite requires the local SAM API and imported content.
+// Explicitly opt in: this suite requires a reachable API and imported content.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   const enabled = bool.fromEnvironment('LIVE_API_TEST');
@@ -47,6 +57,13 @@ void main() {
       final client = http.Client();
       final api = ApiClient(baseUrl: Uri.parse(baseUrl), httpClient: client);
       final repository = BackendQuizRepository(apiClient: api);
+      final imageCache = EncodedImageCache(
+        cacheDirectory: () async => Directory('${directory.path}/images'),
+      );
+      final optionalImageLoader = CachedOptionalImageLoader(
+        cache: imageCache,
+        downloader: HttpImageDownloader(client),
+      );
       final navigation = GlobalKey<NavigatorState>();
       final observer = RouteObserver<PageRoute<dynamic>>();
       final QuizImageDownloader downloader = fixtureImages
@@ -60,6 +77,7 @@ void main() {
         imagePreparer: QuizImagePreparer(
           downloader: downloader,
           decoder: FlutterQuizImageDecoder(),
+          cache: imageCache,
         ),
         timezoneProvider: const _Timezone(),
         completionIdGenerator: SecureQuizCompletionIdGenerator(),
@@ -81,6 +99,7 @@ void main() {
             navigatorKey: navigation,
             routeObserver: observer,
             quizDependencies: () => dependencies,
+            optionalImageLoader: optionalImageLoader,
           ),
         ),
       );
@@ -88,14 +107,85 @@ void main() {
         tester,
         () => find.byType(NavigationBar).evaluate().isNotEmpty,
       );
+      if (!fixtureImages) {
+        await _wait(
+          tester,
+          () => find.byType(FeaturedEventCard).evaluate().isNotEmpty,
+        );
+        await _wait(tester, () => find.byType(RawImage).evaluate().isNotEmpty);
+        await tester.timedDrag(
+          find
+              .descendant(
+                of: find.byType(HomeScreen),
+                matching: find.byType(ListView),
+              )
+              .first,
+          const Offset(0, 500),
+          const Duration(milliseconds: 600),
+        );
+        await tester.pump(const Duration(seconds: 1));
+        await _wait(
+          tester,
+          () => find.byType(RefreshProgressIndicator).evaluate().isEmpty,
+        );
+        expect(find.byType(FeaturedEventCard), findsOneWidget);
+        await _tap(tester, find.text('Read the full story'));
+        await _wait(tester, () => find.byType(RawImage).evaluate().isNotEmpty);
+        await tester.scrollUntilVisible(
+          find.byType(SourcesDisclosure),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        expect(find.byType(EventDetailScreen), findsOneWidget);
+        expect(
+          tester
+              .widget<SourcesDisclosure>(find.byType(SourcesDisclosure))
+              .sources,
+          isNotEmpty,
+        );
+        navigation.currentState!.pop();
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.byType(RecentDayRow).first,
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        final recent = find.byType(RecentDayRow).first;
+        await _tap(tester, recent);
+        await tester.scrollUntilVisible(
+          find.byType(SourcesDisclosure),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        navigation.currentState!.pop();
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.byType(NavigationDestination).at(1));
+      await tester.pumpAndSettle();
       await _wait(
         tester,
         () => find.text('Set up a quick round').evaluate().isNotEmpty,
       );
+      await tester.drag(
+        find.byType(QuizHubScreen).first,
+        const Offset(0, -350),
+      );
+      await tester.pumpAndSettle();
       await _tap(tester, find.text('Set up a quick round'));
       await _wait(tester, () => find.text('20').evaluate().isNotEmpty);
-      await _tap(tester, find.text('20'));
+      await _tap(
+        tester,
+        find
+            .descendant(
+              of: find.byType(QuizQuestionCountSelector),
+              matching: find.byType(InkWell),
+            )
+            .last,
+      );
+      await _wait(
+        tester,
+        () => find.text('Continue with 20 questions').evaluate().isNotEmpty,
+      );
       await _tap(tester, find.byType(SwitchListTile));
       await tester.pumpAndSettle();
       await _tap(tester, find.text('Continue with 20 questions'));
@@ -209,6 +299,7 @@ Future<void> _wait(WidgetTester tester, bool Function() ready) async {
 
 Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder.first);
+  await tester.pump(const Duration(milliseconds: 100));
   await tester.tap(finder.first);
   await tester.pump(const Duration(milliseconds: 300));
 }
