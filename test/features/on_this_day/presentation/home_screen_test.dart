@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:on_this_day_mobile/core/config/timezone_provider.dart';
 import 'package:on_this_day_mobile/core/config/app_theme.dart';
+import 'package:on_this_day_mobile/core/images/cached_optional_image_loader.dart';
+import 'package:on_this_day_mobile/core/images/image_request_cancellation.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/daily_content.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/featured_event.dart';
+import 'package:on_this_day_mobile/features/on_this_day/domain/event_image.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/historical_event_summary.dart';
 import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_exceptions.dart';
@@ -13,6 +18,8 @@ import 'package:on_this_day_mobile/features/on_this_day/domain/on_this_day_repos
 import 'package:on_this_day_mobile/features/on_this_day/domain/recent_day.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/home_screen.dart';
 import 'package:on_this_day_mobile/features/on_this_day/presentation/widgets/featured_event_card.dart';
+
+import '../../quiz/support/image_fakes.dart';
 
 void main() {
   testWidgets('renders loading while today content is pending', (
@@ -49,7 +56,7 @@ void main() {
     await tester.pump();
 
     await tester.timedDrag(
-      find.byType(ListView).first,
+      find.byType(SingleChildScrollView).first,
       const Offset(0, 500),
       const Duration(milliseconds: 600),
     );
@@ -64,6 +71,103 @@ void main() {
 
     expect(find.text('Aug 23'), findsOneWidget);
     expect(find.text('Featured history'), findsOneWidget);
+  });
+
+  testWidgets('iOS refresh uses the native spinner', (tester) async {
+    final repository = _ControlledRefreshRepository();
+    await tester.pumpWidget(_homeApp(repository, platform: TargetPlatform.iOS));
+    await tester.pump();
+
+    await tester.timedDrag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, 500),
+      const Duration(milliseconds: 600),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(repository.loadCount, 2);
+    expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
+    expect(find.byType(RefreshProgressIndicator), findsNothing);
+
+    repository.completeRefresh();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('fast fling keeps featured image and reaches recent days', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final image = (await tester.runAsync(
+      () => testImage(width: 400, height: 300),
+    ))!;
+    addTearDown(image.dispose);
+    final loader = _CountingImageLoader(image);
+    final content = DailyContent(
+      displayDate: 'Oct 3',
+      featuredEvent: FeaturedEvent(
+        id: 'featured-event',
+        title: 'Featured history',
+        year: '1485',
+        historicalDate: 'August 22, 1485',
+        summary: 'A concise featured summary.',
+        notificationTitle: 'A curiosity-driven notification',
+        notificationBody: 'A short notification body.',
+        image: EventImage(
+          url: Uri.parse('https://example.com/portrait.jpg'),
+          altText: 'Historical portrait',
+        ),
+      ),
+      additionalEvents: List.generate(
+        5,
+        (index) => HistoricalEventSummary(
+          id: 'additional-$index',
+          title: 'Additional history $index with a longer title',
+          year: '19$index',
+          historicalDate: 'October 3, 19$index',
+        ),
+      ),
+    );
+    final recentDays = List.generate(
+      6,
+      (index) => RecentDay(
+        daysAgo: index + 1,
+        displayDate: index < 2 ? 'Oct ${2 - index}' : 'Sep ${32 - index}',
+        featuredEvent: HistoricalEventSummary(
+          id: 'recent-$index',
+          title: 'Recent history $index',
+          year: '19$index',
+          historicalDate: 'October 2, 19$index',
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      _homeApp(
+        _StaticRepository(content, recentDays: recentDays),
+        imageLoader: loader,
+        platform: TargetPlatform.iOS,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(loader.loadCount, 1);
+
+    final scrollable = find.byType(SingleChildScrollView);
+    await tester.fling(scrollable, const Offset(0, -650), 5000);
+    await tester.pumpAndSettle();
+
+    final position = tester
+        .state<ScrollableState>(find.byType(Scrollable))
+        .position;
+    expect(position.extentAfter, lessThan(1));
+    expect(find.byType(FeaturedEventCard, skipOffstage: false), findsOneWidget);
+    expect(loader.loadCount, 1);
+
+    await tester.fling(scrollable, const Offset(0, 650), 5000);
+    await tester.pumpAndSettle();
+    expect(loader.loadCount, 1);
   });
 
   testWidgets('renders recent days and opens their events', (
@@ -224,13 +328,16 @@ void main() {
 Widget _homeApp(
   OnThisDayRepository repository, {
   VoidCallback? onShowDebugNotification,
+  OptionalImageLoader? imageLoader,
+  TargetPlatform? platform,
 }) {
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: AppTheme.light.copyWith(platform: platform),
     home: HomeScreen(
       repository: repository,
       timezoneProvider: const _FixedTimezoneProvider('Etc/UTC'),
       onShowDebugNotification: onShowDebugNotification,
+      imageLoader: imageLoader,
     ),
     onGenerateRoute: (settings) {
       return MaterialPageRoute<void>(
@@ -422,5 +529,18 @@ class _FixedTimezoneProvider implements TimezoneProvider {
   @override
   Future<String> currentTimezone() async {
     return timezone;
+  }
+}
+
+final class _CountingImageLoader implements OptionalImageLoader {
+  _CountingImageLoader(this.image);
+
+  final ui.Image image;
+  int loadCount = 0;
+
+  @override
+  Future<ui.Image> load(Uri url, ImageRequestCancellation cancellation) async {
+    loadCount++;
+    return image.clone();
   }
 }
