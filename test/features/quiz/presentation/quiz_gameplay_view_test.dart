@@ -72,9 +72,8 @@ void main() {
             questionTimeLimits: {
               for (final q in questions)
                 q.id: Duration(
-                  seconds: type == QuizQuestionType.chronologicalOrdering
-                      ? 45
-                      : 20,
+                  seconds:
+                      type == QuizQuestionType.chronologicalOrdering ? 45 : 20,
                 ),
             },
             timingEnabledByDefault: true,
@@ -148,6 +147,15 @@ void main() {
     await tester.tap(find.text('Sources (1)'));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('progress header has breathing room below the app bar', (
+    tester,
+  ) async {
+    await mount(tester, type: QuizQuestionType.trueFalse);
+    final barBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+    final progressTop = tester.getTopLeft(find.text('Question 1 of 5')).dy;
+    expect(progressTop - barBottom, greaterThanOrEqualTo(12));
+  });
 
   testWidgets(
     'immediate incorrect choice labels selection and correct answer; locks input',
@@ -270,11 +278,13 @@ void main() {
         '${stage.name} ${system ? 'system' : 'app-bar'} Back exits directly',
         (tester) async {
           await mount(tester, daily: true, stage: stage);
-          expect(controller.state, switch (stage) {
-            _Stage.preparing => isA<QuizPreparing>(),
-            _Stage.failed => isA<QuizPreparationFailed>(),
-            _ => isA<QuizReady>(),
-          });
+          expect(
+              controller.state,
+              switch (stage) {
+                _Stage.preparing => isA<QuizPreparing>(),
+                _Stage.failed => isA<QuizPreparationFailed>(),
+                _ => isA<QuizReady>(),
+              });
           final cancellations = preparation.cancellations;
           if (system) {
             await systemBack(tester);
@@ -381,9 +391,8 @@ void main() {
         const Offset(0, -200),
       );
       await tester.pump();
-      final position = tester
-          .state<ScrollableState>(find.byType(Scrollable).first)
-          .position;
+      final position =
+          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
       final offset = position.pixels;
       clock.advance(const Duration(seconds: 1));
       scheduler.fire();
@@ -570,9 +579,8 @@ void main() {
     await loadCaptureFonts(tester);
     Future<void> capture(String name) async {
       await tester.pumpAndSettle();
-      final boundary =
-          captureKey.currentContext!.findRenderObject()!
-              as RenderRepaintBoundary;
+      final boundary = captureKey.currentContext!.findRenderObject()!
+          as RenderRepaintBoundary;
       final image = (await tester.runAsync(() => boundary.toImage()))!;
       final bytes = await tester.runAsync(
         () => image.toByteData(format: ui.ImageByteFormat.png),

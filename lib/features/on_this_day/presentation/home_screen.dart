@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 
 import '../../../core/images/cached_optional_image_loader.dart';
@@ -245,53 +246,101 @@ class _LoadedState extends StatelessWidget {
   Widget build(BuildContext context) {
     final additionalEvents = content.additionalEvents;
 
-    return RefreshIndicator.adaptive(
-      onRefresh: onRefresh,
-      color: AppColors.archivalCobalt,
-      backgroundColor: AppColors.softIvory,
-      elevation: 0,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                'Featured',
-                style: AppText.eyebrow.copyWith(
-                  color: AppColors.archivalCobalt,
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      slivers: [
+        cupertino.CupertinoSliverRefreshControl(
+          onRefresh: onRefresh,
+          refreshIndicatorExtent: 64,
+          builder: _buildRefreshIndicator,
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    'Featured',
+                    style: AppText.eyebrow.copyWith(
+                      color: AppColors.archivalCobalt,
+                    ),
+                  ),
                 ),
+                FeaturedEventCard(
+                  event: content.featuredEvent,
+                  onTap: () => onEventSelected(content.featuredEvent.id),
+                  imageLoader: imageLoader,
+                  sourceLauncher: sourceLauncher,
+                ),
+                if (additionalEvents.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  const TodaySectionHeader('Also on this day'),
+                  for (final event in additionalEvents)
+                    AdditionalEventRow(
+                      event: event,
+                      onTap: () => onEventSelected(event.id),
+                    ),
+                ],
+                if (recentDays.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  const TodaySectionHeader('Recent days'),
+                  for (final day in recentDays)
+                    RecentDayRow(
+                      day: day,
+                      onTap: () => onRecentEventSelected(day.featuredEvent.id),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRefreshIndicator(
+    BuildContext context,
+    cupertino.RefreshIndicatorMode mode,
+    double pulledExtent,
+    double triggerDistance,
+    double indicatorExtent,
+  ) {
+    if (mode == cupertino.RefreshIndicatorMode.inactive) {
+      return const SizedBox.shrink();
+    }
+    final progress = (pulledExtent / triggerDistance)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final apple = switch (Theme.of(context).platform) {
+      TargetPlatform.iOS || TargetPlatform.macOS => true,
+      _ => false,
+    };
+    return Center(
+      child: apple
+          ? mode == cupertino.RefreshIndicatorMode.drag
+                ? cupertino.CupertinoActivityIndicator.partiallyRevealed(
+                    color: AppColors.archivalCobalt,
+                    progress: progress,
+                  )
+                : const cupertino.CupertinoActivityIndicator(
+                    color: AppColors.archivalCobalt,
+                  )
+          : SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(
+                value: mode == cupertino.RefreshIndicatorMode.drag
+                    ? progress
+                    : null,
+                color: AppColors.archivalCobalt,
+                backgroundColor: AppColors.paleStone,
+                strokeWidth: 2,
               ),
             ),
-            FeaturedEventCard(
-              event: content.featuredEvent,
-              onTap: () => onEventSelected(content.featuredEvent.id),
-              imageLoader: imageLoader,
-              sourceLauncher: sourceLauncher,
-            ),
-            if (additionalEvents.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              const TodaySectionHeader('Also on this day'),
-              for (final event in additionalEvents)
-                AdditionalEventRow(
-                  event: event,
-                  onTap: () => onEventSelected(event.id),
-                ),
-            ],
-            if (recentDays.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              const TodaySectionHeader('Recent days'),
-              for (final day in recentDays)
-                RecentDayRow(
-                  day: day,
-                  onTap: () => onRecentEventSelected(day.featuredEvent.id),
-                ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

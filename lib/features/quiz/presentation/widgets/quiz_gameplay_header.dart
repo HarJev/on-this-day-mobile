@@ -33,7 +33,7 @@ class QuizGameplayHeader extends StatelessWidget {
     final urgent = seconds != null && seconds <= 5;
     final timerColor = urgent ? AppColors.copperDark : AppColors.archivalCobalt;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
