@@ -56,7 +56,7 @@ void main() {
     await tester.pump();
 
     await tester.timedDrag(
-      find.byType(SingleChildScrollView).first,
+      find.byType(CustomScrollView).first,
       const Offset(0, 500),
       const Duration(milliseconds: 600),
     );
@@ -64,7 +64,7 @@ void main() {
 
     expect(repository.loadCount, 2);
     expect(find.text('Featured history'), findsOneWidget);
-    expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     repository.completeRefresh();
     await tester.pumpAndSettle();
@@ -77,9 +77,10 @@ void main() {
     final repository = _ControlledRefreshRepository();
     await tester.pumpWidget(_homeApp(repository, platform: TargetPlatform.iOS));
     await tester.pump();
+    final restingTop = tester.getTopLeft(find.byType(FeaturedEventCard)).dy;
 
     await tester.timedDrag(
-      find.byType(SingleChildScrollView),
+      find.byType(CustomScrollView),
       const Offset(0, 500),
       const Duration(milliseconds: 600),
     );
@@ -88,9 +89,18 @@ void main() {
     expect(repository.loadCount, 2);
     expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
     expect(find.byType(RefreshProgressIndicator), findsNothing);
+    final cardTop = tester.getTopLeft(find.byType(FeaturedEventCard)).dy;
+    final spinnerBottom =
+        tester.getBottomLeft(find.byType(CupertinoActivityIndicator)).dy;
+    expect(cardTop, greaterThan(restingTop + 30));
+    expect(cardTop, greaterThan(spinnerBottom));
 
     repository.completeRefresh();
     await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.byType(FeaturedEventCard)).dy,
+      closeTo(restingTop, 1),
+    );
   });
 
   testWidgets('fast fling keeps featured image and reaches recent days', (
@@ -154,13 +164,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(loader.loadCount, 1);
 
-    final scrollable = find.byType(SingleChildScrollView);
+    final scrollable = find.byType(CustomScrollView);
     await tester.fling(scrollable, const Offset(0, -650), 5000);
     await tester.pumpAndSettle();
 
-    final position = tester
-        .state<ScrollableState>(find.byType(Scrollable))
-        .position;
+    final position =
+        tester.state<ScrollableState>(find.byType(Scrollable)).position;
     expect(position.extentAfter, lessThan(1));
     expect(find.byType(FeaturedEventCard, skipOffstage: false), findsOneWidget);
     expect(loader.loadCount, 1);
@@ -188,6 +197,7 @@ void main() {
     expect(find.textContaining('Hawaii history'), findsOneWidget);
     expect(find.text('Aug 19'), findsOneWidget);
 
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Daguerreotype history'));
     await tester.pumpAndSettle();
 
@@ -412,12 +422,12 @@ class _ControlledRefreshRepository implements OnThisDayRepository {
   int loadCount = 0;
 
   void completeRefresh() => _refresh.complete(
-    const DailyContent(
-      displayDate: 'Aug 23',
-      featuredEvent: _featuredEvent,
-      additionalEvents: [_additionalEvent],
-    ),
-  );
+        const DailyContent(
+          displayDate: 'Aug 23',
+          featuredEvent: _featuredEvent,
+          additionalEvents: [_additionalEvent],
+        ),
+      );
 
   @override
   Future<DailyContent> getTodayContent(String timezone) {
