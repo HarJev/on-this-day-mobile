@@ -414,9 +414,22 @@ canonical records only. Tooling should compare editorial, canonical, and
 database counts/fingerprints so approval and import drift is visible without
 putting drafts into serving tables.
 
-## PD-040 — Widget and sharing are approved after core reliability
+## PD-040 — Sharing precedes the widget after core reliability
 
-A home-screen widget may expose the cached featured-event snapshot and deep-link
-to Event Detail. Event and quiz-result share cards may be added with restrained
-branding and rights-aware imagery. Neither feature delays fixes to image
+Event and quiz-result share cards may be added with restrained branding and
+rights-aware imagery after Phase 0 reliability. A home-screen widget may then
+expose the cached featured-event snapshot and deep-link to Event Detail; it
+requires separate native iOS/Android work. Neither feature delays image
 delivery, iOS builds, content coverage, Daily integration, or notifications.
+
+## PD-041 — Phase 0 depends on a proven daily return path
+
+The first distributable daily ritual includes one scheduled, curiosity-led
+remote notification per local day for users who opt in. Before inviting beta
+testers, verify real APNs/FCM delivery and warm/cold Event Detail routing on physical
+iOS and Android phones. Local/debug notifications and token registration alone
+do not establish delivery. Permission denial leaves reading and quizzes usable.
+A narrower distribution without verified delivery requires an explicit owner
+decision. Do not add a reading quota, dwell/scroll proof, or streak as a
+Phase 0 requirement; revisit a quiet Journey treatment only after beta
+observation. Analytics and Crashlytics stay off pending privacy sign-off.

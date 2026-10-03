@@ -1,5 +1,51 @@
 # Local Release-Readiness Audit
 
+## Phase 0 Distribution Gates
+
+The workplan's Phase 0 is a complete Today-to-tomorrow experience. The
+September 15 evidence below is historical and does not certify these gates.
+Record the device, build, date, and result for each check before changing a
+gate from PENDING to PASS.
+
+| Before inviting beta testers | Required evidence |
+| --- | --- |
+| Apple distribution | Owner-controlled signing/provisioning and successful Release archive. An owner-only TestFlight install may be used to verify production APNs before inviting beta testers. |
+| Daily return | One scheduled remote notification for the featured event at the intended local date/time; permission accepted and denied paths; physical iPhone APNs/FCM receipt and warm/cold Event Detail deep links. Simulator/local push and token registration do not satisfy delivery. |
+| Android | Signed release build, install on a physical Android phone, real FCM receipt and warm/cold Event Detail deep links; denial leaves the app usable. |
+| Core phone journey | Today and Recent, featured image and full story, Daily and Quick Play, Results/Review, cold and warm image fetch, network loss, text scaling, and VoiceOver/TalkBack on their respective devices. |
+| Privacy | Store disclosures and policy checked against actual SDK collection; existing Analytics/Crashlytics remain disabled until owner sign-off. |
+
+The owner can authorize a narrower private distribution if a gate is pending,
+but that exception must be recorded explicitly; it is not a TestFlight PASS.
+Public v1 additionally requires the content, rights, operations, and native
+release gates in `docs/PRODUCTION_LAUNCH_WORKPLAN.md`. Share cards come after
+Phase 0 reliability; the native home-screen widget follows sharing. Neither
+substitutes for the daily notification. Journey, reading quotas, and streaks
+are not Phase 0 requirements.
+
+## Phase 0 Verification Snapshot (2026-10-02)
+
+Evidence from mobile `origin/main` at `fed132c`, checked in an isolated
+worktree. This is not a distribution approval.
+
+| Check | Result | Evidence or limit |
+| --- | --- | --- |
+| Flutter regression and analyzer | PASS | `flutter test --no-pub`: 529 tests; `flutter analyze --no-pub`: no issues. |
+| Android debug packaging | PASS | `flutter build apk --debug --no-pub` produced an APK. |
+| Android release guard | PASS | `flutter build appbundle --release --no-pub` failed clearly because owner-controlled `android/key.properties` is absent; no debug-signing fallback. This is not a signed bundle pass. |
+| iOS Release compilation | PASS (unsigned) | `flutter build ios --release --no-codesign --no-pub` produced `Runner.app`. A signed archive and install remain pending. |
+| iOS APNs configuration | PASS (configuration) | Xcode resolves `Runner.entitlements` with `development` for Debug and `RunnerRelease.entitlements` with `production` for Release. Delivery is unverified. |
+| iOS simulator Today | PASS (smoke) | Debug app launched against CloudFront; October 2 Today returned HTTP 200 and the featured image framed correctly. No full native journey was exercised. |
+| Production Quick Play API | PASS (API smoke) | A SHA-256-header POST for five questions returned HTTP 200 with all four question types. This is not a native quiz completion. |
+| Android emulator Today | PENDING (environment) | App installed and showed Today behind a repeated Android System UI ANR; a clean emulator reboot reproduced it. Debug APK compilation passed, but interactive QA did not. |
+| Physical phone, push, distribution | PENDING | No signed owner build, real APNs/FCM send, TestFlight install, Android release install, or native screen-reader pass was performed. |
+
+Before inviting testers, use the owner's upload keystore and Apple
+provisioning, verify release artifacts, then perform real-device push and
+core-journey checks. An owner-only TestFlight build may establish production
+APNs before the broader beta invitation. Keep telemetry disabled until
+privacy disclosure and the existing event inventory are signed off.
+
 ## Current Beta Signing Gate (2026-10-02)
 
 The September 15 observations below are historical, not current release state.
@@ -156,8 +202,11 @@ The following findings are accepted work, not completed release evidence:
    distribution, difficulty, related-event metadata, and featured-image review.
 7. **Content state:** prove agreement between approved canonical content and the
    target database through counts and fingerprints.
-8. **Retention/operations:** add minimal privacy-conscious product/crash
-   telemetry before beta; widget and share cards follow core reliability.
+8. **Retention/operations:** decide on the existing minimal privacy-conscious
+   product/crash telemetry before beta; collection stays off pending owner
+   privacy sign-off. Share cards follow core reliability; the native widget
+   follows sharing. Scheduled daily notifications and physical-device receipt
+   are separate Phase 0 beta-rollout gates.
 
 The stale content counts earlier in this file describe the verification run in
 which they were observed. Refresh them through the coverage/status tooling

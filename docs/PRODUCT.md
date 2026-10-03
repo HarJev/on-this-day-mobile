@@ -910,8 +910,9 @@ quality check even though playable options are shuffled.
 
 ### 14.5 Approved retention extensions
 
-A home-screen widget and restrained event/result share cards are approved
-post-core work. The widget opens the featured event from a cached app-owned
-snapshot. Sharing must preserve attribution and may use an image only when its
-rights permit that reuse. These features follow reliable core content,
-notifications, and image delivery rather than replacing them.
+Restrained event/result share cards are the first approved post-Phase-0
+extension. Sharing must preserve attribution and may use an image only when its
+rights permit that reuse. A home-screen widget follows sharing; it opens the
+featured event from a cached app-owned snapshot and needs native iOS/Android
+work. Neither feature replaces reliable content, images, or the daily
+notification. Journey, reading quotas, and streaks are not Phase 0 features.

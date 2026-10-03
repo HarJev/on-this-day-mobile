@@ -5,8 +5,28 @@ It records checks that automation cannot establish. Mark each item only after
 the stated evidence has been reviewed; an unchecked item is not a release
 claim.
 
-The latest bounded native evidence and Android distribution inputs are in
+Current Phase 0 evidence is in `RELEASE_READINESS.md`; the earlier bounded
+native QA and Android distribution findings remain in
 `CLOSED_BETA_NATIVE_QA_2026-09-30.md`.
+
+## Phase 0 Owner Sign-off
+
+- [ ] Create and back up the Android upload keystore outside Git; put its
+  values in ignored `android/key.properties` and build a signed release AAB
+  using the commands in `DEVELOPMENT.md`. Verify its signing certificate.
+- [ ] With the Apple Developer account, enable Push Notifications for the
+  production App ID, configure distribution signing and provisioning, upload
+  the APNs key to Firebase, and install an owner-only TestFlight build.
+- [ ] Verify a real scheduled daily notification on physical iOS and Android
+  phones: consent and denial, local-date timing, foreground/background/cold
+  delivery, and deep links to the featured Event Detail. Do not count a local
+  debug notification or token registration as delivery.
+- [ ] Complete the core Today/Recent/Quiz/Results/Review, first-image, outage,
+  large-text, VoiceOver, and TalkBack checks on supported phones.
+- [ ] Approve store/privacy disclosures and the existing telemetry inventory
+  before enabling Analytics or Crashlytics. Otherwise ship them disabled.
+- [ ] Review `RELEASE_READINESS.md` evidence and explicitly approve the beta
+  invitation; owner-only verification builds may precede that decision.
 
 ## L1-L2: Image Reliability And Cache
 
@@ -94,8 +114,10 @@ The latest bounded native evidence and Android distribution inputs are in
   to Firebase, and verify physical-device foreground/background/cold delivery.
 - [ ] Verify the deployed backend scheduler sends its `eventId` payload to an
   opted-in Android device and respects each device's local date and time.
-- [ ] Review the widget's current/stale/empty states and Event Detail deep link.
-- [ ] Review event/result share cards for attribution and image reuse rights.
+- [ ] After Phase 0, review event/result share cards for attribution and image
+  reuse rights before starting native widget work.
+- [ ] Then review the widget's current/stale/empty states and Event Detail
+  deep link. The widget does not substitute for daily notification delivery.
 - [ ] Approve the privacy disclosure and minimal analytics/crash event set before
   enabling production telemetry. Review `TELEMETRY.md` and verify native
   defaults remain off in builds without the explicit release flag.

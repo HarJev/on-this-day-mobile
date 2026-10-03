@@ -1,6 +1,7 @@
 # On This Day: Production Launch Workplan
 
-Status: proposed execution plan, not an implementation record. Updated 2026-09-26.
+Status: historical execution plan with an owner-approved Phase 0 boundary added
+2026-10-02. Task descriptions are not proof of current implementation.
 Owner repositories:
 
 - Mobile: `/Users/jevaunharris/Workspace/on-this-day/on-this-day-mobile`
@@ -71,6 +72,55 @@ when the served image URL changes. Follow Wikimedia's
 and rate limits while any source-host downloads remain.
 
 ## Release Stages
+
+### Phase 0 - A Complete Daily Ritual
+
+Phase 0 is the smallest distributable Today-to-tomorrow experience, not a
+target for maximum time in the app. Readers can enjoy the featured story,
+explore other worthwhile events, take the Daily quiz, and return tomorrow.
+The session may end naturally; there is no required reading quota or streak.
+
+**Product and content:** keep Today, Event Detail, Recent days, the connected
+Daily quiz, Quick Play, Results, and Review coherent. Finish story-depth and
+coverage work, source/rights review, and featured-image crop and first-fetch
+checks. A quiet end-of-day acknowledgement or link to more of today's/recent
+history can be tested during beta, but is not a three-event checklist or a
+distribution gate.
+
+**Return path:** enable one curiosity-led scheduled remote notification per
+local day, after the deferred permission explanation. Verify scheduling,
+consent/denial, real iOS and Android delivery, and warm/cold deep links to
+the featured event. Simulator/debug-local notifications test routing only;
+registration of a token is not delivery. Do not silently substitute local
+scheduling. Real iOS push needs owner-controlled APNs/provisioning. If it
+cannot be proven, mark the beta-rollout gate PENDING; any wider distribution
+without it needs an explicit owner decision.
+
+**Distribution and measurement:** complete Apple and Android signing and
+release checks, physical-phone Today/quiz/image/accessibility passes, and
+privacy/store materials. Decide whether to enable the existing minimal
+Firebase Analytics and Crashlytics inventory after owner privacy sign-off;
+collection stays off until then. Do not add dwell, score, raw-ID, or broad
+session tracking merely to support a retention theory.
+
+**Exit checks:** `docs/RELEASE_READINESS.md` records evidence separately for
+beta rollout and public v1. An owner-only distribution-signed/TestFlight build
+may establish real iOS push. Before inviting beta testers, require the Apple
+distribution path, real iOS push, and Android release/phone-flow checks.
+Before public v1, also satisfy the content, rights, operations, and native
+gates below. A
+simulator or unit pass never certifies an untested physical-device gate.
+
+**Post-Phase-0 experiments:** a compact, non-scored `Today's Journey` may be
+tried only if beta observation supports it. The proposed quiz-or-three-reads
+quota and dwell/scroll proof are not launch requirements. A streak requires a
+new product decision about local dates, missed days, offline use, reinstall,
+and whether it rewards or punishes occasional readers. Global `Surprise Me`
+needs eligible-content selection and belongs later. Build rights-aware share
+cards before a home-screen widget: sharing is the smaller acquisition test;
+the widget needs native iOS/Android work and does not replace notifications.
+Favorites and broader date browsing remain later candidates. Audio,
+achievements, personalization, XP, leaderboards, and AI chat are shelved.
 
 | Stage | Minimum bar | Claim |
 | --- | --- | --- |
@@ -320,8 +370,9 @@ static-image cost is not the full service cost. Use IaC, HTTPS, least-privilege
 secrets/IAM, Flyway before import, DB backups/restore drill, logs/alarms,
 rate-limit protection, and staging vs production configuration. Do not deploy
 to the user's AWS account or create paid resources merely by executing this
-plan. Confirm notification scheduling or explicitly de-scope it for the first
-release; local token registration alone is not daily notification delivery.
+plan. Scheduled daily notification delivery is a Phase 0 beta-rollout gate;
+local token registration alone is not delivery. A narrower distribution
+without it requires an explicit owner-approved scope change.
 
 Prepare signed iOS/Android builds, non-local API configuration, Firebase/APNs
 ownership, privacy/store materials, and physical-device checks. Run cold and
@@ -426,13 +477,15 @@ opens, and shares. Do not collect answer text, notification tokens, full image
 URLs/query strings, or unnecessary personal identifiers. Document retention,
 consent, and store/privacy disclosures before enabling production collection.
 
-### A8. Add Widget And Share Cards (Mobile, P2)
+### A8. Add Share Cards, Then Widget (Mobile, Post-Phase-0)
 
-After A1-A4 are stable, add an iOS/Android home-screen widget backed by a cached
-app-owned featured-event snapshot with current, stale, and empty states. Tapping
-opens Event Detail. Add restrained event/result share cards; include an image
-only when its reviewed rights permit redistribution in generated media. Neither
-feature may introduce an account requirement or block the core app.
+After Phase 0 reliability, add restrained event/result share cards first;
+include an image only when its reviewed rights permit redistribution in
+generated media. Then evaluate an iOS/Android home-screen widget backed by a
+cached app-owned featured-event snapshot with current, stale, and empty states;
+tapping it opens Event Detail. The widget requires native-platform work and is
+not a substitute for proven daily notification delivery. Neither feature may
+introduce an account requirement or block the core app.
 
 ### A9. Visual Refresh From Claude Design (Mobile, P1 Before Beta)
 
@@ -473,7 +526,10 @@ restyled in place.
 Completed L1-L5 foundations remain in place; L6/L7 content work continues in
 reviewed batches. Next execute A1, then A5's status baseline, A2, A3, and A4.
 A6 continues in parallel without mixing content approval into code tasks. Add A7
-before closed beta, then A8. L8 cost/design review may proceed early, but resource
+before closed beta. Finish A4's scheduled delivery and native phone checks
+before inviting beta testers. After core reliability, do A8's share cards before its
+widget. A `Today's Journey` or streak experiment follows beta evidence, not
+the Phase 0 launch gate. L8 cost/design review may proceed early, but resource
 provisioning, paid services, native distribution, and public release remain last.
 Stop after each task for review; do not blend reliability fixes, editorial
 promotion, product expansion, and deployment into one checkpoint.
